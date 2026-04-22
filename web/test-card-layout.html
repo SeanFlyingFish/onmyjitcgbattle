@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#101827; padding:40px; font-family:sans-serif; color:#fff; }
+.container { display:flex; gap:30px; align-items:flex-start; flex-wrap:wrap; }
+
+/* 复制 App.css 的规则 */
+.area {
+  border: none;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.85);
+  color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: bold;
+  position: relative;
+  box-shadow: 0 0 0 3px #cbd5e1, 0 4px 12px rgba(0,0,0,0.4);
+  overflow: visible;
+  padding: 4px;
+}
+.ratio-7-9 {
+  aspect-ratio: 7/9;
+  width: 130px;
+}
+.ratio-7-4 {
+  aspect-ratio: 7/4;
+  width: 130px;
+}
+
+.drop-zone {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: auto;
+  background: transparent;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shikigami-card-in-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  z-index: 25;
+}
+.shikigami-card-stage {
+  display: flex;
+  justify-content: center;
+}
+.unit-card-face {
+  position: relative;
+  width: 100%;
+  max-width: 70px;
+  margin: 0 auto;
+}
+.unit-art-wrap { position:relative; display:inline-block; width:100%; }
+.unit-art {
+  width: 70px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #020617;
+  box-shadow: 0 6px 16px rgba(8,15,30,0.6);
+}
+
+/* 方案A：给 drop-zone 加 position:absolute */
+.test-a .drop-zone { position: absolute; }
+
+/* 方案B：box-shadow inset 画边框 + drop-zone absolute */
+.test-b .area { box-shadow: inset 0 0 0 3px #cbd5e1, 0 4px 12px rgba(0,0,0,0.4); }
+.test-b .drop-zone { position: absolute; z-index: 1; }
+
+/* 方案C：边框在 ::after 伪元素上 */
+.test-c .area { box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.test-c .area::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px solid #cbd5e1;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 0;
+}
+.test-c .drop-zone { position: absolute; z-index: 1; }
+
+.label {
+  font-size: 14px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.test-case {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 符咒区对比 */
+.spell-area {
+  width: calc(130px * 4 + 12px * 3);
+  height: 160px;
+  position: relative;
+  overflow: visible;
+  border: none;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.85);
+  box-shadow: 0 0 0 3px #cbd5e1, 0 4px 12px rgba(0,0,0,0.4);
+}
+.spell-card {
+  position: absolute;
+  width: 70px;
+  height: 85px;
+  border-radius: 7px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border: 2px solid #a78bfa;
+  background: #020617;
+  z-index: 2;
+}
+
+/* 延伸区对比 */
+.extend-drop-zone {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border-radius: inherit;
+}
+.extend-card {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 85px;
+  z-index: 20;
+  border: 2px solid #fbbf24;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+  background: #020617;
+}
+
+/* card 类 */
+.card {
+  width: 110px;
+  aspect-ratio: 7/9;
+  background-size: cover;
+  background-position: center;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+}
+.card--mini {
+  width: 70px !important;
+  height: 85px !important;
+  border-radius: 5px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 2;
+}
+
+.debug-info {
+  font-size: 11px;
+  color: #fbbf24;
+  margin-top: 4px;
+  font-family: monospace;
+}
+
+/* 强制卡牌半透明以观察是否被框遮挡 */
+.test-opacity .unit-art,
+.test-opacity .spell-card,
+.test-opacity .extend-card {
+  background: rgba(255, 0, 0, 0.5) !important;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 当前实现 -->
+  <div class="test-case">
+    <div class="label">当前实现 (drop-zone 无 position)</div>
+    <div class="area ratio-7-9">
+      <div class="drop-zone">
+        <div class="shikigami-card-in-area">
+          <div class="shikigami-card-stage">
+            <div class="unit-card-face">
+              <div class="unit-art-wrap">
+                <img class="unit-art" src="https://picsum.photos/70/85" alt="test">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="debug-info" id="debug-current"></div>
+  </div>
+
+  <!-- 方案A：drop-zone position:absolute -->
+  <div class="test-case test-a">
+    <div class="label">方案A (drop-zone absolute)</div>
+    <div class="area ratio-7-9">
+      <div class="drop-zone">
+        <div class="shikigami-card-in-area">
+          <div class="shikigami-card-stage">
+            <div class="unit-card-face">
+              <div class="unit-art-wrap">
+                <img class="unit-art" src="https://picsum.photos/70/85" alt="test">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="debug-info" id="debug-a"></div>
+  </div>
+
+  <!-- 方案B：box-shadow inset + drop-zone absolute -->
+  <div class="test-case test-b">
+    <div class="label">方案B (inset shadow + dz abs)</div>
+    <div class="area ratio-7-9">
+      <div class="drop-zone">
+        <div class="shikigami-card-in-area">
+          <div class="shikigami-card-stage">
+            <div class="unit-card-face">
+              <div class="unit-art-wrap">
+                <img class="unit-art" src="https://picsum.photos/70/85" alt="test">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="debug-info" id="debug-b"></div>
+  </div>
+
+  <!-- 方案C：::after 伪元素画边框 -->
+  <div class="test-case test-c">
+    <div class="label">方案C (::after border)</div>
+    <div class="area ratio-7-9">
+      <div class="drop-zone">
+        <div class="shikigami-card-in-area">
+          <div class="shikigami-card-stage">
+            <div class="unit-card-face">
+              <div class="unit-art-wrap">
+                <img class="unit-art" src="https://picsum.photos/70/85" alt="test">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="debug-info" id="debug-c"></div>
+  </div>
+
+  <!-- 对比：符咒区卡牌 -->
+  <div class="test-case">
+    <div class="label">对比: 符咒区 spell-card</div>
+    <div class="spell-area">
+      <div class="spell-card" style="left:20px; top:20px;"></div>
+      <div class="spell-card" style="left:100px; top:30px;"></div>
+    </div>
+    <div class="debug-info" id="debug-spell"></div>
+  </div>
+
+  <!-- 对比：延伸区卡牌 -->
+  <div class="test-case">
+    <div class="label">对比: 延伸区 extend-card</div>
+    <div class="area ratio-7-4">
+      <div class="drop-zone extend-drop-zone">
+        <div class="card extend-card"></div>
+      </div>
+    </div>
+    <div class="debug-info" id="debug-extend"></div>
+  </div>
+
+  <!-- 对比：mini card (结界/墓地/移除) -->
+  <div class="test-case">
+    <div class="label">对比: card--mini</div>
+    <div class="area ratio-7-9">
+      <div class="card card--mini" style="background: #020617;"></div>
+    </div>
+    <div class="debug-info" id="debug-mini"></div>
+  </div>
+
+</div>
+
+<script>
+// 检查各元素的尺寸
+function measure(id, selector) {
+  const el = document.querySelector('#' + id)?.previousElementSibling?.querySelector(selector);
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  document.getElementById(id).textContent = 
+    `${selector}: ${Math.round(r.width)}×${Math.round(r.height)}`;
+}
+
+setTimeout(() => {
+  // 当前实现
+  const currentArea = document.querySelector('.test-case:not(.test-a):not(.test-b):not(.test-c) .area');
+  if (currentArea) {
+    const ar = currentArea.getBoundingClientRect();
+    document.getElementById('debug-current').textContent = 
+      `area: ${Math.round(ar.width)}×${Math.round(ar.height)}`;
+    const dz = currentArea.querySelector('.drop-zone');
+    if (dz) {
+      const dr = dz.getBoundingClientRect();
+      document.getElementById('debug-current').textContent += 
+        `\ndrop-zone: ${Math.round(dr.width)}×${Math.round(dr.height)}`;
+    }
+    const card = currentArea.querySelector('.unit-art');
+    if (card) {
+      const cr = card.getBoundingClientRect();
+      document.getElementById('debug-current').textContent += 
+        `\nunit-art: ${Math.round(cr.width)}×${Math.round(cr.height)}`;
+    }
+  }
+
+  // 方案A
+  const areaA = document.querySelector('.test-a .area');
+  if (areaA) {
+    const dz = areaA.querySelector('.drop-zone');
+    if (dz) {
+      const dr = dz.getBoundingClientRect();
+      document.getElementById('debug-a').textContent = 
+        `area: ${Math.round(areaA.getBoundingClientRect().width)}×${Math.round(areaA.getBoundingClientRect().height)}` +
+        `\ndrop-zone: ${Math.round(dr.width)}×${Math.round(dr.height)}`;
+    }
+    const card = areaA.querySelector('.unit-art');
+    if (card) {
+      const cr = card.getBoundingClientRect();
+      document.getElementById('debug-a').textContent += 
+        `\nunit-art: ${Math.round(cr.width)}×${Math.round(cr.height)}`;
+    }
+  }
+
+  // 符咒区
+  const spellCard = document.querySelector('.spell-card');
+  if (spellCard) {
+    const r = spellCard.getBoundingClientRect();
+    document.getElementById('debug-spell').textContent = 
+      `spell-card: ${Math.round(r.width)}×${Math.round(r.height)}`;
+  }
+
+  // 延伸区
+  const extendCard = document.querySelector('.extend-card');
+  if (extendCard) {
+    const r = extendCard.getBoundingClientRect();
+    document.getElementById('debug-extend').textContent = 
+      `extend-card: ${Math.round(r.width)}×${Math.round(r.height)}`;
+  }
+
+  // mini
+  const miniCard = document.querySelector('.card--mini');
+  if (miniCard) {
+    const r = miniCard.getBoundingClientRect();
+    document.getElementById('debug-mini').textContent = 
+      `card--mini: ${Math.round(r.width)}×${Math.round(r.height)}`;
+  }
+}, 100);
+</script>
+</body>
+</html>
