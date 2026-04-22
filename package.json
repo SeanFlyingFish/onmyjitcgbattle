@@ -1,0 +1,31 @@
+{
+  "name": "card-battle-online",
+  "version": "1.0.0",
+  "description": "Online card battle game framework starter",
+  "main": "dist/server/index.js",
+  "scripts": {
+    "dev:server": "tsx src/server/index.ts",
+    "dev:client": "tsx src/client/mockClient.ts",
+    "dev:web": "npm --prefix web run dev -- --open",
+    "dev:oneclick": "concurrently -n server,web -c cyan,magenta \"npm run dev:server\" \"npm run dev:web\"",
+    "build:web": "npm --prefix web run build",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "nanoid": "^5.1.9",
+    "ws": "^8.20.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
