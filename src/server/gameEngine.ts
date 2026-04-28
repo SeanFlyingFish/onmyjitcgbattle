@@ -93,12 +93,13 @@ export function cardFromBuilder(builderCard: BuilderCard): Card {
       type = "spell";     break;
   }
 
-  // 攻击/生命：从卡牌数据读取（如有），否则使用 Lua 格式的 power/life
-  const isShikigami = type === "shikigami";
+  // 攻击/生命：优先使用 attack/health 字段；兼容 Lua 格式的 power/life；觉醒牌也有 attack/health
   const rawAttack = (builderCard as unknown as { attack?: number }).attack ?? (builderCard as unknown as { power?: number }).power;
   const rawHealth = (builderCard as unknown as { health?: number }).health ?? (builderCard as unknown as { life?: number }).life;
-  const attack = isShikigami && rawAttack !== undefined ? rawAttack : (isShikigami ? Math.max(1, Math.min(10, cost + Math.floor(Math.random() * 3) - 1)) : 0);
-  const health = isShikigami && rawHealth !== undefined ? rawHealth : (isShikigami ? Math.max(1, Math.max(2, cost + Math.floor(Math.random() * 4) - 1)) : 0);
+  const isShikigami = type === "shikigami";
+  // 有原始数据时直接用；式神没有原始数据时随机生成；觉醒/其他类型无数据时为 0
+  const attack = rawAttack !== undefined ? rawAttack : (isShikigami ? Math.max(1, Math.min(10, cost + Math.floor(Math.random() * 3) - 1)) : 0);
+  const health = rawHealth !== undefined ? rawHealth : (isShikigami ? Math.max(1, Math.max(2, cost + Math.floor(Math.random() * 4) - 1)) : 0);
 
   return {
     id: nanoid(10),
@@ -109,7 +110,8 @@ export function cardFromBuilder(builderCard: BuilderCard): Card {
     health,
     keyword: String(builderCard.keyword ?? ""),
     ability: String(builderCard.ability ?? ""),
-    img: String(builderCard.img ?? "")
+    img: String(builderCard.img ?? ""),
+    alias: builderCard.alias
   };
 }
 
@@ -147,7 +149,8 @@ export function createPlayer(
     spellCardsPlayedThisTurn: 0,
     deckSearchBuffer: [],
     deckPeekBuffer: [],
-    revealedHandIds: []
+    revealedHandIds: [],
+    ghostFireCoins: 0
   };
 }
 
@@ -312,7 +315,11 @@ function newShikigamiEntry(card: Card, stealth = false): ShikigamiZoneCard {
     energyMarkers: 0,
     barrierMarkers: 0,
     stunMarkers: 0,
-    stealth
+    silenceMarkers: 0,
+    poisonMarkers: 0,
+    weakenMarkers: 0,
+    stealth,
+    awakenCards: []
   };
 }
 
@@ -437,12 +444,18 @@ function addCardToTarget(
   toShikigamiSlot: number | undefined,
   opponentId: PlayerId | null,
   /** 如果从式神区移出，传递原始攻击/生命值以在离场时恢复 */
-  baseValues?: { baseAttack: number; baseHealth: number }
+  baseValues?: { baseAttack: number; baseHealth: number },
+  /** 如果从式神区移出，传递完整的槽位条目以归还觉醒牌 */
+  shikigamiEntry?: ShikigamiZoneCard
 ): boolean {
-  // 当式神离开战场（到手牌/墓地/牌库）时，恢复原始 attack/health
-  if (baseValues && (to === "hand" || to === "graveyard" || to === "deck_top" || to === "deck_bottom")) {
+  // 当式神离开战场（到手牌/墓地/牌库/移除区）时，恢复原始 attack/health 并归还觉醒牌
+  if (baseValues && (to === "hand" || to === "graveyard" || to === "deck_top" || to === "deck_bottom" || to === "removed_zone")) {
     card.attack = baseValues.baseAttack;
     card.health = baseValues.baseHealth;
+    // 归还觉醒牌给本人手牌
+    if (shikigamiEntry) {
+      returnAwakenCardsToHand(state, shikigamiEntry, player.id);
+    }
   }
 
   switch (to) {
@@ -477,7 +490,15 @@ function addCardToTarget(
       if (player.shikigamiZone[slot] !== null) {
         return false;
       }
-      player.shikigamiZone[slot] = newShikigamiEntry(card);
+      if (shikigamiEntry) {
+        // 式神位→式神位移动：保留原槽位的 awakenCards、exhausted 状态及 baseAttack/baseHealth
+        player.shikigamiZone[slot] = {
+          ...shikigamiEntry,
+          card
+        };
+      } else {
+        player.shikigamiZone[slot] = newShikigamiEntry(card, /^潜行/.test(card.ability ?? ""));
+      }
       return true;
     }
     case "barrier": {
@@ -596,7 +617,7 @@ export function moveCard(
     ? { baseAttack: shikigamiEntry.baseAttack, baseHealth: shikigamiEntry.baseHealth }
     : undefined;
 
-  const ok = addCardToTarget(state, player, to, card, toShikigamiSlot, opponentId, baseValues);
+  const ok = addCardToTarget(state, player, to, card, toShikigamiSlot, opponentId, baseValues, shikigamiEntry);
   if (!ok) {
     restoreCardToSource(player, from, card, spellEntry, shikigamiFromIndex, shikigamiEntry);
     return state;
@@ -643,6 +664,103 @@ export function toggleHandReveal(state: MatchState, actorId: PlayerId, cardId: s
     player.revealedHandIds = player.revealedHandIds.filter(id => id !== cardId);
   }
   return state;
+}
+
+/**
+ * 将觉醒牌从手牌或符咒区附着到指定式神下方。
+ * 同时把觉醒牌的 attack/health 累加到式神的 card.attack/health 上（影响显示和战斗）。
+ */
+export function attachAwaken(
+  state: MatchState,
+  actorId: PlayerId,
+  awakenCardId: string,
+  from: "hand" | "spell",
+  targetPlayerId: PlayerId,
+  slotIndex: number
+): MatchState {
+  if (state.winnerId || state.phase !== "playing") return state;
+  const actor = state.players[actorId];
+  const target = state.players[targetPlayerId];
+  if (!actor || !target) return state;
+
+  const slot = target.shikigamiZone[slotIndex];
+  if (!slot) return state; // 目标位必须有式神
+
+  // 从手牌或符咒区找到觉醒牌
+  let awakenCard: Card | null = null;
+  if (from === "hand") {
+    const idx = actor.hand.findIndex(c => c.id === awakenCardId && c.type === "awaken");
+    if (idx === -1) return state;
+    awakenCard = actor.hand.splice(idx, 1)[0]!;
+  } else {
+    const idx = actor.spellZone.findIndex(e => e.card.id === awakenCardId && e.card.type === "awaken");
+    if (idx === -1) return state;
+    awakenCard = actor.spellZone.splice(idx, 1)[0]!.card;
+  }
+
+  // 校验 alias：觉醒牌的 alias 必须与目标式神的名称一致
+  if (awakenCard.alias && awakenCard.alias !== slot.card.name) return state;
+
+  // 累加觉醒牌的 attack/health 到式神
+  slot.card.attack += (awakenCard.attack ?? 0);
+  slot.card.health += (awakenCard.health ?? 0);
+
+  // 将觉醒牌挂在式神下方
+  if (!slot.awakenCards) slot.awakenCards = [];
+  slot.awakenCards.push(awakenCard);
+
+  return state;
+}
+
+/**
+ * 从式神下方移除指定觉醒牌，回到己方手牌。
+ * 同时撤销对式神 attack/health 的加成。
+ */
+export function detachAwaken(
+  state: MatchState,
+  actorId: PlayerId,
+  targetPlayerId: PlayerId,
+  slotIndex: number,
+  awakenCardId: string
+): MatchState {
+  if (state.winnerId || state.phase !== "playing") return state;
+  const actor = state.players[actorId];
+  const target = state.players[targetPlayerId];
+  if (!actor || !target) return state;
+
+  const slot = target.shikigamiZone[slotIndex];
+  if (!slot || !slot.awakenCards) return state;
+
+  const idx = slot.awakenCards.findIndex(c => c.id === awakenCardId);
+  if (idx === -1) return state;
+  const awakenCard = slot.awakenCards.splice(idx, 1)[0]!;
+
+  // 撤销加成
+  slot.card.attack = Math.max(0, slot.card.attack - (awakenCard.attack ?? 0));
+  slot.card.health = Math.max(1, slot.card.health - (awakenCard.health ?? 0));
+
+  // 放回手牌（超出手牌上限则放移除区）
+  if (actor.hand.length < actor.maxHandSize) {
+    actor.hand.push(awakenCard);
+  } else {
+    actor.removedZone.push({ ...awakenCard });
+  }
+
+  return state;
+}
+
+/** 式神离场时，将附着的觉醒牌全部归还给所属玩家的手牌 */
+function returnAwakenCardsToHand(state: MatchState, slot: ShikigamiZoneCard, ownerId: PlayerId): void {
+  const owner = state.players[ownerId];
+  if (!owner || !slot.awakenCards || slot.awakenCards.length === 0) return;
+  for (const ac of slot.awakenCards) {
+    if (owner.hand.length < owner.maxHandSize) {
+      owner.hand.push(ac);
+    } else {
+      owner.removedZone.push({ ...ac });
+    }
+  }
+  slot.awakenCards = [];
 }
 
 export function deckDraw(state: MatchState, actorId: PlayerId, count: number, opponentId: PlayerId | null): MatchState {
@@ -750,6 +868,9 @@ export function placeShikigamiToken(
   slot.energyMarkers = slot.energyMarkers ?? 0;
   slot.barrierMarkers = slot.barrierMarkers ?? 0;
   slot.stunMarkers = slot.stunMarkers ?? 0;
+  slot.silenceMarkers = slot.silenceMarkers ?? 0;
+  slot.poisonMarkers = slot.poisonMarkers ?? 0;
+  slot.weakenMarkers = slot.weakenMarkers ?? 0;
 
   switch (tokenKind) {
     case "attack_plus":
@@ -780,12 +901,23 @@ export function placeShikigamiToken(
       slot.stunMarkers += 1;
       slot.exhausted = true;
       break;
+    case "silence":
+      slot.silenceMarkers += 1;
+      break;
+    case "poison":
+      slot.poisonMarkers += 1;
+      break;
+    case "weaken":
+      slot.weakenMarkers += 1;
+      break;
     default:
       return state;
   }
 
   if (slot.card.health <= 0) {
-    // 死亡时恢复原始 attack/health
+    // 死亡时归还觉醒牌给所属玩家
+    returnAwakenCardsToHand(state, slot, player.id);
+    // 恢复原始 attack/health
     slot.card.attack = slot.baseAttack;
     slot.card.health = slot.baseHealth;
     player.graveyard.push({ ...slot.card }); // 浅拷贝，防止槽位复用时墓地带走新卡的标记物数据
@@ -819,6 +951,9 @@ export function removeShikigamiToken(
   slot.energyMarkers = slot.energyMarkers ?? 0;
   slot.barrierMarkers = slot.barrierMarkers ?? 0;
   slot.stunMarkers = slot.stunMarkers ?? 0;
+  slot.silenceMarkers = slot.silenceMarkers ?? 0;
+  slot.poisonMarkers = slot.poisonMarkers ?? 0;
+  slot.weakenMarkers = slot.weakenMarkers ?? 0;
 
   switch (tokenKind) {
     case "attack_plus":
@@ -872,6 +1007,18 @@ export function removeShikigamiToken(
       }
       slot.stunMarkers -= 1;
       // 所有眩晕标记移除后，不再强制横置（如果回合开始已刷新过则保持刷新状态）
+      break;
+    case "silence":
+      if (slot.silenceMarkers <= 0) return state;
+      slot.silenceMarkers -= 1;
+      break;
+    case "poison":
+      if (slot.poisonMarkers <= 0) return state;
+      slot.poisonMarkers -= 1;
+      break;
+    case "weaken":
+      if (slot.weakenMarkers <= 0) return state;
+      slot.weakenMarkers -= 1;
       break;
     default:
       return state;
@@ -945,12 +1092,34 @@ export function adjustPlayerHp(state: MatchState, actorId: PlayerId, delta: numb
   return state;
 }
 
+/** 增减鬼火硬币 */
+export function adjustGhostFire(state: MatchState, actorId: PlayerId, delta: number): MatchState {
+  if (state.winnerId) return state;
+  const player = state.players[actorId];
+  if (!player) return state;
+  player.ghostFireCoins = Math.max(0, (player.ghostFireCoins ?? 0) + delta);
+  return state;
+}
+
 export function createMatchState(roomId: string, playerA: PlayerState, playerB: PlayerState): MatchState {
+  // 随机决定先手（50/50）
+  const isFirstRandom = Math.random() < 0.5;
+  const firstPlayerId = isFirstRandom ? playerA.id : playerB.id;
+  const secondPlayerId = isFirstRandom ? playerB.id : playerA.id;
+
+  // 后手玩家获得 1 枚鬼火硬币
+  if (secondPlayerId === playerB.id) {
+    playerB.ghostFireCoins = 1;
+  } else {
+    playerA.ghostFireCoins = 1;
+  }
+
   return {
     roomId,
     phase: "mulligan",
     turn: 1,
-    currentPlayerId: playerA.id,
+    currentPlayerId: firstPlayerId,
+    firstPlayerId,
     players: {
       [playerA.id]: playerA,
       [playerB.id]: playerB
@@ -998,7 +1167,7 @@ export function playCard(
   if (openShikigamiSlot === -1) {
     actor.graveyard.push({ ...card }); // 浅拷贝
   } else {
-    actor.shikigamiZone[openShikigamiSlot] = newShikigamiEntry(card, card.ability?.includes("潜行") ?? false);
+    actor.shikigamiZone[openShikigamiSlot] = newShikigamiEntry(card, /^潜行/.test(card.ability ?? ""));
   }
   return state;
 }
@@ -1058,12 +1227,22 @@ export function attack(
   defenderSlot.card.health -= atkPower;
 
   if (attackerSlot.card.health <= 0) {
+    // 战死：先归还觉醒牌给攻击方
+    returnAwakenCardsToHand(state, attackerSlot, actor.id);
+    // 恢复原始 attack/health 再入墓
+    attackerSlot.card.attack = attackerSlot.baseAttack;
+    attackerSlot.card.health = attackerSlot.baseHealth;
     actor.graveyard.push({ ...attackerSlot.card }); // 浅拷贝
     actor.shikigamiZone[attackerSlotIndex] = null;
   } else {
     attackerSlot.exhausted = true;
   }
   if (defenderSlot.card.health <= 0) {
+    // 战死：先归还觉醒牌给防御方
+    returnAwakenCardsToHand(state, defenderSlot, targetPlayer.id);
+    // 恢复原始 attack/health 再入墓
+    defenderSlot.card.attack = defenderSlot.baseAttack;
+    defenderSlot.card.health = defenderSlot.baseHealth;
     targetPlayer.graveyard.push({ ...defenderSlot.card }); // 浅拷贝
     targetPlayer.shikigamiZone[defenderSlotIndex] = null;
   }

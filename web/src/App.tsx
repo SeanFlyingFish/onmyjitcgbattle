@@ -14,7 +14,7 @@ type SpellZoneCard = {
   revealedToOpponent?: boolean;
   concealedForViewer?: boolean;
 };
-type ShikigamiTokenKind = "attack_plus" | "attack_minus" | "health_plus" | "health_minus" | "damage" | "energy" | "barrier" | "stun";
+type ShikigamiTokenKind = "attack_plus" | "attack_minus" | "health_plus" | "health_minus" | "damage" | "energy" | "barrier" | "stun" | "silence" | "poison" | "weaken";
 
 type ShikigamiZoneCard = {
   card: Card;
@@ -32,8 +32,16 @@ type ShikigamiZoneCard = {
   barrierMarkers: number;
   /** 眩晕标记 */
   stunMarkers: number;
+  /** 沉默标记 */
+  silenceMarkers: number;
+  /** 毒伤标记 */
+  poisonMarkers: number;
+  /** 虚弱标记 */
+  weakenMarkers: number;
   /** 潜行状态 */
   stealth: boolean;
+  /** 附着在该式神下方的觉醒牌 */
+  awakenCards?: Card[];
 };
 
 type PlayerState = {
@@ -55,6 +63,7 @@ type PlayerState = {
   deckSearchBuffer: Card[];
   deckPeekBuffer: Card[];
   revealedHandIds?: string[];
+  ghostFireCoins?: number;
 };
 
 type MatchState = {
@@ -64,6 +73,7 @@ type MatchState = {
   currentPlayerId: string;
   players: Record<string, PlayerState>;
   winnerId?: string;
+  firstPlayerId: string;
   mulliganSubmitted?: Record<string, boolean>;
 };
 
@@ -96,12 +106,18 @@ type BoardDragPayload =
   | { kind: "card"; cardId: string; from: DragFrom; cardType?: string }
   | { kind: "token"; tokenKind: ShikigamiTokenKind };
 
-const TOKEN_STRIP: { kind: ShikigamiTokenKind; label: string; hint: string }[] = [
-  { kind: "attack_plus", label: "+攻", hint: "攻击 +1" },
-  { kind: "attack_minus", label: "-攻", hint: "攻击 -1" },
-  { kind: "health_plus", label: "+命", hint: "生命 +1" },
-  { kind: "health_minus", label: "-命", hint: "生命 -1" },
-  { kind: "damage", label: "伤", hint: "伤害 1（生命 -1）" }
+const TOKEN_STRIP: { kind: ShikigamiTokenKind; label: string; hint: string; emoji: string; color: string }[] = [
+  { kind: "attack_plus",  label: "+攻", hint: "攻击 +1",   emoji: "⚔️", color: "#f97316" },
+  { kind: "attack_minus", label: "-攻", hint: "攻击 -1",   emoji: "⚔️", color: "#64748b" },
+  { kind: "health_plus",  label: "+命", hint: "生命 +1",   emoji: "💚", color: "#22c55e" },
+  { kind: "health_minus", label: "-命", hint: "生命 -1",   emoji: "💔", color: "#a855f7" },
+  { kind: "damage",       label: "伤",  hint: "伤害 1",    emoji: "🩸", color: "#ef4444" },
+  { kind: "energy",       label: "能",  hint: "能量 +1",   emoji: "⚡", color: "#3b82f6" },
+  { kind: "barrier",      label: "障",  hint: "屏障 +1",   emoji: "🛡️", color: "#94a3b8" },
+  { kind: "stun",         label: "晕",  hint: "眩晕",      emoji: "💫", color: "#a78bfa" },
+  { kind: "silence",      label: "默",  hint: "沉默",      emoji: "🚫", color: "#475569" },
+  { kind: "poison",       label: "毒",  hint: "毒伤",      emoji: "☠️", color: "#84cc16" },
+  { kind: "weaken",       label: "弱",  hint: "虚弱",      emoji: "💤", color: "#f59e0b" },
 ];
 
 function setDragPayload(e: DragEvent, cardId: string, from: DragFrom, cardType?: string) {
@@ -132,20 +148,8 @@ function readBoardDragPayload(e: DragEvent): BoardDragPayload | null {
 }
 
 function effectiveAttackValue(slot: ShikigamiZoneCard): number {
-  const baseAtk = slot.card.attack ?? 0;
-  return Math.max(0, baseAtk + (slot.attackModifier ?? 0));
-}
-
-function TokenDiscStack({ count, variant }: { count: number; variant: "atk-pos" | "atk-neg" | "hp-pos" | "hp-neg" | "dmg" }) {
-  const n = Math.min(count, 8);
-  return (
-    <span className={`token-disc-stack token-disc-stack--${variant}`} aria-hidden>
-      {Array.from({ length: n }).map((_, i) => (
-        <span key={i} className="token-disc-layer" />
-      ))}
-      {count > 8 ? <span className="token-disc-more">+{count - 8}</span> : null}
-    </span>
-  );
+  // card.attack 已含 awaken 加攻，attackModifier 是 ±攻 标记（后端不合并到 card.attack）
+  return Math.max(0, (slot.card.attack ?? 0) + (slot.attackModifier ?? 0));
 }
 
 function ShikigamiCardFace({
@@ -170,10 +174,31 @@ function ShikigamiCardFace({
   onHoverLeave?: () => void;
 }) {
   const atk = effectiveAttackValue(slot);
-  const hp = slot.card.health ?? 0;
+  // card.health 已含 awaken 加血 + healthModifier（±命）；damageMarkers 为额外扣血需减掉
+  const hp = Math.max(1, (slot.card.health ?? 0) - (slot.damageMarkers ?? 0));
   const energy = slot.energyMarkers ?? 0;
   const stealthed = slot.stealth;
   const showBack = isHidden && stealthed;
+
+  // 收集所有活跃标记，供圆形徽章展示
+  const activeTokens: { kind: ShikigamiTokenKind; count: number; emoji: string; color: string }[] = [];
+  TOKEN_STRIP.forEach(t => {
+    let count = 0;
+    switch (t.kind) {
+      case "attack_plus":  count = Math.max(0,  slot.attackModifier ?? 0); break;
+      case "attack_minus": count = Math.max(0, -(slot.attackModifier ?? 0)); break;
+      case "health_plus":  count = Math.max(0,  slot.healthModifier ?? 0); break;
+      case "health_minus": count = Math.max(0, -(slot.healthModifier ?? 0)); break;
+      case "damage":       count = slot.damageMarkers ?? 0; break;
+      case "energy":       count = energy; break;
+      case "barrier":      count = slot.barrierMarkers ?? 0; break;
+      case "stun":         count = slot.stunMarkers ?? 0; break;
+      case "silence":      count = slot.silenceMarkers ?? 0; break;
+      case "poison":       count = slot.poisonMarkers ?? 0; break;
+      case "weaken":       count = slot.weakenMarkers ?? 0; break;
+    }
+    if (count > 0) activeTokens.push({ kind: t.kind, count, emoji: t.emoji, color: t.color });
+  });
 
   return (
     <div
@@ -186,19 +211,6 @@ function ShikigamiCardFace({
         {stealthed && !showBack && (
           <div className="stealth-badge" title="潜行中">👤</div>
         )}
-        {/* 能量标记 - 左上角 */}
-        {energy > 0 && (
-          <div className="energy-badge" title={`能量 ×${energy}`}>
-            <span className="energy-icon">⚡</span>
-            <span className="energy-count">{energy}</span>
-          </div>
-        )}
-        {/* 眩晕标记 - 左上角能量旁边 */}
-        {(slot.stunMarkers ?? 0) > 0 && (
-          <div className="stun-badge" title={`眩晕 ×${slot.stunMarkers}`}>
-            <span className="stun-icon">💫</span>
-          </div>
-        )}
         <img
           className="unit-art"
           src={showBack ? CARD_BACK_IMAGE_URL : (slot.card.img || CARD_IMAGE_URL)}
@@ -209,6 +221,22 @@ function ShikigamiCardFace({
         {!showBack && (
           <div className="unit-stat-badge" title="当前攻击 / 当前生命">
             {atk}/{hp}
+          </div>
+        )}
+        {/* 圆形标记徽章 - 覆盖在卡面上 */}
+        {!showBack && activeTokens.length > 0 && (
+          <div className="token-overlay">
+            {activeTokens.map(({ kind, count, emoji, color }) => (
+              <div
+                key={kind}
+                className="token-overlay-badge"
+                style={{ background: `${color}22`, borderColor: color, color }}
+                title={`${TOKEN_STRIP.find(t => t.kind === kind)?.hint} ×${count}`}
+              >
+                <span className="token-overlay-emoji">{emoji}</span>
+                {count > 1 && <span className="token-overlay-count">{count}</span>}
+              </div>
+            ))}
           </div>
         )}
         {/* 解除潜行按钮 */}
@@ -236,63 +264,37 @@ function ShikigamiTokenBelt({
   interactive: boolean;
   onRemoveToken?: (kind: ShikigamiTokenKind) => void;
 }) {
+  // 只在 interactive 模式（己方）下显示可移除按钮行
+  if (!interactive) return null;
+  const stop = (e: MouseEvent) => e.stopPropagation();
+
+  // 有任何标记才渲染
   const am = slot.attackModifier ?? 0;
   const hm = slot.healthModifier ?? 0;
   const dm = slot.damageMarkers ?? 0;
   const barrier = slot.barrierMarkers ?? 0;
-  const stop = (e: MouseEvent) => e.stopPropagation();
+  const stun = slot.stunMarkers ?? 0;
+  const silence = slot.silenceMarkers ?? 0;
+  const poison = slot.poisonMarkers ?? 0;
+  const weaken = slot.weakenMarkers ?? 0;
+  const energy = slot.energyMarkers ?? 0;
+
+  const hasAny = am !== 0 || hm !== 0 || dm > 0 || barrier > 0 || stun > 0 || silence > 0 || poison > 0 || weaken > 0 || energy > 0;
+  if (!hasAny) return null;
 
   return (
-    <div className="unit-token-belt">
-      {/* 屏障标记 - 圆形图标横向排列 */}
-      {barrier > 0 ? (
-        <div className="unit-token-row">
-          <span className="token-circle token-barrier" title={`屏障 ×${barrier}`}>
-            <span className="token-circle-inner">🛡</span>
-            {barrier > 1 ? <span className="token-circle-count">{barrier}</span> : null}
-          </span>
-          <span className="unit-token-caption">屏障</span>
-          {interactive ? (
-            <button type="button" className="token-micro-remove" onClick={(e) => { stop(e); onRemoveToken?.("barrier"); }} aria-label="移除屏障">-</button>
-          ) : null}
-        </div>
-      ) : null}
-      {/* 攻击修正 */}
-      {am !== 0 ? (
-        <div className="unit-token-row">
-          <TokenDiscStack count={Math.abs(am)} variant={am > 0 ? "atk-pos" : "atk-neg"} />
-          <span className="unit-token-caption">{am > 0 ? `+攻×${am}` : `-攻×${-am}`}</span>
-          {interactive && am > 0 ? (
-            <button type="button" className="token-micro-remove" onClick={(e) => { stop(e); onRemoveToken?.("attack_plus"); }} aria-label="移除一枚 +攻">-</button>
-          ) : null}
-          {interactive && am < 0 ? (
-            <button type="button" className="token-micro-remove" onClick={(e) => { stop(e); onRemoveToken?.("attack_minus"); }} aria-label="移除一枚 -攻">-</button>
-          ) : null}
-        </div>
-      ) : null}
-      {/* 生命修正 */}
-      {hm !== 0 ? (
-        <div className="unit-token-row">
-          <TokenDiscStack count={Math.abs(hm)} variant={hm > 0 ? "hp-pos" : "hp-neg"} />
-          <span className="unit-token-caption">{hm > 0 ? `+命×${hm}` : `-命×${-hm}`}</span>
-          {interactive && hm > 0 ? (
-            <button type="button" className="token-micro-remove" onClick={(e) => { stop(e); onRemoveToken?.("health_plus"); }} aria-label="移除一枚 +命">-</button>
-          ) : null}
-          {interactive && hm < 0 ? (
-            <button type="button" className="token-micro-remove" onClick={(e) => { stop(e); onRemoveToken?.("health_minus"); }} aria-label="移除一枚 -命">-</button>
-          ) : null}
-        </div>
-      ) : null}
-      {/* 伤害标记 */}
-      {dm > 0 ? (
-        <div className="unit-token-row">
-          <TokenDiscStack count={dm} variant="dmg" />
-          <span className="unit-token-caption">伤×{dm}</span>
-          {interactive ? (
-            <button type="button" className="token-micro-remove" onClick={(e) => { stop(e); onRemoveToken?.("damage"); }} aria-label="移除一枚伤害">-</button>
-          ) : null}
-        </div>
-      ) : null}
+    <div className="unit-token-remove-row" onClick={stop}>
+      {energy > 0 && <button type="button" className="token-rm-btn" style={{ color: "#60a5fa" }} onClick={(e) => { stop(e); onRemoveToken?.("energy"); }} title="移除能量">⚡-</button>}
+      {barrier > 0 && <button type="button" className="token-rm-btn" style={{ color: "#94a3b8" }} onClick={(e) => { stop(e); onRemoveToken?.("barrier"); }} title="移除屏障">🛡️-</button>}
+      {stun > 0 && <button type="button" className="token-rm-btn" style={{ color: "#a78bfa" }} onClick={(e) => { stop(e); onRemoveToken?.("stun"); }} title="移除眩晕">💫-</button>}
+      {silence > 0 && <button type="button" className="token-rm-btn" style={{ color: "#64748b" }} onClick={(e) => { stop(e); onRemoveToken?.("silence"); }} title="移除沉默">🚫-</button>}
+      {poison > 0 && <button type="button" className="token-rm-btn" style={{ color: "#84cc16" }} onClick={(e) => { stop(e); onRemoveToken?.("poison"); }} title="移除毒伤">☠️-</button>}
+      {weaken > 0 && <button type="button" className="token-rm-btn" style={{ color: "#f59e0b" }} onClick={(e) => { stop(e); onRemoveToken?.("weaken"); }} title="移除虚弱">💤-</button>}
+      {am > 0 && <button type="button" className="token-rm-btn" style={{ color: "#fb923c" }} onClick={(e) => { stop(e); onRemoveToken?.("attack_plus"); }} title="移除+攻">⚔️+</button>}
+      {am < 0 && <button type="button" className="token-rm-btn" style={{ color: "#94a3b8" }} onClick={(e) => { stop(e); onRemoveToken?.("attack_minus"); }} title="移除-攻">⚔️-</button>}
+      {hm > 0 && <button type="button" className="token-rm-btn" style={{ color: "#4ade80" }} onClick={(e) => { stop(e); onRemoveToken?.("health_plus"); }} title="移除+命">💚+</button>}
+      {hm < 0 && <button type="button" className="token-rm-btn" style={{ color: "#c084fc" }} onClick={(e) => { stop(e); onRemoveToken?.("health_minus"); }} title="移除-命">💔-</button>}
+      {dm > 0 && <button type="button" className="token-rm-btn" style={{ color: "#f87171" }} onClick={(e) => { stop(e); onRemoveToken?.("damage"); }} title="移除伤害">🩸-</button>}
     </div>
   );
 }
@@ -440,6 +442,8 @@ function App() {
   /** 通用卡牌悬停状态（用于棋盘上所有区域的卡牌） */
   const [hoveredBoardCardId, setHoveredBoardCardId] = useState<string | null>(null);
   const [hoveredBoardCardData, setHoveredBoardCardData] = useState<Card | null>(null);
+  /** 悬浮的式神槽位（含觉醒牌信息，用于 tooltip 增强展示） */
+  const [hoveredShikigamiSlot, setHoveredShikigamiSlot] = useState<ShikigamiZoneCard | null>(null);
   const [mulliganSelectedIds, setMulliganSelectedIds] = useState<Set<string>>(new Set());
   const [spellFlipMode, setSpellFlipMode] = useState(false);
   /** 潜行模式：点击后选择式神进入潜行 */
@@ -511,6 +515,19 @@ function App() {
     }
   }, [Boolean(matchState)]);
 
+  // 游戏开始时提示先手玩家
+  useEffect(() => {
+    if (!matchState || !playerId) return;
+    const myName = matchState.players[playerId]?.name ?? "你";
+    const isFirst = matchState.firstPlayerId === playerId;
+    const firstPlayerName = matchState.players[matchState.firstPlayerId]?.name ?? "某玩家";
+    const msg = isFirst
+      ? `🎯 先手！你（${myName}）先出牌！`
+      : `🎯 后手！${firstPlayerName} 先出牌，你获得 1 枚鬼火硬币。`;
+    setLogs((prev) => [msg, ...prev].slice(0, 30));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Boolean(matchState && playerId)]);
+
   useEffect(() => {
     if (phase === "playing") {
       setMulliganSelectedIds(new Set());
@@ -526,7 +543,10 @@ function App() {
       damageMarkers: entry.damageMarkers ?? 0,
       energyMarkers: entry.energyMarkers ?? 0,
       barrierMarkers: entry.barrierMarkers ?? 0,
-      stunMarkers: entry.stunMarkers ?? 0
+      stunMarkers: entry.stunMarkers ?? 0,
+      silenceMarkers: entry.silenceMarkers ?? 0,
+      poisonMarkers: entry.poisonMarkers ?? 0,
+      weakenMarkers: entry.weakenMarkers ?? 0,
     };
   }
 
@@ -545,7 +565,8 @@ function App() {
       barrier: player.barrier ?? null,
       spellCardsPlayedThisTurn: player.spellCardsPlayedThisTurn ?? 0,
       deckSearchBuffer: player.deckSearchBuffer ?? [],
-      deckPeekBuffer: player.deckPeekBuffer ?? []
+      deckPeekBuffer: player.deckPeekBuffer ?? [],
+      ghostFireCoins: player.ghostFireCoins ?? 0
     };
   }
 
@@ -585,15 +606,6 @@ function App() {
     connect((ws) => ws.send(JSON.stringify(payload)));
   }
 
-  function canPlayToShikigami(_: Card): boolean {
-    return Boolean(!gameOver && !isMulligan && selfView);
-  }
-
-  function playCardToZone(cardId: string, zone: "shikigami" | "spell") {
-    if (!playerId) return;
-    send({ type: "play_card", payload: { roomId, cardId, targetPlayerId: playerId, zone } });
-  }
-
   function toggleSpellExhaust(cardId: string) {
     send({ type: "toggle_spell_exhaust", payload: { roomId, cardId } });
   }
@@ -625,6 +637,29 @@ function App() {
 
   function toggleShikigamiStealth(cardId: string, stealth: boolean) {
     send({ type: "toggle_shikigami_stealth", payload: { roomId, cardId, stealth } });
+  }
+
+  /** 将觉醒牌从手牌或符咒区附着到目标式神下方 */
+  function attachAwakenToShikigami(awakenCardId: string, from: "hand" | "spell", targetPlayerId: string, slotIndex: number) {
+    send({ type: "attach_awaken", payload: { roomId, awakenCardId, from, targetPlayerId, slotIndex } });
+  }
+
+  /** 从式神下方取下觉醒牌（回手牌） */
+  function detachAwakenFromShikigami(targetPlayerId: string, slotIndex: number, awakenCardId: string) {
+    send({ type: "detach_awaken", payload: { roomId, targetPlayerId, slotIndex, awakenCardId } });
+  }
+
+  /**
+   * 获取觉醒牌 alias（即其对应的式神名称）。
+   * 优先从卡牌数据库查找；无数据库记录时尝试从名称提取（如"觉醒·座敷童子" → "座敷童子"）。
+   */
+  function getAwakenAlias(card: Card): string {
+    // 从 CARD_DATABASE 查找
+    const dbEntry = Object.values(CARD_DATABASE).find(e => e.id === card.id);
+    if (dbEntry?.alias) return dbEntry.alias as string;
+    // fallback：去掉"觉醒·"前缀
+    if (card.name.startsWith("觉醒·")) return card.name.slice(3);
+    return card.name;
   }
 
   function toggleMulliganPick(cardId: string) {
@@ -684,6 +719,11 @@ function App() {
 
   function adjustSelfHpByDelta(delta: number) {
     send({ type: "adjust_player_hp", payload: { roomId, delta } });
+  }
+
+  function adjustGhostFireBy(delta: number) {
+    if (!roomId) return;
+    send({ type: "adjust_ghost_fire", payload: { roomId, delta } });
   }
 
   function onDropToZone(e: DragEvent, to: DragTo, toShikigamiSlot?: number, tokenTargetPlayerId?: string) {
@@ -753,16 +793,6 @@ function App() {
       <header className="app-header">
         <div className="app-title-block">
           <h1 className="app-title">⚔ 卡牌对战</h1>
-          {matchState && (
-            <div className={`turn-badge ${isMyTurn && !isMulligan ? "is-my-turn" : ""}`}>
-              {isMulligan
-                ? "🔄 调度阶段"
-                : isMyTurn
-                ? "✅ 我的回合"
-                : "⏳ 对手回合"}
-              <span className="turn-num">第 {matchState.turn} 回合</span>
-            </div>
-          )}
         </div>
         <div className="app-header-actions">
           <div className={`conn-dot ${isConnected ? "connected" : "disconnected"}`} title={isConnected ? "已连接" : "未连接"} />
@@ -894,27 +924,9 @@ function App() {
           )}
 
           {/* ============================================================
-              战场主体（左侧标记面板 + 右侧棋盘区）
+              战场主体（不再有左侧面板，仅一列）
               ============================================================ */}
           <div className="battlefield-wrapper">
-
-            {/* ── 左侧标记面板（竖向） ── */}
-            <div className="token-panel" aria-label="指示物池">
-              <div className="token-panel-title">指示物</div>
-              <div className="token-panel-strip">
-                {TOKEN_STRIP.map((t) => (
-                  <div
-                    key={t.kind}
-                    className={`token-chip token-chip--${t.kind}`}
-                    draggable={allowBoardDrag}
-                    onDragStart={(e) => { if (allowBoardDrag) setTokenDragPayload(e, t.kind); }}
-                    title={t.hint}
-                  >
-                    {t.label}
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {/* ── 右侧棋盘（战场.html的grid布局） ── */}
             <div className="battlefield-right">
@@ -1054,6 +1066,10 @@ function App() {
                           const p = readBoardDragPayload(e);
                           if (p?.kind === "token" && slot) {
                             placeTokenOnShikigami(enemyView.id, boardIndex, p.tokenKind);
+                          } else if (p?.kind === "card" && p.cardType === "awaken" && slot) {
+                            // 觉醒牌拖到对方有式神的格子 → 附着（对方式神也可附觉醒）
+                            const from = (p.from === "hand" || p.from === "spell") ? p.from : null;
+                            if (from) attachAwakenToShikigami(p.cardId, from, enemyView.id, boardIndex);
                           } else if (!slot && p?.kind === "card" && p.cardType !== "spell") {
                             moveCardPayload(p.cardId, p.from, "shikigami", boardIndex);
                           }
@@ -1070,10 +1086,20 @@ function App() {
                                 allowBoardDrag={false}
                                 isHidden={true}
                                 onCardDragStart={() => {}}
-                                onHoverEnter={() => { if (!slot.stealth) { setHoveredBoardCardId(slot.card.id); setHoveredBoardCardData(slot.card); } }}
-                                onHoverLeave={() => setHoveredBoardCardId(null)}
+                                onHoverEnter={() => { if (!slot.stealth) { setHoveredBoardCardId(slot.card.id); setHoveredBoardCardData(slot.card); setHoveredShikigamiSlot(slot); } }}
+                                onHoverLeave={() => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); setHoveredShikigamiSlot(null); }}
                               />
                             </div>
+                            {/* 对方觉醒牌徽章（只读展示） */}
+                            {!slot.stealth && slot.awakenCards && slot.awakenCards.length > 0 && (
+                              <div className="awaken-badge-row awaken-badge-row--enemy">
+                                {slot.awakenCards.map((ac) => (
+                                  <div key={ac.id} className="awaken-badge" title={ac.name}>
+                                    <img src={ac.img || CARD_IMAGE_URL} alt={ac.name} className="awaken-badge-img" />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                             {!slot.stealth && <ShikigamiTokenBelt slot={slot} interactive={false} />}
                           </div>
                         )}
@@ -1161,7 +1187,7 @@ function App() {
                             className={`card card--mini ${selfView.barrierExhausted ? 'is-exhausted' : ''}`}
                             style={{ backgroundImage: `url(${selfView.barrier.img || CARD_IMAGE_URL})` }}
                             draggable={allowBoardDrag}
-                            onDragStart={(e) => setDragPayload(e, selfView!.barrier!.id, "barrier", "barrier")}
+                            onDragStart={(e) => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); setDragPayload(e, selfView!.barrier!.id, "barrier", "barrier"); }}
                             onClick={() => toggleSpellExhaust(selfView!.barrier!.id)}
                             onMouseEnter={() => { setHoveredBoardCardId(selfView!.barrier!.id); setHoveredBoardCardData(selfView!.barrier!); }}
                             onMouseLeave={() => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); }}
@@ -1190,6 +1216,10 @@ function App() {
                           if (!p) { setDragOverSlot(null); return; }
                           if (p.kind === "token") {
                             if (slot) placeTokenOnShikigami(playerId, renderIndex, p.tokenKind);
+                          } else if (p.kind === "card" && p.cardType === "awaken" && slot) {
+                            // 觉醒牌拖到有式神的格子 → 附着
+                            const from = (p.from === "hand" || p.from === "spell") ? p.from : null;
+                            if (from) attachAwakenToShikigami(p.cardId, from, playerId, renderIndex);
                           } else if (!slot && p.cardType !== "spell") {
                             moveCardPayload(p.cardId, p.from, "shikigami", renderIndex);
                           }
@@ -1206,8 +1236,8 @@ function App() {
                                 toggleShikigamiExhaust(slot.card.id);
                               }}
                               role="presentation"
-                              onMouseEnter={() => { setHoveredBoardCardId(slot.card.id); setHoveredBoardCardData(slot.card); }}
-                              onMouseLeave={() => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); }}
+                              onMouseEnter={() => { setHoveredBoardCardId(slot.card.id); setHoveredBoardCardData(slot.card); setHoveredShikigamiSlot(slot); }}
+                              onMouseLeave={() => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); setHoveredShikigamiSlot(null); }}
                             >
                               <ShikigamiCardFace
                                 slot={slot}
@@ -1218,6 +1248,21 @@ function App() {
                                 onCardDragStart={(e) => setDragPayload(e, slot.card.id, "shikigami", slot.card.type)}
                               />
                             </div>
+                            {/* 觉醒牌徽章列表 */}
+                            {slot.awakenCards && slot.awakenCards.length > 0 && (
+                              <div className="awaken-badge-row">
+                                {slot.awakenCards.map((ac) => (
+                                  <div
+                                    key={ac.id}
+                                    className="awaken-badge"
+                                    title={`${ac.name}（点击取下）`}
+                                    onClick={(e) => { e.stopPropagation(); if (playerId) detachAwakenFromShikigami(playerId, renderIndex, ac.id); }}
+                                  >
+                                    <img src={ac.img || CARD_IMAGE_URL} alt={ac.name} className="awaken-badge-img" />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                             <div onClick={(e) => e.stopPropagation()}>
                               <ShikigamiTokenBelt
                                 slot={slot}
@@ -1242,7 +1287,7 @@ function App() {
                             className={`card extend-card ${entry.exhausted ? 'is-exhausted' : ''} ${deckPlaceMode && deckPlaceSelected.some((s) => s.cardId === entry.card.id) ? 'deck-modal-cell--selected' : ''}`}
                             style={{ backgroundImage: `url(${entry.card.img || CARD_IMAGE_URL})` }}
                             draggable={allowBoardDrag && !deckPlaceMode}
-                            onDragStart={(ev) => { if (allowBoardDrag && !deckPlaceMode) setDragPayload(ev, entry.card.id, "extend", entry.card.type); }}
+                            onDragStart={(ev) => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); if (allowBoardDrag && !deckPlaceMode) setDragPayload(ev, entry.card.id, "extend", entry.card.type); }}
                             onClick={() => { if (deckPlaceMode) { toggleDeckPlaceCard(entry.card.id, "extend"); return; } toggleSpellExhaust(entry.card.id); }}
                             onMouseEnter={() => { setHoveredBoardCardId(entry.card.id); setHoveredBoardCardData(entry.card); }}
                             onMouseLeave={() => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); }}
@@ -1294,6 +1339,9 @@ function App() {
                           onDragStart={(e) => {
                             if (!deckPlaceMode) {
                               setDragPayload(e, entry.card.id, "spell", entry.card.type);
+                              // 拖拽开始时清除卡牌详情悬浮
+                              setHoveredBoardCardId(null);
+                              setHoveredBoardCardData(null);
                               if (entry.card.type === "spell") {
                                 draggingSpellRef.current = entry.card;
                                 draggingSpellFromRef.current = "spell";
@@ -1302,9 +1350,9 @@ function App() {
                             }
                           }}
                           onDragEnd={() => {
-                            if (draggingSpellRef.current && !spellDroppedOnZone.current) {
-                              handleSpellPlay(draggingSpellRef.current);
-                            }
+                            // 拖拽结束后清除卡牌详情悬浮
+                            setHoveredBoardCardId(null);
+                            setHoveredBoardCardData(null);
                             draggingSpellRef.current = null;
                             spellDroppedOnZone.current = false;
                           }}
@@ -1321,6 +1369,23 @@ function App() {
                         />
                       );
                     })}
+                  </div>
+                  {/* 鬼火硬币 — 符咒区右下角 */}
+                  <div className="ghost-fire-panel">
+                    <span className="ghost-fire-icon" title="鬼火硬币">🔥</span>
+                    <span className="ghost-fire-count">{selfView?.ghostFireCoins ?? 0}</span>
+                    <button
+                      type="button"
+                      className="ghost-fire-btn ghost-fire-btn--add"
+                      onClick={() => adjustGhostFireBy(1)}
+                      title="获得鬼火硬币"
+                    >+</button>
+                    <button
+                      type="button"
+                      className="ghost-fire-btn ghost-fire-btn--sub"
+                      onClick={() => adjustGhostFireBy(-1)}
+                      title="消耗鬼火硬币"
+                    >−</button>
                   </div>
                 </div>
                 <div className="area ratio-7-9 area--self">
@@ -1516,7 +1581,7 @@ function App() {
                               setDragPayload(e, card.id, "hand", card.type);
                             }
                           }}
-                          onDragEnd={() => setDragOverSlot(null)}
+                          onDragEnd={() => { setDragOverSlot(null); setHoveredHandCardId(null); }}
                           onClick={() => {
                             if (deckPlaceMode) { toggleDeckPlaceCard(card.id, "hand"); return; }
                             if (isMulligan) {
@@ -1527,7 +1592,7 @@ function App() {
                               revealHandCard(card.id);
                               return;
                             }
-                            if (canPlayToShikigami(card)) playCardToZone(card.id, "shikigami");
+                            // 移除了自动打出逻辑，仅支持拖拽出牌
                           }}
                         >
                           <img
@@ -1637,6 +1702,35 @@ function App() {
                 </div>
               </div>
 
+              {/* ── 下方标记面板（水平） ── */}
+              <div className="token-panel-bottom" aria-label="指示物池">
+                {/* 回合标识 — 移至标记面板左侧 */}
+                {matchState && (
+                  <div className={`turn-badge ${isMyTurn && !isMulligan ? "is-my-turn" : ""}`}>
+                    {isMulligan
+                      ? "🔄 调度"
+                      : isMyTurn
+                      ? "✅ 我的回合"
+                      : "⏳ 对手回合"}
+                    <span className="turn-num">第 {matchState.turn} 回合</span>
+                  </div>
+                )}
+                <span className="token-panel-bottom-title">标记</span>
+                {TOKEN_STRIP.map((t) => (
+                  <div
+                    key={t.kind}
+                    className="token-chip-bottom"
+                    style={{ borderColor: t.color, color: t.color, background: `${t.color}18` }}
+                    draggable={allowBoardDrag}
+                    onDragStart={(e) => { if (allowBoardDrag) setTokenDragPayload(e, t.kind); }}
+                    title={t.hint}
+                  >
+                    <span className="token-chip-bottom-emoji">{t.emoji}</span>
+                    <span className="token-chip-bottom-label">{t.label}</span>
+                  </div>
+                ))}
+              </div>
+
             </div>{/* /battlefield-right */}
           </div>{/* /battlefield-wrapper */}
 
@@ -1674,15 +1768,46 @@ function App() {
             <div className="card-preview-name">{hoveredBoardCardData.name}</div>
             <div className="card-preview-stats">
               <span className="preview-stat">费用 {hoveredBoardCardData.cost}</span>
-              {hoveredBoardCardData.type === 'shikigami' && (
-                <>
-                  <span className="preview-stat">攻击 {hoveredBoardCardData.attack}</span>
-                  <span className="preview-stat">生命 {hoveredBoardCardData.health}</span>
-                </>
-              )}
+              {hoveredBoardCardData.type === 'shikigami' && (() => {
+                // 如果有觉醒加成，展示基础值 + 觉醒加成
+                const slot = hoveredShikigamiSlot;
+                const awakenBonusAtk = slot?.awakenCards?.reduce((s, c) => s + (c.attack ?? 0), 0) ?? 0;
+                const awakenBonusHp = slot?.awakenCards?.reduce((s, c) => s + (c.health ?? 0), 0) ?? 0;
+                return (
+                  <>
+                    <span className="preview-stat">
+                      攻击 {hoveredBoardCardData.attack}
+                      {awakenBonusAtk > 0 && <span className="preview-stat-awaken-bonus">(+{awakenBonusAtk})</span>}
+                    </span>
+                    <span className="preview-stat">
+                      生命 {hoveredBoardCardData.health}
+                      {awakenBonusHp > 0 && <span className="preview-stat-awaken-bonus">(+{awakenBonusHp})</span>}
+                    </span>
+                  </>
+                );
+              })()}
             </div>
             {hoveredBoardCardData.ability && (
               <div className="card-preview-ability">{hoveredBoardCardData.ability}</div>
+            )}
+            {/* 觉醒牌信息（虚线分隔） */}
+            {hoveredShikigamiSlot?.awakenCards && hoveredShikigamiSlot.awakenCards.length > 0 && (
+              <div className="card-preview-awaken-section">
+                {hoveredShikigamiSlot.awakenCards.map((ac) => (
+                  <div key={ac.id} className="card-preview-awaken-item">
+                    <div className="card-preview-awaken-name">🌟 {ac.name}</div>
+                    {(ac.attack > 0 || ac.health > 0) && (
+                      <div className="card-preview-awaken-stats">
+                        {ac.attack > 0 && <span className="preview-stat preview-stat--awaken">+{ac.attack}攻</span>}
+                        {ac.health > 0 && <span className="preview-stat preview-stat--awaken">+{ac.health}命</span>}
+                      </div>
+                    )}
+                    {ac.ability && (
+                      <div className="card-preview-awaken-ability">{ac.ability}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

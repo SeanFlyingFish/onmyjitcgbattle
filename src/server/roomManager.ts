@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import WebSocket from "ws";
 import { BuilderCard, MatchState, PlayerId, PlayerState, RoomId, ServerEvent } from "../shared/types.js";
 import {
+  adjustGhostFire as engineAdjustGhostFire,
   adjustPlayerHp as engineAdjustPlayerHp,
   attack,
   createMatchState,
@@ -13,6 +14,8 @@ import {
   deckShuffle,
   endTurn,
   moveCard,
+  attachAwaken as engineAttachAwaken,
+  detachAwaken as engineDetachAwaken,
   placeShikigamiToken as enginePlaceShikigamiToken,
   playCard,
   preparePlayerForMatch,
@@ -198,6 +201,31 @@ export class RoomManager {
     return toggleHandReveal(room.matchState, playerId, cardId, reveal);
   }
 
+  attachAwaken(
+    roomId: RoomId,
+    actorId: PlayerId,
+    awakenCardId: string,
+    from: "hand" | "spell",
+    targetPlayerId: PlayerId,
+    slotIndex: number
+  ): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAttachAwaken(room.matchState, actorId, awakenCardId, from, targetPlayerId, slotIndex);
+  }
+
+  detachAwaken(
+    roomId: RoomId,
+    actorId: PlayerId,
+    targetPlayerId: PlayerId,
+    slotIndex: number,
+    awakenCardId: string
+  ): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineDetachAwaken(room.matchState, actorId, targetPlayerId, slotIndex, awakenCardId);
+  }
+
   deckDraw(roomId: RoomId, playerId: PlayerId, count: number): MatchState {
     const room = this.getRoomOrThrow(roomId);
     if (!room.matchState) {
@@ -272,6 +300,12 @@ export class RoomManager {
       throw new Error("match not started");
     }
     return engineAdjustPlayerHp(room.matchState, playerId, delta);
+  }
+
+  adjustGhostFire(roomId: RoomId, playerId: PlayerId, delta: number): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAdjustGhostFire(room.matchState, playerId, delta);
   }
 
   toggleShikigamiStealth(roomId: RoomId, playerId: PlayerId, cardId: string, stealth: boolean): MatchState {

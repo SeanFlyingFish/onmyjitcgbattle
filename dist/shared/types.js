@@ -18,7 +18,8 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
                 ability: z.string().optional(),
                 img: z.string().optional(),
                 attack: z.number().optional(),
-                health: z.number().optional()
+                health: z.number().optional(),
+                alias: z.string().optional()
             }))
         })
     }),
@@ -52,6 +53,10 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
         payload: z.object({ roomId: z.string().min(1), cardId: z.string().min(1) })
     }),
     z.object({
+        type: z.literal("toggle_shikigami_stealth"),
+        payload: z.object({ roomId: z.string().min(1), cardId: z.string().min(1), stealth: z.boolean() })
+    }),
+    z.object({
         type: z.literal("attack"),
         payload: z.object({
             roomId: z.string().min(1),
@@ -62,6 +67,32 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
         })
     }),
     z.object({ type: z.literal("end_turn"), payload: z.object({ roomId: z.string().min(1) }) }),
+    z.object({
+        type: z.literal("attach_awaken"),
+        payload: z.object({
+            roomId: z.string().min(1),
+            /** 觉醒牌 ID（来自手牌或符咒区） */
+            awakenCardId: z.string().min(1),
+            /** 觉醒牌来源区域 */
+            from: z.enum(["hand", "spell"]),
+            /** 目标式神所属玩家 ID */
+            targetPlayerId: z.string().min(1),
+            /** 目标式神位索引 0-5 */
+            slotIndex: z.number().int().min(0).max(5)
+        })
+    }),
+    z.object({
+        type: z.literal("detach_awaken"),
+        payload: z.object({
+            roomId: z.string().min(1),
+            /** 式神所属玩家 ID */
+            targetPlayerId: z.string().min(1),
+            /** 式神位索引 0-5 */
+            slotIndex: z.number().int().min(0).max(5),
+            /** 觉醒牌 ID */
+            awakenCardId: z.string().min(1)
+        })
+    }),
     z.object({
         type: z.literal("move_card"),
         payload: z.object({
@@ -89,6 +120,10 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     z.object({
         type: z.literal("deck_search"),
         payload: z.object({ roomId: z.string().min(1), count: z.number().int().min(1).max(60) })
+    }),
+    z.object({
+        type: z.literal("deck_search_return"),
+        payload: z.object({ roomId: z.string().min(1) })
     }),
     z.object({
         type: z.literal("deck_peek"),
@@ -119,6 +154,13 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
             roomId: z.string().min(1),
             /** 增加或减少的生命值（可为负） */
             delta: z.number().int()
+        })
+    }),
+    z.object({
+        type: z.literal("chat"),
+        payload: z.object({
+            roomId: z.string().min(1),
+            message: z.string().min(1)
         })
     })
 ]);

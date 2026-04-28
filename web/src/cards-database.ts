@@ -158,7 +158,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：你场上每存在1个「座敷童子」，获得❶。\n运势 4：重置。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_13.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_253.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 2,
+  },
+  "AYK012-OR": {
+    "id": "AYK012-OR",
+    "name": "觉醒·座敷童子",
+    "alias": "座敷童子",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：你场上每存在1个「座敷童子」，获得❶。\n运势 4：重置。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_13.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 2,
   },
   "AYK013": {
     "id": "AYK013",
@@ -264,7 +278,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "你回合结束时，抽1张牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_20.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_20.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
+  },
+  "AYK017-OR": {
+    "id": "AYK017-OR",
+    "name": "觉醒·山兔",
+    "alias": "山兔",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "你回合结束时，抽1张牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_20.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
   },
   "AYK018": {
     "id": "AYK018",
@@ -322,7 +350,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "连击\n❶：本回合获得「出击时，额外造成1次战斗伤害」。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_25.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_255.webp",
+    "attack": 0,
+    "health": 0,
+  },
+  "AYK022-OR": {
+    "id": "AYK022-OR",
+    "name": "觉醒·三尾狐",
+    "alias": "三尾狐",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "连击\n❶：本回合获得「出击时，额外造成1次战斗伤害」。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_25.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
   },
   "AYK023": {
     "id": "AYK023",
@@ -368,7 +410,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "复活后发起1次攻击，本次攻击获得远程。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_29.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_256.webp?v=3.2.1.3",
+    "attack": 2,
+    "health": 0,
+  },
+  "AYK025-OR": {
+    "id": "AYK025-OR",
+    "name": "觉醒·九命猫",
+    "alias": "九命猫",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "复活后发起1次攻击，本次攻击获得远程。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_29.webp?v=3.2.1.3",
+    "attack": 2,
+    "health": 0,
   },
   "AYK026": {
     "id": "AYK026",
@@ -426,7 +482,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：恢复全部{命}。\n敌方回合拥有暴击。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_34.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_257.webp",
+    "attack": 1,
+    "health": 1,
+  },
+  "AYK030-OR": {
+    "id": "AYK030-OR",
+    "name": "觉醒·犬神",
+    "alias": "犬神",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：恢复全部{命}。\n敌方回合拥有暴击。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_34.webp?v=3.2.1.3",
+    "attack": 1,
+    "health": 1,
   },
   "AYK031": {
     "id": "AYK031",
@@ -472,7 +542,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "远程\n你场上的式神{命}变化时，为你恢复1{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_38.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_258.webp",
+    "attack": 2,
+    "health": 0,
+  },
+  "AYK034-OR": {
+    "id": "AYK034-OR",
+    "name": "觉醒·萤草",
+    "alias": "萤草",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "远程\n你场上的式神{命}变化时，为你恢复1{命}。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_38.webp?v=3.2.1.3",
+    "attack": 2,
+    "health": 0,
   },
   "AYK034-UR": {
     "id": "AYK034-UR",
@@ -483,6 +567,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "keyword": "",
     "ability": "远程\n你场上的式神{命}变化时，为你恢复1{命}。",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_39.webp",
+    "attack": 2,
+    "health": 0,
   },
   "AYK035": {
     "id": "AYK035",
@@ -540,7 +626,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：重置。\n贯通",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_44.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_259.webp",
+    "attack": 0,
+    "health": 0,
+  },
+  "AYK039-OR": {
+    "id": "AYK039-OR",
+    "name": "觉醒·白狼",
+    "alias": "白狼",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：重置。\n贯通",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_44.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
   },
   "AYK040": {
     "id": "AYK040",
@@ -706,7 +806,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "免疫非战斗伤害。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_58.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_260.webp",
+    "attack": 2,
+    "health": 1,
+  },
+  "AYK050-OR": {
+    "id": "AYK050-OR",
+    "name": "觉醒·山童",
+    "alias": "山童",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "免疫非战斗伤害。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_58.webp?v=3.2.1.3",
+    "attack": 2,
+    "health": 1,
   },
   "AYK051": {
     "id": "AYK051",
@@ -764,7 +878,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "每回合首次受到的伤害至多为1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_63.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_261.webp",
+    "attack": 0,
+    "health": 0,
+  },
+  "AYK055-OR": {
+    "id": "AYK055-OR",
+    "name": "觉醒·独眼小僧",
+    "alias": "独眼小僧",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "每回合首次受到的伤害至多为1。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_63.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
   },
   "AYK056": {
     "id": "AYK056",
@@ -810,7 +938,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：获得屏障。若已拥有屏障，获得2{命}。\n❷：本回合获得{命}的{力}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_67.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_262.webp",
+    "attack": 0,
+    "health": 0,
+  },
+  "AYK059-OR": {
+    "id": "AYK059-OR",
+    "name": "觉醒·兵俑",
+    "alias": "兵俑",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：获得屏障。若已拥有屏障，获得2{命}。\n❷：本回合获得{命}的{力}。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_67.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
   },
   "AYK060": {
     "id": "AYK060",
@@ -880,7 +1022,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：从你牌库选择1张牌加入手牌。\n鼓舞：你因从没有牌的牌库抽牌而受到的伤害改由敌方牌手承担。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_73.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_263.webp",
+    "attack": 0,
+    "health": 0,
+  },
+  "AYK064-OR": {
+    "id": "AYK064-OR",
+    "name": "觉醒·书翁",
+    "alias": "书翁",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：从你牌库选择1张牌加入手牌。\n鼓舞：你因从没有牌的牌库抽牌而受到的伤害改由敌方牌手承担。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_73.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
   },
   "AYK064-UR": {
     "id": "AYK064-UR",
@@ -891,6 +1047,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "keyword": "",
     "ability": "觉醒：从你牌库选择1张牌加入手牌。\n鼓舞：你因从没有牌的牌库抽牌而受到的伤害改由敌方牌手承担。",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_74.webp",
+    "attack": 0,
+    "health": 0,
   },
   "AYK065": {
     "id": "AYK065",
@@ -996,7 +1154,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：获得1{能}。\n若你场上的「河童」本回合获得过{能}，使你场上的<宿水>造成的伤害+1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_83.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_264.webp",
+    "attack": 1,
+    "health": 1,
+  },
+  "AYK071-OR": {
+    "id": "AYK071-OR",
+    "name": "觉醒·河童",
+    "alias": "河童",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：获得1{能}。\n若你场上的「河童」本回合获得过{能}，使你场上的<宿水>造成的伤害+1。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_83.webp?v=3.2.1.3",
+    "attack": 1,
+    "health": 1,
   },
   "AYK072": {
     "id": "AYK072",
@@ -1030,7 +1202,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：使1个式神获得屏障。\n你使敌方控制的式神获得屏障时，你可以眩晕目标。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_86.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_265.webp",
+    "attack": 0,
+    "health": 2,
+  },
+  "AYK074-OR": {
+    "id": "AYK074-OR",
+    "name": "觉醒·鲤鱼精",
+    "alias": "鲤鱼精",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：使1个式神获得屏障。\n你使敌方控制的式神获得屏障时，你可以眩晕目标。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_86.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 2,
   },
   "AYK075": {
     "id": "AYK075",
@@ -1100,7 +1286,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：消灭你场上的所有「棺材」。每因此消灭1个「棺材」，从你墓地选择1个费用不大于2的<跳跳家族>召唤到你场上。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_93.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_266.webp",
+    "attack": 2,
+    "health": 1,
+  },
+  "AYK080-OR": {
+    "id": "AYK080-OR",
+    "name": "觉醒·跳跳哥哥",
+    "alias": "跳跳哥哥",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：消灭你场上的所有「棺材」。每因此消灭1个「棺材」，从你墓地选择1个费用不大于2的<跳跳家族>召唤到你场上。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_93.webp?v=3.2.1.3",
+    "attack": 2,
+    "health": 1,
   },
   "AYK081": {
     "id": "AYK081",
@@ -1170,7 +1370,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：重置。\n❷：重置本回合符咒打出次数。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_99.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_267.webp",
+    "attack": 0,
+    "health": 0,
+  },
+  "AYK085-OR": {
+    "id": "AYK085-OR",
+    "name": "觉醒·妖琴师",
+    "alias": "妖琴师",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "觉醒：重置。\n❷：重置本回合符咒打出次数。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_99.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
   },
   "AYK085-UR": {
     "id": "AYK085-UR",
@@ -1181,6 +1395,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "keyword": "",
     "ability": "觉醒：重置。\n❷：重置本回合符咒打出次数。",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_100.webp",
+    "attack": 0,
+    "health": 0,
   },
   "AYK086": {
     "id": "AYK086",
@@ -1310,7 +1526,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "❷：重新触发此牌的召唤效果。\n消灭式神后，你可以从你墓地选择1个<冥使>加入手牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_111.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_268.webp",
+    "attack": 0,
+    "health": 0,
+  },
+  "AYK094-OR": {
+    "id": "AYK094-OR",
+    "name": "觉醒·判官",
+    "alias": "判官",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "❷：重新触发此牌的召唤效果。\n消灭式神后，你可以从你墓地选择1个<冥使>加入手牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_111.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 0,
   },
   "AYK095": {
     "id": "AYK095",
@@ -1452,7 +1682,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "消耗{火}的效果费用-1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_123.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_269.webp",
+    "attack": 1,
+    "health": 1,
+  },
+  "AYK102-OR": {
+    "id": "AYK102-OR",
+    "name": "觉醒·大天狗",
+    "alias": "大天狗",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "消耗{火}的效果费用-1。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_123.webp?v=3.2.1.3",
+    "attack": 1,
+    "health": 1,
   },
   "AYK103": {
     "id": "AYK103",
@@ -1582,7 +1826,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "自伤 1：选择1项：①本回合获得2{力}；②对1个式神造成1点伤害。\n受到致命伤害或被消灭时，若不因战斗伤害导致此情况，终止伤害结算或消灭效果。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_133.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_270.webp",
+    "attack": 0,
+    "health": 2,
+  },
+  "AYK109-OR": {
+    "id": "AYK109-OR",
+    "name": "觉醒·酒吞童子",
+    "alias": "酒吞童子",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "自伤 1：选择1项：①本回合获得2{力}；②对1个式神造成1点伤害。\n受到致命伤害或被消灭时，若不因战斗伤害导致此情况，终止伤害结算或消灭效果。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_133.webp?v=3.2.1.3",
+    "attack": 0,
+    "health": 2,
   },
   "AYK110": {
     "id": "AYK110",
@@ -1676,7 +1934,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "远程\n散射\n因此牌散射效果造成的伤害依然拥有散射。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_141.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_271.webp",
+    "attack": 2,
+    "health": 0,
+  },
+  "AYK114-OR": {
+    "id": "AYK114-OR",
+    "name": "觉醒·茨木童子",
+    "alias": "茨木童子",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "远程\n散射\n因此牌散射效果造成的伤害依然拥有散射。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_141.webp?v=3.2.1.3",
+    "attack": 2,
+    "health": 0,
   },
   "AYK115": {
     "id": "AYK115",
@@ -1685,7 +1957,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "shikigami",
     "cost": 6,
     "keyword": "大妖/大江山",
-    "ability": "从你墓地召唤到你场上的「地狱之手」拥有迅捷。\n你场上的「地狱之手」造成伤害时，对同一目标造成X点伤害。（X为本回合「地狱之手」造成的伤害次数）",
+    "ability": "从你墓地召唤到你场上的「地狱之手」拥有迅捷。\n你场上的「地狱之手」造成伤害时，对同一目标造成X点伤害。\n（X为本回合「地狱之手」造成的伤害次数）",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_142.webp?v=3.2.1.1",
     "attack": 3,
     "health": 5,
@@ -1722,7 +1994,21 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "连击",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_145.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_272.webp",
+    "attack": 1,
+    "health": 0,
+  },
+  "AYK118-OR": {
+    "id": "AYK118-OR",
+    "name": "觉醒·妖刀姬",
+    "alias": "妖刀姬",
+    "type": "awaken",
+    "cost": 0,
+    "keyword": "",
+    "ability": "连击",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_145.webp?v=3.2.1.3",
+    "attack": 1,
+    "health": 0,
   },
   "AYK119": {
     "id": "AYK119",
@@ -1731,7 +2017,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "shikigami",
     "cost": 7,
     "keyword": "付丧神",
-    "ability": "迅捷\n造成战斗伤害时，运势 4：本次伤害+X。（X为本次伤害的一半，向上取整）",
+    "ability": "迅捷\n造成战斗伤害时，运势 4：本次伤害+X。\n（X为本次伤害的一半，向上取整）",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_146.webp?v=3.2.1.0",
     "attack": 4,
     "health": 8,
@@ -2207,8 +2493,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 1,
     "keyword": "妖术",
-    "ability": "从你牌库/墓地选择1个<付丧神>加入手牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_193.webp",
+    "ability": "从你牌库选择1个<付丧神>加入手牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_193.webp?v=3.2.2.0",
   },
   "AYK162": {
     "id": "AYK162",
@@ -2227,8 +2513,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 2,
     "keyword": "妖术",
-    "ability": "使1个式神获得3{命}和守护。若目标为<天邪鬼>，额外使其获得2{力}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_195.webp",
+    "ability": "使1个式神获得3{命}和守护。若目标为<天邪鬼>，使其恢复全部{命}。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_195.webp?v=3.2.2.0",
   },
   "AYK164": {
     "id": "AYK164",
@@ -2317,8 +2603,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 3,
     "keyword": "妖术",
-    "ability": "弹回你符咒区内的所有牌。每因此弹回1张牌，使你恢复2{命}。\n本局游戏的剩余时间内，你回合开始时，从你墓地选择1张牌暗置于符咒区。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_204.webp",
+    "ability": "移除此牌，弹回你符咒区内的所有牌。每因此弹回1张牌，使你恢复2{命}。\n本局游戏的剩余时间内，你回合开始时，从你墓地选择1张牌暗置于符咒区。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_204.webp?v=3.2.1.3",
   },
   "AYK172": {
     "id": "AYK172",
@@ -2397,8 +2683,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 3,
     "keyword": "妖术",
-    "ability": "依次选择至多3个不同的式神。对第1个目标造成2点伤害，眩晕第2个目标，使第3个目标获得-1{力}和-1{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_212.webp",
+    "ability": "沉默1个<式神>，然后将其置于其所有者的牌库顶。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_212.webp?v=3.2.2.0",
   },
   "AYK180": {
     "id": "AYK180",
@@ -2455,10 +2741,10 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "name": "百闻一得",
     "alias": "百闻一得",
     "type": "spell",
-    "cost": 0,
+    "cost": "X",
     "keyword": "妖术",
-    "ability": "查看你牌库顶的X张牌，选择其中1张牌加入手牌，其余牌洗回牌库。\n本回合你使用的下1张「百闻一得」以外的牌费用-X。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_218.webp",
+    "ability": "查看你牌库顶的X张牌，选择其中1张牌加入手牌，其余牌洗回牌库。\n本回合你使用的下1张「百闻一得」以外的牌费用-X。\n（X至少为3）",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_218.webp?v=3.2.1.2",
   },
   "AYK186": {
     "id": "AYK186",
@@ -2625,10 +2911,10 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "name": "碧落太鼓",
     "alias": "碧落太鼓",
     "type": "barrier",
-    "cost": 4,
+    "cost": 3,
     "keyword": "秘境",
     "ability": "横置：失去5{命}，获得2{火}。若此时你的{命}小于10，弹回你符咒区中的1张牌，然后将此牌暗置于符咒区。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_235.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_235.webp?v=3.2.2.0",
   },
   "AYK200": {
     "id": "AYK200",
@@ -2757,8 +3043,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "barrier",
     "cost": 7,
     "keyword": "地域",
-    "ability": "你可以如手牌般使用你墓地中的牌，因此效果使用的牌离场时，移除该牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_248.webp",
+    "ability": "你可以如手牌般使用你墓地中的牌，因此效果使用的牌离场时，移除该牌。\n进场后，你从墓地使用的第1张牌费用-4。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_248.webp?v=3.2.2.0",
   },
   "AYK210-OR": {
     "id": "AYK210-OR",
@@ -2767,8 +3053,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "barrier",
     "cost": 7,
     "keyword": "地域",
-    "ability": "你可以如手牌般使用你墓地中的牌，因此效果使用的牌离场时，移除该牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_249.webp",
+    "ability": "你可以如手牌般使用你墓地中的牌，因此效果使用的牌离场时，移除该牌。\n进场后，你从墓地使用的第1张牌费用-4。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_249.webp?v=3.2.2.0",
   },
   "BPP001": {
     "id": "BPP001",
@@ -2777,11 +3063,12 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "shikigami",
     "cost": 0,
     "keyword": "灵火",
-    "ability": "召唤：获得1{火}。你回合结束时，你可以消耗3{命}，弹回此牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_1.webp",
-    "attack": 0,
+    "ability": "潜行\n解除潜行状态时，获得1{火}。\n你回合结束时，你可以消耗3{命}，弹回此牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_1.webp?v=3.2.2.0",
+    "attack": 1,
     "health": 1
-  },  "BPP002": {
+  },  
+"BPP002": {
     "id": "BPP002",
     "name": "盗墓小鬼",
     "alias": "盗墓小鬼",
@@ -2792,7 +3079,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_2.webp",
     "attack": 1,
     "health": 2
-  },  "BPP003": {
+  },  
+"BPP003": {
     "id": "BPP003",
     "name": "寄生魂",
     "alias": "寄生魂",
@@ -2877,7 +3165,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "获得{力}与{命}的效果+1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_9.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_9.webp",
+    "attack": 1,
+    "health": 1,
   },  "BPP010": {
     "id": "BPP010",
     "name": "大快朵颐",
@@ -2951,8 +3241,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "shikigami",
     "cost": 2,
     "keyword": "恶鬼/毒瘴",
-    "ability": "运势X：敌方选择1张手牌洗回牌库。（X为你的手牌数减去敌方的手牌数，至少为1）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_14.webp",
+    "ability": "召唤：运势X：敌方选择1张手牌洗回牌库。\n（X为你的手牌数减去敌方的手牌数，至少为1）",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_14.webp?v=3.2.2.0",
     "attack": 1,
     "health": 3
   },  "BPP015": {
@@ -2984,8 +3274,10 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "awaken",
     "cost": 0,
     "keyword": "",
-    "ability": "觉醒：使你控制的「青蛙瓷器」各触发1次安魂效果。你控制的「青蛙瓷器」被消灭时，运势 4：从你墓地/牌库选择1个<宿水>加入手牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_16.webp"
+    "ability": "觉醒：使你控制的「青蛙瓷器」各触发1次安魂效果。你控制的「青蛙瓷器」被消灭时，运势 4：从你墓地选择1个<宿水>加入手牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_16.webp?v=3.2.2.0",
+    "attack": 1,
+    "health": 0,
   },  "BPP017": {
     "id": "BPP017",
     "name": "国士无双",
@@ -3038,7 +3330,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "发动消耗{火}的效果时，可额外指定1个目标。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_21.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_21.webp",
+    "attack": 0,
+    "health": 2,
   },  "BPP022": {
     "id": "BPP022",
     "name": "梨花怨",
@@ -3080,7 +3374,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "❶：移除你记录的2点伤害。你记录的伤害减少时，对敌方牌手造成2点伤害。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_25.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_25.webp",
+    "attack": 0,
+    "health": 2,
   },  "BPP026": {
     "id": "BPP026",
     "name": "涌流",
@@ -3132,8 +3428,10 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "awaken",
     "cost": 0,
     "keyword": "",
-    "ability": "将此牌的X取值改为{力}。鼓舞：你场上的所有<宿水>增加2{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_30.webp"
+    "ability": "将此牌的X取值改为{力}。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_30.webp?v=3.2.1.2",
+    "attack": 1,
+    "health": 1
   },  "BPP031": {
     "id": "BPP031",
     "name": "灵能",
@@ -3142,9 +3440,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "宿水",
     "ability": "吸血 ❷：对敌方场上的所有角色各造成1点伤害，执行X次。（X未定义时，默认为1）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_31.webp",
-    "attack": 3,
-    "health": 5
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_31.webp?v=3.2.1.2",
+    "attack": 2,
+    "health": 4
   },  "BPP032": {
     "id": "BPP032",
     "name": "蹈海",
@@ -3208,7 +3506,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：净化此牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_36.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_36.webp",
+    "attack": 1,
+    "health": 0
   },  "BPP037": {
     "id": "BPP037",
     "name": "破竹之势",
@@ -3250,7 +3550,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "出击时，净化你场上的1个式神。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_40.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_40.webp",
+    "attack": 1,
+    "health": 1,
   },  "BPP041": {
     "id": "BPP041",
     "name": "群鸦乱舞",
@@ -3270,7 +3572,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "疾风/天狗",
     "ability": "迅捷 你回合结束时，对敌方场上的所有式神造成各造成1点伤害，然后使此牌恢复X{命}。（X为因此造成的伤害之和）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_216.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_216.webp?v=3.2.1.3",
     "attack": 2,
     "health": 6
   },  "BPP042": {
@@ -3303,7 +3605,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "（2）：再临此牌。离场时，将因此移回手牌的<觉醒>牌横置于符咒区，使你本回合造成的伤害+1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_44.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_44.webp",
+    "attack": 1,
+    "health": 1,
   },  "BPP045": {
     "id": "BPP045",
     "name": "飞颅谑戏",
@@ -3356,7 +3660,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：对敌方牌手发起1次攻击。受到致命伤害时，从你墓地移除1个<怨灵>，免疫本次伤害。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_48.webp?v=3.2.1.1"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_48.webp?v=3.2.1.1",
+    "attack": 0,
+    "health": 0
   },  "BPP049": {
     "id": "BPP049",
     "name": "不甘之怒",
@@ -3442,7 +3748,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：弹回敌方符咒区里的1张牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_54.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_54.webp",
+    "attack": 1,
+    "health": 1,
   },  "BPP055": {
     "id": "BPP055",
     "name": "灵视",
@@ -3472,10 +3780,10 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "shikigami",
     "cost": 2,
     "keyword": "灵火",
-    "ability": "复活 激怒：运势 4：重置你符咒区里的1张牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_57.webp",
-    "attack": 0,
-    "health": 3
+    "ability": "激怒：运势 4：重置你符咒区里的1张牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_57.webp?v=3.2.2.0",
+    "attack": 1,
+    "health": 5
   },  "BPP058": {
     "id": "BPP058",
     "name": "觉醒·古笼火",
@@ -3484,7 +3792,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "你每回合首次运势判定的结果必定为6。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_58.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_58.webp",
+    "attack": 0,
+    "health": 1
   },  "BPP059": {
     "id": "BPP059",
     "name": "飘摇鬼火",
@@ -3501,10 +3811,12 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "name": "火风车",
     "alias": "古笼火",
     "type": "shikigami",
-    "cost": NaN,
+    "cost": "X",
     "keyword": "灵火",
     "ability": "召唤进场的回合内，运势 5：获得1{火}，重复此效果，直至运势判定失败。（X为你符咒区里的牌数）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_60.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_60.webp",
+    "attack": 1,
+    "health": 1
   },  "BPP061": {
     "id": "BPP061",
     "name": "姑获鸟",
@@ -3524,7 +3836,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "消灭敌方式神后，对敌方牌手发起1次攻击。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_62.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_62.webp",
+    "attack": 1,
+    "health": 0
   },  "BPP062-UR": {
     "id": "BPP062-UR",
     "name": "觉醒·姑获鸟(UR)",
@@ -3533,7 +3847,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "消灭敌方式神后，对敌方牌手发起1次攻击。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_220.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_220.webp",
+    "attack": 1,
+    "health": 0
   },  "BPP063": {
     "id": "BPP063",
     "name": "影翼",
@@ -3608,7 +3924,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "❷：重新触发此牌的召唤效果。你可以如瞬发<法术>般使用此效果。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_67.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_67.webp",
+    "attack": 0,
+    "health": 1
   },  "BPP068": {
     "id": "BPP068",
     "name": "金缕歌",
@@ -3661,7 +3979,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "鼓舞：你或你控制的式神毒伤敌方控制的角色时，使其额外获得1层毒伤。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_71.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_71.webp",
+    "attack": 1,
+    "health": 1
   },  "BPP072": {
     "id": "BPP072",
     "name": "食魂蛊",
@@ -3703,7 +4023,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "鼓舞：敌方控制的式神获得的毒伤同时具有虚弱效果。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_75.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_75.webp",
+    "attack": 1,
+    "health": 1
   },  "BPP076": {
     "id": "BPP076",
     "name": "氤氲蛇姬",
@@ -3745,7 +4067,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：使此牌恢复全部{命}。获得{命}时，额外获得1{力}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_79.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_79.webp",
+    "attack": 0,
+    "health": 1
   },  "BPP080": {
     "id": "BPP080",
     "name": "瘴疠体质",
@@ -3787,7 +4111,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "追猎 获得{命}时，改为获得等量的{力}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_83.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_83.webp",
+    "attack": 3,
+    "health": 0
   },  "BPP083b": {
     "id": "BPP083b",
     "name": "觉醒·数珠【定】",
@@ -3796,7 +4122,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "离场时，若{命}不为0，阻止离场效果的结算。获得{力}时，改为获得等量的{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_224.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_224.webp",
+    "attack": 0,
+    "health": 3
   },  "BPP083c": {
     "id": "BPP083c",
     "name": "觉醒·数珠【慧】",
@@ -3805,7 +4133,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：使此牌的{能}变为6。获得{能}时，额外获得1{能}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_225.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_225.webp",
+    "attack": 0,
+    "health": 0
   },  "BPP084": {
     "id": "BPP084",
     "name": "不二法门",
@@ -3847,7 +4177,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "远程 发起攻击时可以选择任意角色为目标：若目标由你控制，改为使其恢复此牌{力}的{命}；否则，改为使其获得2个伤害指示物。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_87.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_87.webp",
+    "attack": 1,
+    "health": 1
   },  "BPP088": {
     "id": "BPP088",
     "name": "弥生之舞",
@@ -3867,7 +4199,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "你控制的<式神>从你墓地召唤到场上时，获得1{力}和1{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_89.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_89.webp",
+    "attack": 1,
+    "health": 1
   },  "BPP090": {
     "id": "BPP090",
     "name": "丰实之姿",
@@ -3898,7 +4232,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "离场时，你可以从你牌库选择1个<大江山>置于墓地，此时若{命}不为0，阻止离场效果的结算。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_92.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_92.webp",
+    "attack": 0,
+    "health": 1
   },  "BPP093": {
     "id": "BPP093",
     "name": "血枫之姬",
@@ -3929,7 +4265,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "鼓舞：敌方控制的处于沉默状态的<式神>被消灭进入敌方墓地后，移除该<式神>。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_95.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_95.webp",
+    "attack": 0,
+    "health": 0
   },  "BPP096": {
     "id": "BPP096",
     "name": "忆昔当年",
@@ -3971,7 +4309,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：获得屏障和2{能}。若拥有屏障，自伤 1：使另1个式神获得屏障。失去屏障时，消耗1{能}，获得屏障。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_99.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_99.webp",
+    "attack": 0,
+    "health": 2
   },  "BPP100": {
     "id": "BPP100",
     "name": "樱竹迎春",
@@ -4167,7 +4507,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "获得减益效果时，运势 4：免疫该效果，此时你可以消耗❶，使另1个式神获得此减益效果。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_114.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_114.webp",
+    "attack": 1,
+    "health": 1
   },  "BPP115": {
     "id": "BPP115",
     "name": "自强之愿",
@@ -4220,7 +4562,9 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "觉醒：进入潜行状态。解除潜行状态无须消耗{火}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_118.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_118.webp",
+    "attack": 1,
+    "health": 1
   },  "BPP119": {
     "id": "BPP119",
     "name": "怒涛沧海",
@@ -4313,10 +4657,10 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "name": "神秘的符咒",
     "alias": "符箓",
     "type": "spell",
-    "cost": 0,
+    "cost": 1,
     "keyword": "阴阳术",
-    "ability": "将此牌作为符咒打出时，展示此牌并抽1张牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_127.webp"
+    "ability": "若你未打出过符咒，抽1张牌，然后将此牌作为符咒打出。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_127.webp?v=3.2.1.2"
   },  "BPP128": {
     "id": "BPP128",
     "name": "基础术式",
@@ -4349,7 +4693,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "name": "狂气",
     "alias": "狂气",
     "type": "spell",
-    "cost": 5,
+    "cost": 4,
     "keyword": "召唤术",
     "ability": "从你牌库选择1个费用不小于5的<大江山>召唤你场上，然后使其获得-X{力}和-X{命}。（X为其费用-5）",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_131.webp"
@@ -4358,7 +4702,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "name": "狂气(OR)",
     "alias": "狂气",
     "type": "spell",
-    "cost": 5,
+    "cost": 4,
     "keyword": "召唤术",
     "ability": "从你牌库选择1个费用不小于5的<大江山>召唤你场上，然后使其获得-X{力}和-X{命}。（X为其费用-5）",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_231.webp?v=3.2.1.0"
@@ -4369,8 +4713,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 6,
     "keyword": "召唤术",
-    "ability": "进行1次运势判定：对敌方场上的式神各造成X点伤害，然后从你墓地选择1个费用为6-X的<式神>以活跃状态召唤到你场上。（X为运势判定结果）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_132.webp"
+    "ability": "使敌方场上所有的角色各获得2个伤害指示物，然后从你墓地选择1个费用至多为4的<式神>以活跃状态召唤到你场上。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_132.webp?v=3.2.2.0"
   },  "BPP133": {
     "id": "BPP133",
     "name": "灵运",
@@ -4405,8 +4749,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 1,
     "keyword": "妖术",
-    "ability": "瞬发 造成1点伤害，然后弹回此牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_136.webp"
+    "ability": "瞬发\n造成1点伤害。\n你回合结束时，弹回你墓地中的此牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_136.webp?v=3.2.1.2"
   },  "BPP137": {
     "id": "BPP137",
     "name": "棺封",
@@ -4414,8 +4758,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 2,
     "keyword": "妖术",
-    "ability": "瞬发 将敌方墓地中的所有牌暂时移出游戏，直到回合结束。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_137.webp"
+    "ability": "瞬发\n选择1项：①从敌方墓地选择至多3张牌，将这些牌置于敌方牌库底；②触发你场上1个式神的安魂效果。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_137.webp?v=3.2.2.0"
   },  "BPP138": {
     "id": "BPP138",
     "name": "勾诀",
@@ -4495,8 +4839,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 1,
     "keyword": "妖术",
-    "ability": "毒伤（你回合开始时，将1个毒伤标记变为1个伤害指示物。可叠加）1个角色，抽1张牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_146.webp"
+    "ability": "毒伤（你回合开始时，将1个毒伤标记变为1个伤害指示物。可叠加）1个角色，若目标处于毒伤状态，抽1张牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_146.webp?v=3.2.2.0"
   },  "BPP147": {
     "id": "BPP147",
     "name": "追风",
@@ -4513,8 +4857,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 1,
     "keyword": "妖术",
-    "ability": "从你牌库选择1个<苍叶>加入手牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_148.webp"
+    "ability": "从你墓地选择1个<苍叶>加入手牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_148.webp?v=3.2.2.0"
   },  "BPP149": {
     "id": "BPP149",
     "name": "投石",
@@ -4531,8 +4875,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 1,
     "keyword": "妖术",
-    "ability": "从你牌库/墓地选择1个<灵火>加入手牌。若你本回合还未消耗过{火}，费用-1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_150.webp"
+    "ability": "从你牌库/墓地选择1个<灵火>加入手牌。\n此牌消耗的{火}不计入本回合消耗{火}的数量。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_150.webp?v=3.2.2.0"
   },  "BPP151": {
     "id": "BPP151",
     "name": "鬼火球",
@@ -4576,8 +4920,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 1,
     "keyword": "妖术",
-    "ability": "对1个式神造成1点伤害，然后运势 X：眩晕目标。（X为目标的{命}）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_155.webp"
+    "ability": "对1个式神造成1点伤害，然后运势 4：眩晕目标。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_155.webp?v=3.2.2.0"
   },  "BPP156": {
     "id": "BPP156",
     "name": "坐禅",
@@ -4610,10 +4954,10 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "name": "切腹",
     "alias": "切腹",
     "type": "spell",
-    "cost": 1,
+    "cost": 2,
     "keyword": "妖术",
     "ability": "消灭你控制的1个<怨灵>，你本回合造成的伤害+1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_159.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_159.webp?v=3.2.1.3"
   },  "BPP160": {
     "id": "BPP160",
     "name": "读心",
@@ -4810,8 +5154,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 4,
     "keyword": "妖术",
-    "ability": "对敌方场上的所有式神各造成2点伤害。每消灭1个式神，使你控制的1个角色恢复1{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_180.webp"
+    "ability": "对敌方场上的所有式神各造成2点伤害。每有1个式神受到伤害，使你控制的1个角色恢复1{命}。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_180.webp?v=3.2.1.2"
   },  "BPP181": {
     "id": "BPP181",
     "name": "绽放",
@@ -5026,8 +5370,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "barrier",
     "cost": 3,
     "keyword": "秘境",
-    "ability": "横置：从你牌库/墓地选择1个<首领>加入手牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_201.webp"
+    "ability": "横置：从你牌库选择1个<首领>加入手牌。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_201.webp?v=3.2.2.0"
   },  "BPP202": {
     "id": "BPP202",
     "name": "猛毒深渊",
@@ -5044,8 +5388,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "barrier",
     "cost": 4,
     "keyword": "地域",
-    "ability": "你从手牌召唤<式神>进场时，若你场上没有空的式神位，消灭你场上的1个式神。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_203.webp"
+    "ability": "你可以进行1次运势判定：\n消灭位于你场上第X个式神位的式神。本回合每有式神进入此式神位后，消灭该式神。\n（X为运势判定结果）",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_203.webp?v=3.2.2.0"
   },  "BPP204": {
     "id": "BPP204",
     "name": "祈愿鸟居",
@@ -5054,7 +5398,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "地域",
     "ability": "若你场上不存在式神，横置：你本回合使用的下1张牌费用-2。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_204.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_204.webp?v=3.2.2.0"
   },  "BPP205": {
     "id": "BPP205",
     "name": "恶鬼炼狱",
@@ -5096,10 +5440,10 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "name": "引驾行",
     "alias": "引驾行",
     "type": "barrier",
-    "cost": 5,
+    "cost": 4,
     "keyword": "幻境",
     "ability": "你控制的<虫>拥有追猎。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_209.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_209.webp?v=3.2.2.0"
   },  "BPP210": {
     "id": "BPP210",
     "name": "灯火长明",
@@ -5109,6 +5453,36 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "keyword": "幻境",
     "ability": "你每因回合结束移除❶，获得1{能}。横置：消耗所有{能}，获得等量{火}。",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_210.webp"
-  }
+  },
+ "TOKEN001": {
+    "id": "TOKEN001",
+    "name": "【召】棺材",
+    "alias": "棺材",
+    "type": "token",
+    "ability": "",
+    "img": "https://steamusercontent-a.akamaihd.net/ugc/10676367430835319526/06F3B41DF4D5B385362E2BE96F78EDD6AE0B1AAB/",
+    "attack": 0,
+    "health": 2,
+  },
+ "TOKEN002": {
+    "id": "TOKEN002",
+    "name": "【召】草人",
+    "alias": "草人",
+    "type": "token",
+    "ability": "",
+    "img": "https://steamusercontent-a.akamaihd.net/ugc/10203674490965220690/77623586FC277EC8D07B7B074294917AA4EDBD22//",
+    "attack": 0,
+    "health": 2,
+  },
+ "TOKEN003": {
+    "id": "TOKEN003",
+    "name": "【召】魂鬼",
+    "alias": "魂鬼",
+    "type": "token",
+    "ability": "",
+    "img": "https://steamusercontent-a.akamaihd.net/ugc/12103824460487153849/8A4F9F3ECB1584F4BD866F594E52F3C1065572CA/",
+    "attack": 0,
+    "health": 2,
+  },
 };
 export default CARD_DATABASE;

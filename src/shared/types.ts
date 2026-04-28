@@ -16,6 +16,8 @@ export type Card = {
   keyword?: string;
   ability?: string;
   img?: string;
+  /** 别名：觉醒牌 alias 对应其所属式神名称（用于附着校验） */
+  alias?: string;
 };
 
 /**
@@ -33,6 +35,8 @@ export type BuilderCard = {
   attack?: number;
   /** 生命值（仅式神） */
   health?: number;
+  /** 别名：觉醒牌 alias 对应其所属式神名称 */
+  alias?: string;
 };
 
 export type SpellZoneCard = {
@@ -50,7 +54,8 @@ export type ShikigamiTokenKind =
   | "attack_plus" | "attack_minus"
   | "health_plus" | "health_minus"
   | "damage"
-  | "energy" | "barrier" | "stun";
+  | "energy" | "barrier" | "stun"
+  | "silence" | "poison" | "weaken";
 
 export type ShikigamiZoneCard = {
   card: Card;
@@ -71,8 +76,16 @@ export type ShikigamiZoneCard = {
   barrierMarkers: number;
   /** 眩晕标记 */
   stunMarkers: number;
+  /** 沉默标记 */
+  silenceMarkers: number;
+  /** 毒伤标记 */
+  poisonMarkers: number;
+  /** 虚弱标记 */
+  weakenMarkers: number;
   /** 潜行状态：true 时对手只能看到牌背 */
   stealth: boolean;
+  /** 附在该式神下方的觉醒牌（alias 匹配） */
+  awakenCards?: Card[];
 };
 
 /** 延伸区卡牌条目 */
@@ -106,6 +119,8 @@ export type PlayerState = {
   deckPeekBuffer: Card[];
   /** 手牌中已向对手公开的卡牌 ID 集合 */
   revealedHandIds: string[];
+  /** 鬼火硬币数量 */
+  ghostFireCoins: number;
 };
 
 export type MatchPhase = "mulligan" | "playing";
@@ -117,6 +132,8 @@ export type MatchState = {
   currentPlayerId: PlayerId;
   players: Record<PlayerId, PlayerState>;
   winnerId?: PlayerId;
+  /** 先手玩家 ID（对局开始时随机确定） */
+  firstPlayerId: PlayerId;
   /** 双方是否已提交调度（不同步公开具体卡牌） */
   mulliganSubmitted?: Record<PlayerId, boolean>;
   /** 服务端解析用，广播前会剥离 */
@@ -144,7 +161,8 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
         ability: z.string().optional(),
         img: z.string().optional(),
         attack: z.number().optional(),
-        health: z.number().optional()
+        health: z.number().optional(),
+        alias: z.string().optional()
       }))
     })
   }),
@@ -193,6 +211,32 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("end_turn"), payload: z.object({ roomId: z.string().min(1) }) }),
   z.object({
+    type: z.literal("attach_awaken"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 觉醒牌 ID（来自手牌或符咒区） */
+      awakenCardId: z.string().min(1),
+      /** 觉醒牌来源区域 */
+      from: z.enum(["hand", "spell"]),
+      /** 目标式神所属玩家 ID */
+      targetPlayerId: z.string().min(1),
+      /** 目标式神位索引 0-5 */
+      slotIndex: z.number().int().min(0).max(5)
+    })
+  }),
+  z.object({
+    type: z.literal("detach_awaken"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 式神所属玩家 ID */
+      targetPlayerId: z.string().min(1),
+      /** 式神位索引 0-5 */
+      slotIndex: z.number().int().min(0).max(5),
+      /** 觉醒牌 ID */
+      awakenCardId: z.string().min(1)
+    })
+  }),
+  z.object({
     type: z.literal("move_card"),
     payload: z.object({
       roomId: z.string().min(1),
@@ -235,7 +279,7 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
       /** 式神所属玩家（可为己方或对方） */
       targetPlayerId: z.string().min(1),
       slotIndex: z.number().int().min(0).max(5),
-      tokenKind: z.enum(["attack_plus", "attack_minus", "health_plus", "health_minus", "damage", "energy", "barrier", "stun"])
+      tokenKind: z.enum(["attack_plus", "attack_minus", "health_plus", "health_minus", "damage", "energy", "barrier", "stun", "silence", "poison", "weaken"])
     })
   }),
   z.object({
@@ -244,7 +288,7 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
       roomId: z.string().min(1),
       targetPlayerId: z.string().min(1),
       slotIndex: z.number().int().min(0).max(5),
-      tokenKind: z.enum(["attack_plus", "attack_minus", "health_plus", "health_minus", "damage", "energy", "barrier", "stun"])
+      tokenKind: z.enum(["attack_plus", "attack_minus", "health_plus", "health_minus", "damage", "energy", "barrier", "stun", "silence", "poison", "weaken"])
     })
   }),
   z.object({
@@ -252,6 +296,14 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     payload: z.object({
       roomId: z.string().min(1),
       /** 增加或减少的生命值（可为负） */
+      delta: z.number().int()
+    })
+  }),
+  z.object({
+    type: z.literal("adjust_ghost_fire"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 增加（正）或减少（负）的鬼火硬币数量 */
       delta: z.number().int()
     })
   }),

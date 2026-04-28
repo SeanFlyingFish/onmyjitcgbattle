@@ -69,8 +69,23 @@ wss.on("connection", (ws) => {
                 roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
                 return;
             }
+            if (parsed.type === "toggle_shikigami_stealth") {
+                const state = roomManager.toggleShikigamiStealth(parsed.payload.roomId, session.playerId, parsed.payload.cardId, parsed.payload.stealth);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
             if (parsed.type === "end_turn") {
                 const state = roomManager.endTurn(parsed.payload.roomId, session.playerId);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            if (parsed.type === "attach_awaken") {
+                const state = roomManager.attachAwaken(parsed.payload.roomId, session.playerId, parsed.payload.awakenCardId, parsed.payload.from, parsed.payload.targetPlayerId, parsed.payload.slotIndex);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            if (parsed.type === "detach_awaken") {
+                const state = roomManager.detachAwaken(parsed.payload.roomId, session.playerId, parsed.payload.targetPlayerId, parsed.payload.slotIndex, parsed.payload.awakenCardId);
                 roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
                 return;
             }
@@ -105,7 +120,17 @@ wss.on("connection", (ws) => {
                 return;
             }
             if (parsed.type === "deck_search") {
-                const state = roomManager.deckSearch(parsed.payload.roomId, session.playerId, parsed.payload.count);
+                const count = parsed.payload.count;
+                const state = roomManager.deckSearch(parsed.payload.roomId, session.playerId, count);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                roomManager.broadcastRoom(parsed.payload.roomId, {
+                    type: "chat",
+                    payload: { playerId: "system", playerName: "", message: `${session.playerName} 查看了牌库顶 ${count} 张` }
+                });
+                return;
+            }
+            if (parsed.type === "deck_search_return") {
+                const state = roomManager.deckSearchReturn(parsed.payload.roomId, session.playerId);
                 roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
                 return;
             }
@@ -122,6 +147,18 @@ wss.on("connection", (ws) => {
             if (parsed.type === "remove_shikigami_token") {
                 const state = roomManager.removeShikigamiToken(parsed.payload.roomId, session.playerId, parsed.payload.targetPlayerId, parsed.payload.slotIndex, parsed.payload.tokenKind);
                 roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            if (parsed.type === "chat") {
+                // 广播聊天/通知消息给房间内所有玩家
+                roomManager.broadcastRoom(parsed.payload.roomId, {
+                    type: "chat",
+                    payload: {
+                        playerId: session.playerId,
+                        playerName: session.playerName,
+                        message: parsed.payload.message
+                    }
+                });
                 return;
             }
             if (parsed.type === "adjust_player_hp") {

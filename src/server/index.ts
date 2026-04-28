@@ -101,6 +101,31 @@ wss.on("connection", (ws) => {
         return;
       }
 
+      if (parsed.type === "attach_awaken") {
+        const state = roomManager.attachAwaken(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.awakenCardId,
+          parsed.payload.from,
+          parsed.payload.targetPlayerId,
+          parsed.payload.slotIndex
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      if (parsed.type === "detach_awaken") {
+        const state = roomManager.detachAwaken(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.targetPlayerId,
+          parsed.payload.slotIndex,
+          parsed.payload.awakenCardId
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
       if (parsed.type === "attack") {
         const state = roomManager.attack(
           parsed.payload.roomId,
@@ -212,6 +237,16 @@ wss.on("connection", (ws) => {
 
       if (parsed.type === "adjust_player_hp") {
         const state = roomManager.adjustPlayerHp(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.delta
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      if (parsed.type === "adjust_ghost_fire") {
+        const state = roomManager.adjustGhostFire(
           parsed.payload.roomId,
           session.playerId,
           parsed.payload.delta

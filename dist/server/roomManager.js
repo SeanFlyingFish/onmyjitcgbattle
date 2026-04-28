@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import WebSocket from "ws";
-import { adjustPlayerHp as engineAdjustPlayerHp, attack, createMatchState, createPlayer, deckDraw, deckPeek, deckSearch, deckShuffle, endTurn, moveCard, placeShikigamiToken as enginePlaceShikigamiToken, playCard, preparePlayerForMatch, removeShikigamiToken as engineRemoveShikigamiToken, sanitizeMatchStateForPlayer, submitMulligan, toggleShikigamiExhaust, toggleSpellExhaust, toggleSpellReveal, toggleHandReveal } from "./gameEngine.js";
+import { adjustPlayerHp as engineAdjustPlayerHp, attack, createMatchState, createPlayer, deckDraw, deckPeek, deckSearch, deckSearchReturn, deckShuffle, endTurn, moveCard, attachAwaken as engineAttachAwaken, detachAwaken as engineDetachAwaken, placeShikigamiToken as enginePlaceShikigamiToken, playCard, preparePlayerForMatch, removeShikigamiToken as engineRemoveShikigamiToken, sanitizeMatchStateForPlayer, submitMulligan, toggleShikigamiExhaust, toggleShikigamiStealth as engineToggleShikigamiStealth, toggleSpellExhaust, toggleSpellReveal, toggleHandReveal } from "./gameEngine.js";
 export class RoomManager {
     rooms = new Map();
     createRoom(ws, name) {
@@ -121,6 +121,18 @@ export class RoomManager {
         }
         return toggleHandReveal(room.matchState, playerId, cardId, reveal);
     }
+    attachAwaken(roomId, actorId, awakenCardId, from, targetPlayerId, slotIndex) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAttachAwaken(room.matchState, actorId, awakenCardId, from, targetPlayerId, slotIndex);
+    }
+    detachAwaken(roomId, actorId, targetPlayerId, slotIndex, awakenCardId) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineDetachAwaken(room.matchState, actorId, targetPlayerId, slotIndex, awakenCardId);
+    }
     deckDraw(roomId, playerId, count) {
         const room = this.getRoomOrThrow(roomId);
         if (!room.matchState) {
@@ -141,6 +153,13 @@ export class RoomManager {
             throw new Error("match not started");
         }
         return deckSearch(room.matchState, playerId, count);
+    }
+    deckSearchReturn(roomId, playerId) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState) {
+            throw new Error("match not started");
+        }
+        return deckSearchReturn(room.matchState, playerId);
     }
     deckPeek(roomId, playerId, count) {
         const room = this.getRoomOrThrow(roomId);
@@ -169,6 +188,13 @@ export class RoomManager {
             throw new Error("match not started");
         }
         return engineAdjustPlayerHp(room.matchState, playerId, delta);
+    }
+    toggleShikigamiStealth(roomId, playerId, cardId, stealth) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState) {
+            throw new Error("match not started");
+        }
+        return engineToggleShikigamiStealth(room.matchState, playerId, cardId, stealth);
     }
     broadcastRoom(roomId, event) {
         const room = this.getRoomOrThrow(roomId);

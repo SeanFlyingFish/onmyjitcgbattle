@@ -87,6 +87,7 @@ body {
   border: 1px solid var(--color-border);
   background: rgba(15,30,55,0.7);
   color: var(--color-text-dim);
+  flex-shrink: 0;
 }
 .turn-badge.is-my-turn {
   border-color: #22c55e;
@@ -100,6 +101,16 @@ body {
   color: var(--color-text-dim);
   border-left: 1px solid var(--color-border);
   padding-left: 8px;
+}
+/* 标记面板内的回合标识 — 更紧凑 */
+.token-panel-bottom .turn-badge {
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  gap: 5px;
+}
+.token-panel-bottom .turn-num {
+  font-size: 0.68rem;
+  padding-left: 5px;
 }
 
 .app-header-actions {
@@ -288,7 +299,7 @@ body {
   margin-bottom: 10px;
 }
 
-/* 战场主体：左侧标记面板 + 右侧内容 */
+/* 战场主体：仅右侧内容（标记面板已移到下方） */
 .battlefield-wrapper {
   display: flex;
   flex-direction: row;
@@ -326,6 +337,53 @@ body {
   gap: 8px;
   padding: 6px 0;
 }
+
+/* ── 下方标记面板（水平，放在下半场） ── */
+.token-panel-bottom {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 1100px;
+  margin-top: 6px;
+}
+.token-panel-bottom-title {
+  font-size: 11px;
+  font-weight: bold;
+  color: #60a5fa;
+  flex-shrink: 0;
+  margin-right: 4px;
+  padding-right: 8px;
+  border-right: 1px solid #334155;
+}
+.token-chip-bottom {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.1s, box-shadow 0.1s;
+  flex-shrink: 0;
+}
+.token-chip-bottom:active { cursor: grabbing; }
+.token-chip-bottom:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px currentColor;
+}
+.token-chip-bottom-emoji { font-size: 14px; line-height: 1; }
+.token-chip-bottom-label { font-size: 9px; font-weight: bold; line-height: 1; }
 
 /* ── 右侧战场内容 ── */
 .battlefield-right {
@@ -598,7 +656,62 @@ body {
   overflow: visible;
 }
 
-/* 符咒区内的drop-zone（绝对定位覆盖整个区域） */
+/* 鬼火硬币面板 — 固定在符咒区右下角 */
+.ghost-fire-panel {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(10, 10, 30, 0.88);
+  border: 1px solid #b45309;
+  border-radius: 8px;
+  padding: 3px 6px;
+  z-index: 20;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+.ghost-fire-icon {
+  font-size: 14px;
+  filter: drop-shadow(0 0 3px #f97316);
+}
+.ghost-fire-count {
+  font-size: 13px;
+  font-weight: bold;
+  color: #fb923c;
+  min-width: 14px;
+  text-align: center;
+}
+.ghost-fire-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+.ghost-fire-btn--add {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+.ghost-fire-btn--add:hover {
+  background: rgba(34, 197, 94, 0.4);
+}
+.ghost-fire-btn--sub {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.ghost-fire-btn--sub:hover {
+  background: rgba(239, 68, 68, 0.4);
+}/* 符咒区内的drop-zone（绝对定位覆盖整个区域） */
 .spell-drop-zone {
   position: absolute;
   top: 0;
@@ -1128,7 +1241,74 @@ body {
 }
 .token-micro-remove:hover:not(:disabled) { border-color: #f87171; color: #fecaca; }
 
-/* 能量/眩晕徽章 */
+/* ============================================================
+   式神牌上圆形标记覆盖层
+   ============================================================ */
+.token-overlay {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  z-index: 8;
+  pointer-events: none;
+}
+.token-overlay-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  font-size: 10px;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+}
+.token-overlay-emoji { font-size: 10px; line-height: 1; }
+.token-overlay-count {
+  position: absolute;
+  top: -4px;
+  right: -5px;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  font-size: 8px;
+  font-weight: bold;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* 己方可移除标记：小按钮行（卡牌下方） */
+.unit-token-remove-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px 2px 0;
+  justify-content: center;
+}
+.token-rm-btn {
+  background: rgba(10, 18, 35, 0.85);
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 1px 3px;
+  cursor: pointer;
+  line-height: 1.2;
+  opacity: 0.8;
+  transition: opacity 0.1s, transform 0.1s;
+}
+.token-rm-btn:hover { opacity: 1; transform: scale(1.1); }
+
+/* ============================================================
+   能量/眩晕徽章（保留兼容旧代码，但新版不再使用） */
 .energy-badge, .stun-badge {
   position: absolute;
   top: -8px;
@@ -1345,6 +1525,90 @@ body {
   line-height: 1.4;
   border-top: 1px solid #2d4a6b;
   padding-top: 8px;
+}
+
+/* 觉醒牌信息区域（式神 tooltip 中） */
+.card-preview-awaken-section {
+  border-top: 2px dashed #7c5cbf;
+  padding-top: 8px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card-preview-awaken-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.card-preview-awaken-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #c084fc;
+}
+.card-preview-awaken-stats {
+  display: flex;
+  gap: 8px;
+}
+.preview-stat--awaken {
+  background: rgba(124,92,191,0.25);
+  color: #d8b4fe;
+  border: 1px solid #7c5cbf;
+}
+.preview-stat-awaken-bonus {
+  color: #a78bfa;
+  font-size: 0.8em;
+  margin-left: 3px;
+}
+.card-preview-awaken-ability {
+  color: #a5b4fc;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
+
+/* 觉醒牌徽章行 — 浮在式神牌右下角 */
+.awaken-badge-row {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 2px;
+  background: transparent;
+  z-index: 10;
+}
+.awaken-badge-row--enemy {
+  opacity: 0.85;
+}
+.awaken-badge {
+  width: 28px;
+  height: 38px;
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(167,139,250,0.7);
+  box-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+  transition: transform 0.15s, border-color 0.1s;
+  flex-shrink: 0;
+}
+.awaken-badge:hover {
+  transform: scale(1.25) translateY(-4px);
+  border-color: #c084fc;
+  z-index: 15;
+}
+.awaken-badge-row--enemy .awaken-badge {
+  cursor: default;
+}
+.awaken-badge-row--enemy .awaken-badge:hover {
+  transform: none;
+}
+.awaken-badge-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* ============================================================

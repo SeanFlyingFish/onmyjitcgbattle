@@ -103,7 +103,8 @@ export function cardFromBuilder(builderCard) {
         health,
         keyword: String(builderCard.keyword ?? ""),
         ability: String(builderCard.ability ?? ""),
-        img: String(builderCard.img ?? "")
+        img: String(builderCard.img ?? ""),
+        alias: builderCard.alias
     };
 }
 export function createPlayer(playerId, name, customDeck) {
@@ -269,7 +270,7 @@ export function submitMulligan(state, playerId, cardIds) {
     }
     return state;
 }
-function newShikigamiEntry(card) {
+function newShikigamiEntry(card, stealth = false) {
     return {
         card,
         exhausted: false,
@@ -280,7 +281,9 @@ function newShikigamiEntry(card) {
         baseHealth: card.health,
         energyMarkers: 0,
         barrierMarkers: 0,
-        stunMarkers: 0
+        stunMarkers: 0,
+        stealth,
+        awakenCards: []
     };
 }
 function effectiveAttack(slot) {
@@ -384,11 +387,17 @@ function removeCardFromSource(state, player, from, cardId) {
 }
 function addCardToTarget(state, player, to, card, toShikigamiSlot, opponentId, 
 /** 如果从式神区移出，传递原始攻击/生命值以在离场时恢复 */
-baseValues) {
-    // 当式神离开战场（到手牌/墓地/牌库）时，恢复原始 attack/health
-    if (baseValues && (to === "hand" || to === "graveyard" || to === "deck_top" || to === "deck_bottom")) {
+baseValues, 
+/** 如果从式神区移出，传递完整的槽位条目以归还觉醒牌 */
+shikigamiEntry) {
+    // 当式神离开战场（到手牌/墓地/牌库/移除区）时，恢复原始 attack/health 并归还觉醒牌
+    if (baseValues && (to === "hand" || to === "graveyard" || to === "deck_top" || to === "deck_bottom" || to === "removed_zone")) {
         card.attack = baseValues.baseAttack;
         card.health = baseValues.baseHealth;
+        // 归还觉醒牌给本人手牌
+        if (shikigamiEntry) {
+            returnAwakenCardsToHand(state, shikigamiEntry, player.id);
+        }
     }
     switch (to) {
         case "hand": {
@@ -423,7 +432,16 @@ baseValues) {
             if (player.shikigamiZone[slot] !== null) {
                 return false;
             }
-            player.shikigamiZone[slot] = newShikigamiEntry(card);
+            if (shikigamiEntry) {
+                // 式神位→式神位移动：保留原槽位的 awakenCards、exhausted 状态及 baseAttack/baseHealth
+                player.shikigamiZone[slot] = {
+                    ...shikigamiEntry,
+                    card
+                };
+            }
+            else {
+                player.shikigamiZone[slot] = newShikigamiEntry(card, /^潜行/.test(card.ability ?? ""));
+            }
             return true;
         }
         case "barrier": {
@@ -520,7 +538,7 @@ export function moveCard(state, actorId, cardId, from, to, toShikigamiSlot, oppo
     const baseValues = shikigamiEntry
         ? { baseAttack: shikigamiEntry.baseAttack, baseHealth: shikigamiEntry.baseHealth }
         : undefined;
-    const ok = addCardToTarget(state, player, to, card, toShikigamiSlot, opponentId, baseValues);
+    const ok = addCardToTarget(state, player, to, card, toShikigamiSlot, opponentId, baseValues, shikigamiEntry);
     if (!ok) {
         restoreCardToSource(player, from, card, spellEntry, shikigamiFromIndex, shikigamiEntry);
         return state;
@@ -566,8 +584,93 @@ export function toggleHandReveal(state, actorId, cardId, reveal) {
     }
     return state;
 }
+/**
+ * 将觉醒牌从手牌或符咒区附着到指定式神下方。
+ * 同时把觉醒牌的 attack/health 累加到式神的 card.attack/health 上（影响显示和战斗）。
+ */
+export function attachAwaken(state, actorId, awakenCardId, from, targetPlayerId, slotIndex) {
+    if (state.winnerId || state.phase !== "playing")
+        return state;
+    const actor = state.players[actorId];
+    const target = state.players[targetPlayerId];
+    if (!actor || !target)
+        return state;
+    const slot = target.shikigamiZone[slotIndex];
+    if (!slot)
+        return state; // 目标位必须有式神
+    // 从手牌或符咒区找到觉醒牌
+    let awakenCard = null;
+    if (from === "hand") {
+        const idx = actor.hand.findIndex(c => c.id === awakenCardId && c.type === "awaken");
+        if (idx === -1)
+            return state;
+        awakenCard = actor.hand.splice(idx, 1)[0];
+    }
+    else {
+        const idx = actor.spellZone.findIndex(e => e.card.id === awakenCardId && e.card.type === "awaken");
+        if (idx === -1)
+            return state;
+        awakenCard = actor.spellZone.splice(idx, 1)[0].card;
+    }
+    // 校验 alias：觉醒牌的 alias 必须与目标式神的名称一致
+    if (awakenCard.alias && awakenCard.alias !== slot.card.name)
+        return state;
+    // 累加觉醒牌的 attack/health 到式神
+    slot.card.attack += (awakenCard.attack ?? 0);
+    slot.card.health += (awakenCard.health ?? 0);
+    // 将觉醒牌挂在式神下方
+    if (!slot.awakenCards)
+        slot.awakenCards = [];
+    slot.awakenCards.push(awakenCard);
+    return state;
+}
+/**
+ * 从式神下方移除指定觉醒牌，回到己方手牌。
+ * 同时撤销对式神 attack/health 的加成。
+ */
+export function detachAwaken(state, actorId, targetPlayerId, slotIndex, awakenCardId) {
+    if (state.winnerId || state.phase !== "playing")
+        return state;
+    const actor = state.players[actorId];
+    const target = state.players[targetPlayerId];
+    if (!actor || !target)
+        return state;
+    const slot = target.shikigamiZone[slotIndex];
+    if (!slot || !slot.awakenCards)
+        return state;
+    const idx = slot.awakenCards.findIndex(c => c.id === awakenCardId);
+    if (idx === -1)
+        return state;
+    const awakenCard = slot.awakenCards.splice(idx, 1)[0];
+    // 撤销加成
+    slot.card.attack = Math.max(0, slot.card.attack - (awakenCard.attack ?? 0));
+    slot.card.health = Math.max(1, slot.card.health - (awakenCard.health ?? 0));
+    // 放回手牌（超出手牌上限则放移除区）
+    if (actor.hand.length < actor.maxHandSize) {
+        actor.hand.push(awakenCard);
+    }
+    else {
+        actor.removedZone.push({ ...awakenCard });
+    }
+    return state;
+}
+/** 式神离场时，将附着的觉醒牌全部归还给所属玩家的手牌 */
+function returnAwakenCardsToHand(state, slot, ownerId) {
+    const owner = state.players[ownerId];
+    if (!owner || !slot.awakenCards || slot.awakenCards.length === 0)
+        return;
+    for (const ac of slot.awakenCards) {
+        if (owner.hand.length < owner.maxHandSize) {
+            owner.hand.push(ac);
+        }
+        else {
+            owner.removedZone.push({ ...ac });
+        }
+    }
+    slot.awakenCards = [];
+}
 export function deckDraw(state, actorId, count, opponentId) {
-    if (state.winnerId || state.phase !== "playing" || state.currentPlayerId !== actorId) {
+    if (state.winnerId || state.phase !== "playing") {
         return state;
     }
     const player = state.players[actorId];
@@ -595,7 +698,7 @@ export function deckShuffle(state, actorId) {
     return state;
 }
 export function deckSearch(state, actorId, count) {
-    if (state.winnerId || state.phase !== "playing" || state.currentPlayerId !== actorId) {
+    if (state.winnerId || state.phase !== "playing") {
         return state;
     }
     const p = state.players[actorId];
@@ -608,6 +711,23 @@ export function deckSearch(state, actorId, count) {
     }
     const n = Math.min(count, p.deck.length);
     p.deckSearchBuffer = p.deck.splice(0, n);
+    p.deckPeekBuffer = [];
+    p.deckCount = p.deck.length;
+    return state;
+}
+/** 将 deckSearchBuffer 中的牌放回牌库顶，不洗牌 */
+export function deckSearchReturn(state, actorId) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const p = state.players[actorId];
+    if (!p) {
+        return state;
+    }
+    if (p.deckSearchBuffer.length > 0) {
+        p.deck = [...p.deckSearchBuffer, ...p.deck];
+        p.deckSearchBuffer = [];
+    }
     p.deckPeekBuffer = [];
     p.deckCount = p.deck.length;
     return state;
@@ -675,7 +795,9 @@ export function placeShikigamiToken(state, _actorId, targetPlayerId, slotIndex, 
             return state;
     }
     if (slot.card.health <= 0) {
-        // 死亡时恢复原始 attack/health
+        // 死亡时归还觉醒牌给所属玩家
+        returnAwakenCardsToHand(state, slot, player.id);
+        // 恢复原始 attack/health
         slot.card.attack = slot.baseAttack;
         slot.card.health = slot.baseHealth;
         player.graveyard.push({ ...slot.card }); // 浅拷贝，防止槽位复用时墓地带走新卡的标记物数据
@@ -792,6 +914,14 @@ export function sanitizeMatchStateForPlayer(state, viewerId) {
                     return { ...e };
                 }
                 return { ...e, concealedForViewer: true };
+            }),
+            shikigamiZone: p.shikigamiZone.map((slot) => {
+                if (!slot)
+                    return null;
+                if (slot.stealth) {
+                    return { ...slot, card: { ...slot.card, name: "", keyword: "", ability: "", img: "" } };
+                }
+                return { ...slot };
             })
         };
         players[pid] = hidden;
@@ -851,7 +981,7 @@ export function playCard(state, actorId, cardId, targetPlayerId, zone) {
         actor.graveyard.push({ ...card }); // 浅拷贝
     }
     else {
-        actor.shikigamiZone[openShikigamiSlot] = newShikigamiEntry(card);
+        actor.shikigamiZone[openShikigamiSlot] = newShikigamiEntry(card, /^潜行/.test(card.ability ?? ""));
     }
     return state;
 }
@@ -896,6 +1026,11 @@ export function attack(state, actorId, attackerCardId, targetPlayerId, target, t
     attackerSlot.card.health -= defPower;
     defenderSlot.card.health -= atkPower;
     if (attackerSlot.card.health <= 0) {
+        // 战死：先归还觉醒牌给攻击方
+        returnAwakenCardsToHand(state, attackerSlot, actor.id);
+        // 恢复原始 attack/health 再入墓
+        attackerSlot.card.attack = attackerSlot.baseAttack;
+        attackerSlot.card.health = attackerSlot.baseHealth;
         actor.graveyard.push({ ...attackerSlot.card }); // 浅拷贝
         actor.shikigamiZone[attackerSlotIndex] = null;
     }
@@ -903,6 +1038,11 @@ export function attack(state, actorId, attackerCardId, targetPlayerId, target, t
         attackerSlot.exhausted = true;
     }
     if (defenderSlot.card.health <= 0) {
+        // 战死：先归还觉醒牌给防御方
+        returnAwakenCardsToHand(state, defenderSlot, targetPlayer.id);
+        // 恢复原始 attack/health 再入墓
+        defenderSlot.card.attack = defenderSlot.baseAttack;
+        defenderSlot.card.health = defenderSlot.baseHealth;
         targetPlayer.graveyard.push({ ...defenderSlot.card }); // 浅拷贝
         targetPlayer.shikigamiZone[defenderSlotIndex] = null;
     }
@@ -949,6 +1089,21 @@ export function toggleShikigamiExhaust(state, actorId, cardId) {
         return state;
     }
     targetShikigami.exhausted = !targetShikigami.exhausted;
+    return state;
+}
+export function toggleShikigamiStealth(state, actorId, cardId, stealth) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const actor = state.players[actorId];
+    if (!actor) {
+        return state;
+    }
+    const targetShikigami = actor.shikigamiZone.find((entry) => entry?.card.id === cardId);
+    if (!targetShikigami) {
+        return state;
+    }
+    targetShikigami.stealth = stealth;
     return state;
 }
 export function endTurn(state, actorId) {
