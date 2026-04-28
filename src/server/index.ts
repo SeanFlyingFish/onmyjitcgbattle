@@ -5,7 +5,7 @@ import { RoomManager } from "./roomManager.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const roomManager = new RoomManager();
-const playerSocket = new Map<WebSocket, { playerId: string; roomId: string }>();
+const playerSocket = new Map<WebSocket, { playerId: string; roomId: string; playerName: string }>();
 
 const server = createServer();
 const wss = new WebSocketServer({ server });
@@ -23,14 +23,14 @@ wss.on("connection", (ws) => {
 
       if (parsed.type === "create_room") {
         const result = roomManager.createRoom(ws, parsed.payload.name);
-        playerSocket.set(ws, result);
+        playerSocket.set(ws, { roomId: result.roomId, playerId: result.playerId, playerName: parsed.payload.name });
         send(ws, { type: "room_created", payload: result });
         return;
       }
 
       if (parsed.type === "join_room") {
         const result = roomManager.joinRoom(parsed.payload.roomId, ws, parsed.payload.name);
-        playerSocket.set(ws, { roomId: result.roomId, playerId: result.playerId });
+        playerSocket.set(ws, { roomId: result.roomId, playerId: result.playerId, playerName: parsed.payload.name });
         roomManager.broadcastRoom(result.roomId, { type: "room_joined", payload: result });
         return;
       }
