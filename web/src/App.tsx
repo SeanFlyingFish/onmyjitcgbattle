@@ -300,7 +300,8 @@ function ShikigamiTokenBelt({
 }
 
 function App() {
-  const [serverUrl, setServerUrl] = useState("ws://localhost:8080");
+  // 本地开发用 ws://localhost:8080，生产环境用 VITE_WS_URL 环境变量
+  const [serverUrl, setServerUrl] = useState(import.meta.env.VITE_WS_URL || "ws://localhost:8080");
   const [name, setName] = useState("玩家");
   const [roomIdInput, setRoomIdInput] = useState("");
   /** 组卡器选择的当前牌库（BuilderCard 格式），由组卡器通过 BroadcastChannel 同步 */
