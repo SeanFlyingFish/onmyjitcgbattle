@@ -492,6 +492,12 @@ function App() {
   const [removedModalOpen, setRemovedModalOpen] = useState(false);
   const [removedModalView, setRemovedModalView] = useState<"self" | "enemy">("self");
   const [importDeckCode, setImportDeckCode] = useState("");
+  /** 召唤物弹窗是否打开 */
+  const [tokenModalOpen, setTokenModalOpen] = useState(false);
+  /** 召唤物弹窗中选中的卡牌 ID */
+  const [tokenSelectedIds, setTokenSelectedIds] = useState<string[]>([]);
+  /** 聊天输入 */
+  const [chatInput, setChatInput] = useState("");
 
   const self = useMemo(() => {
     if (!matchState || !playerId) return null;
@@ -793,7 +799,7 @@ function App() {
       {/* ========== 顶部标题栏 ========== */}
       <header className="app-header">
         <div className="app-title-block">
-          <h1 className="app-title">⚔ 卡牌对战</h1>
+          <h1 className="app-title">⚔ 阴阳师TCG</h1>
         </div>
         <div className="app-header-actions">
           <div className={`conn-dot ${isConnected ? "connected" : "disconnected"}`} title={isConnected ? "已连接" : "未连接"} />
@@ -1410,7 +1416,6 @@ function App() {
                 </div>
               </div>
 
-              {/* 下方玩家区（己方） */}
               <div className="player-area player-area--self">
                 {/* 生命区 */}
                 <div className="life-area">
@@ -1452,6 +1457,16 @@ function App() {
                     <span style={{ color: "#5e88b0", fontSize: "0.75rem" }}>
                       {isMulligan ? "🔄 调度" : `🃏 ${selfView?.hand.length ?? 0}/${selfView?.maxHandSize ?? 12}`}
                     </span>
+                    <button
+                      type="button"
+                      className="btn召唤物"
+                      disabled={!roomId || gameOver}
+                      onClick={() => { setTokenModalOpen(true); setTokenSelectedIds([]); }}
+                      title="从召唤物库选择卡牌"
+                      style={{ fontSize: "0.7rem", padding: "2px 8px" }}
+                    >
+                      🐾 召唤物
+                    </button>
                     <div style={{ display: "flex", gap: "8px" }}>
                       {matchState && !isMulligan && (
                         <button
@@ -1716,6 +1731,19 @@ function App() {
                     <span className="turn-num">第 {matchState.turn} 回合</span>
                   </div>
                 )}
+                <button
+                  type="button"
+                  className="btn-运势"
+                  disabled={!roomId || gameOver || isMulligan}
+                  onClick={() => {
+                    const dice = Math.floor(Math.random() * 6) + 1;
+                    send({ type: "chat", payload: { roomId, message: `🎲 运势：【${dice}】点！` } });
+                  }}
+                  title="掷骰子"
+                  style={{ fontSize: "0.7rem", padding: "2px 8px" }}
+                >
+                  🎲 运势
+                </button>
                 <span className="token-panel-bottom-title">标记</span>
                 {TOKEN_STRIP.map((t) => (
                   <div
@@ -1737,6 +1765,60 @@ function App() {
 
         </section>
       )}
+
+      {/* ========== 聊天面板 ========== */}
+      <div className="chat-panel" style={{
+        display: "flex",
+        gap: "8px",
+        padding: "8px 12px",
+        background: "rgba(0,0,0,0.3)",
+        borderRadius: "8px",
+        marginBottom: "8px"
+      }}>
+        <input
+          type="text"
+          placeholder="输入聊天内容..."
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && chatInput.trim()) {
+              send({ type: "chat", payload: { roomId, message: chatInput.trim() } });
+              setChatInput("");
+            }
+          }}
+          style={{
+            flex: 1,
+            padding: "4px 8px",
+            borderRadius: "4px",
+            border: "1px solid #334155",
+            background: "#1e293b",
+            color: "#e2e8f0",
+            fontSize: "0.8rem"
+          }}
+          disabled={!roomId}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            if (chatInput.trim()) {
+              send({ type: "chat", payload: { roomId, message: chatInput.trim() } });
+              setChatInput("");
+            }
+          }}
+          disabled={!roomId || !chatInput.trim()}
+          style={{
+            padding: "4px 12px",
+            borderRadius: "4px",
+            border: "none",
+            background: "#3b82f6",
+            color: "white",
+            fontSize: "0.8rem",
+            cursor: "pointer"
+          }}
+        >
+          发送
+        </button>
+      </div>
 
       {/* ========== 日志面板（可折叠） ========== */}
       <section className={`collapsible-panel logs-panel ${logsCollapsed ? "collapsed" : ""}`}>
@@ -2065,7 +2147,7 @@ function App() {
       ) : null}
 
       {/* ========== 卡组导入弹窗 ========== */}
-      {importModalOpen && (
+      {importModalOpen ? (
         <div className="import-modal-overlay" onClick={() => setImportModalOpen(false)}>
           <div className="import-modal" onClick={e => e.stopPropagation()}>
             <div className="import-modal-header">
@@ -2110,7 +2192,85 @@ function App() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
+
+      {/* ========== 召唤物(TOKEN)弹窗 ========== */}
+      {tokenModalOpen ? (
+        <div
+          className="deck-modal-backdrop"
+          role="presentation"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setTokenModalOpen(false); }}
+        >
+          <div className="deck-modal" role="dialog" aria-modal="true" style={{ maxWidth: "600px" }}>
+            <h3>🐾 召唤物库</h3>
+            <p className="deck-modal-hint">选择 1 张召唤物，将其置于展示区</p>
+            <div className="deck-modal-scroll">
+              <div className="deck-modal-grid">
+                {Object.values(CARD_DATABASE)
+                  .filter((card) => card.id.startsWith("TOKEN"))
+                  .map((card) => {
+                    const isSelected = tokenSelectedIds.includes(card.id);
+                    return (
+                      <div
+                        key={card.id}
+                        className={`deck-modal-cell ${isSelected ? "deck-modal-cell--selected" : ""}`}
+                        onClick={() => {
+                          setTokenSelectedIds((prev) =>
+                            prev.includes(card.id)
+                              ? prev.filter((id) => id !== card.id)
+                              : prev.length < 1
+                                ? [...prev, card.id]
+                                : prev // 只允许选1张
+                          );
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <img className="deck-modal-thumb" src={card.img || CARD_IMAGE_URL} alt={card.name} />
+                        <span className="deck-modal-name">{card.name}</span>
+                        {card.attack !== undefined && (
+                          <span style={{ fontSize: "0.7rem", color: "#f97316" }}>⚔{card.attack}</span>
+                        )}
+                        {card.health !== undefined && (
+                          <span style={{ fontSize: "0.7rem", color: "#22c55e" }}>♥{card.health}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+            <div className="deck-modal-actions">
+              <button type="button" onClick={() => setTokenModalOpen(false)}>取消</button>
+              <button
+                type="button"
+                disabled={tokenSelectedIds.length === 0 || !roomId || !allowBoardDrag}
+                onClick={() => {
+                  if (tokenSelectedIds.length > 0) {
+                    const tokenCard = CARD_DATABASE[tokenSelectedIds[0]];
+                    if (tokenCard) {
+                      send({
+                        type: "place_token_to_showcase",
+                        payload: {
+                          roomId,
+                          tokenId: tokenCard.id,
+                          tokenName: tokenCard.name,
+                          tokenAttack: tokenCard.attack ?? 0,
+                          tokenHealth: tokenCard.health ?? 2,
+                          tokenImg: tokenCard.img ?? ""
+                        }
+                      });
+                      appendLog(`📋 将【${tokenCard.name}】置于展示区`);
+                    }
+                    setTokenModalOpen(false);
+                    setTokenSelectedIds([]);
+                  }
+                }}
+              >
+                📋 展示
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* 墓地弹窗 */}
       {graveyardModalOpen && (() => {
