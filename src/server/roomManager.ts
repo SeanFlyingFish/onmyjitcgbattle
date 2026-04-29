@@ -17,6 +17,8 @@ import {
   attachAwaken as engineAttachAwaken,
   detachAwaken as engineDetachAwaken,
   placeShikigamiToken as enginePlaceShikigamiToken,
+  placeTokenToShowcase,
+  removeTokenCard,
   playCard,
   preparePlayerForMatch,
   removeShikigamiToken as engineRemoveShikigamiToken,
@@ -264,6 +266,34 @@ export class RoomManager {
       throw new Error("match not started");
     }
     return deckPeek(room.matchState, playerId, count);
+  }
+
+  placeTokenToShowcase(
+    roomId: RoomId,
+    playerId: PlayerId,
+    tokenId: string,
+    tokenName: string,
+    tokenAttack: number,
+    tokenHealth: number,
+    tokenImg: string
+  ): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) {
+      throw new Error("match not started");
+    }
+    return placeTokenToShowcase(room.matchState, playerId, tokenId, tokenName, tokenAttack, tokenHealth, tokenImg);
+  }
+
+  removeTokenCard(
+    roomId: RoomId,
+    playerId: PlayerId,
+    cardId: string
+  ): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) {
+      throw new Error("match not started");
+    }
+    return removeTokenCard(room.matchState, playerId, cardId);
   }
 
   placeShikigamiToken(

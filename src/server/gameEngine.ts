@@ -88,18 +88,20 @@ export function cardFromBuilder(builderCard: BuilderCard): Card {
     case "spell":      type = "spell";     break;
     case "结界":
     case "barrier":    type = "barrier";   break;
+    case "token":      type = "token";     break;
     default:
       console.warn(`[cardFromBuilder] 未知卡牌类型: "${builderCard.type}" (${builderCard.name})，默认为 spell`);
       type = "spell";     break;
   }
 
-  // 攻击/生命：优先使用 attack/health 字段；兼容 Lua 格式的 power/life；觉醒牌也有 attack/health
+  // 攻击/生命：优先使用 attack/health 字段；兼容 Lua 格式的 power/life；觉醒牌也有 attack/health；TOKEN 牌也使用原始数据
   const rawAttack = (builderCard as unknown as { attack?: number }).attack ?? (builderCard as unknown as { power?: number }).power;
   const rawHealth = (builderCard as unknown as { health?: number }).health ?? (builderCard as unknown as { life?: number }).life;
   const isShikigami = type === "shikigami";
-  // 有原始数据时直接用；式神没有原始数据时随机生成；觉醒/其他类型无数据时为 0
-  const attack = rawAttack !== undefined ? rawAttack : (isShikigami ? Math.max(1, Math.min(10, cost + Math.floor(Math.random() * 3) - 1)) : 0);
-  const health = rawHealth !== undefined ? rawHealth : (isShikigami ? Math.max(1, Math.max(2, cost + Math.floor(Math.random() * 4) - 1)) : 0);
+  const isToken = type === "token";
+  // 有原始数据时直接用；式神/TOKEN 没有原始数据时随机生成；其他类型无数据时为 0
+  const attack = rawAttack !== undefined ? rawAttack : (isShikigami || isToken ? Math.max(1, Math.min(10, cost + Math.floor(Math.random() * 3) - 1)) : 0);
+  const health = rawHealth !== undefined ? rawHealth : (isShikigami || isToken ? Math.max(1, Math.max(2, cost + Math.floor(Math.random() * 4) - 1)) : 0);
 
   return {
     id: nanoid(10),
@@ -472,6 +474,10 @@ function addCardToTarget(
       return true;
     }
     case "graveyard": {
+      // TOKEN 牌离场时直接删除（不保留在墓地）
+      if (card.type === "token") {
+        return true; // 已从场上移除，不保留
+      }
       player.graveyard.push({ ...card }); // 浅拷贝，防止后续槽位复用时意外污染墓地的卡牌数据
       return true;
     }
@@ -840,6 +846,52 @@ export function deckPeek(state: MatchState, actorId: PlayerId, count: number): M
   }
   const n = Math.min(count, p.deck.length);
   p.deckPeekBuffer = p.deck.slice(0, n).map((c) => ({ ...c }));
+  return state;
+}
+
+/** 将召唤物（TOKEN）卡牌从召唤物库置于展示区 */
+export function placeTokenToShowcase(
+  state: MatchState,
+  actorId: PlayerId,
+  tokenId: string,
+  tokenName: string,
+  tokenAttack: number,
+  tokenHealth: number,
+  tokenImg: string
+): MatchState {
+  if (state.winnerId || state.phase !== "playing") {
+    return state;
+  }
+  // TOKEN 卡牌 ID 必须以 "TOKEN" 开头
+  if (!tokenId.startsWith("TOKEN")) {
+    return state;
+  }
+  const tokenCard: Card = {
+    id: nanoid(10),
+    name: tokenName,
+    type: "token",
+    cost: 0,
+    attack: tokenAttack,
+    health: tokenHealth,
+    img: tokenImg
+  };
+  state.showcaseZone.push(tokenCard);
+  return state;
+}
+
+/** 从展示区移除召唤物卡牌（直接删除，不保留到墓地） */
+export function removeTokenCard(
+  state: MatchState,
+  _actorId: PlayerId,
+  cardId: string
+): MatchState {
+  if (state.winnerId || state.phase !== "playing") {
+    return state;
+  }
+  const idx = state.showcaseZone.findIndex(c => c.id === cardId);
+  if (idx === -1) return state;
+  // 直接删除，不保留到墓地
+  state.showcaseZone.splice(idx, 1);
   return state;
 }
 

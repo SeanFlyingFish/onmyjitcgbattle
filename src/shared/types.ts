@@ -3,7 +3,7 @@ import { z } from "zod";
 export type PlayerId = string;
 export type RoomId = string;
 
-export type CardType = "shikigami" | "awaken" | "spell" | "attach" | "barrier";
+export type CardType = "shikigami" | "awaken" | "spell" | "attach" | "barrier" | "token";
 
 export type Card = {
   id: string;
@@ -312,6 +312,26 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     payload: z.object({
       roomId: z.string().min(1),
       message: z.string().min(1)
+    })
+  }),
+  // 召唤物展示：从召唤物库选择一张卡牌置于展示区
+  z.object({
+    type: z.literal("place_token_to_showcase"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      tokenId: z.string().min(1),
+      tokenName: z.string().min(1),
+      tokenAttack: z.number(),
+      tokenHealth: z.number(),
+      tokenImg: z.string()
+    })
+  }),
+  // 移除展示区的召唤物卡牌（直接删除）
+  z.object({
+    type: z.literal("remove_token_card"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      cardId: z.string().min(1)
     })
   })
 ]);

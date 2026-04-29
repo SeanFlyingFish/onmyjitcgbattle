@@ -254,6 +254,31 @@ wss.on("connection", (ws) => {
         roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
         return;
       }
+
+      if (parsed.type === "place_token_to_showcase") {
+        const state = roomManager.placeTokenToShowcase(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.tokenId,
+          parsed.payload.tokenName,
+          parsed.payload.tokenAttack,
+          parsed.payload.tokenHealth,
+          parsed.payload.tokenImg
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      // 移除展示区的召唤物卡牌（直接删除）
+      if (parsed.type === "remove_token_card") {
+        const state = roomManager.removeTokenCard(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.cardId
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "unknown error";
       send(ws, { type: "error", payload: { message } });
