@@ -1,76 +1,16 @@
 import { createServer } from "http";
-import { readFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
 import WebSocket, { WebSocketServer } from "ws";
 import { ClientEventSchema, ServerEvent } from "../shared/types.js";
 import { RoomManager } from "./roomManager.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 8080);
-// 前端静态文件目录：后端编译后在 dist/server/，前端在 dist/public/
-const WEB_DIST = join(__dirname, "../public");
 const roomManager = new RoomManager();
 const playerSocket = new Map<WebSocket, { playerId: string; roomId: string; playerName: string }>();
 
-// MIME 类型映射
-const MIME_TYPES: Record<string, string> = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
-  ".webp": "image/webp",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-  ".ttf": "font/ttf",
-};
-
 const server = createServer((req, res) => {
-  // 静态文件服务：提供 web/dist 下的文件
-  let urlPath = req.url?.split("?")[0] || "/";
-  if (urlPath === "/") urlPath = "/index.html";
-
-  const filePath = join(WEB_DIST, urlPath);
-
-  // 安全检查：防止路径穿越
-  if (!filePath.startsWith(WEB_DIST)) {
-    res.writeHead(403);
-    res.end("Forbidden");
-    return;
-  }
-
-  if (existsSync(filePath)) {
-    const ext = filePath.substring(filePath.lastIndexOf("."));
-    const contentType = MIME_TYPES[ext] || "application/octet-stream";
-    try {
-      const content = readFileSync(filePath);
-      res.writeHead(200, { "Content-Type": contentType });
-      res.end(content);
-      return;
-    } catch {
-      // 读取失败，回退到 index.html
-    }
-  }
-
-  // SPA 回退：找不到文件时返回 index.html（让前端路由处理）
-  const indexPath = join(WEB_DIST, "index.html");
-  if (existsSync(indexPath)) {
-    try {
-      const content = readFileSync(indexPath);
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      res.end(content);
-      return;
-    } catch {
-      // 读取失败
-    }
-  }
-
-  res.writeHead(404);
-  res.end("Not Found");
+  // 后端只处理 WebSocket，HTTP 请求返回 200 即可
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("onmyoji-tcg server");
 });
 
 const wss = new WebSocketServer({ server });

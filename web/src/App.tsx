@@ -383,10 +383,14 @@ function ShikigamiTokenBelt({
 }
 
 function App() {
-  // 自动根据当前页面域名生成 WebSocket 地址，无需手动配置
-  const wsProtocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss:" : "ws:";
-  const wsHost = typeof window !== "undefined" ? window.location.host : "localhost:8080";
-  const [serverUrl, setServerUrl] = useState(`${wsProtocol}//${wsHost}`);
+  // 优先使用构建时注入的环境变量 VITE_WS_URL，否则根据当前页面域名自动生成
+  const envWsUrl = typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_WS_URL;
+  const defaultUrl = envWsUrl || (() => {
+    const wsProtocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsHost = typeof window !== "undefined" ? window.location.host : "localhost:8080";
+    return `${wsProtocol}//${wsHost}`;
+  })();
+  const [serverUrl, setServerUrl] = useState(defaultUrl);
   const [name, setName] = useState("玩家");
   const [roomIdInput, setRoomIdInput] = useState("");
   /** 组卡器选择的当前牌库（BuilderCard 格式），由组卡器通过 BroadcastChannel 同步 */
