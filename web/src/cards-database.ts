@@ -3461,7 +3461,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "shikigami",
     "cost": 2,
     "keyword": "兽妖",
-    "ability": "召唤：运势 2X：抽X张牌。横置：获得1枚「鬼火钱币」。",
+    "ability": "召唤：运势 2X：抽X张牌。\n横置：你本回合造成的伤害+1。",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_33.webp",
     "attack": 0,
     "health": 1
@@ -4080,7 +4080,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "ability": "守护\n激怒：毒伤此牌，执行X次。\n你可以失去此效果，将此牌的所有毒伤标记变为{命}增幅。\n（X为本次伤害）",
     "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_80.webp?v=3.2.1.0",
     "attack": 2,
-    "health": 7
+    "health": 8
   },  "BPP081": {
     "id": "BPP081",
     "name": "肿胀体质",
@@ -4209,8 +4209,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "shikigami",
     "cost": 5,
     "keyword": "苍叶",
-    "ability": "召唤：使你场上的1个角色恢复4{命}。\n鼓舞：你场上的式神获得过量恢复时，从你墓地选择1个费用不大于X的式神召唤到你场上。单次对多个式神同时造成的过量恢复仅生效1次。\n（X为该式神本次过量恢复的{命}）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_90.webp?v=3.2.1.0",
+    "ability": "召唤：使你场上的1个角色恢复4{命}。\n鼓舞：你场上的式神获得过量恢复时，从你墓地选择1个费用不大于X的「丰实之姿」以外的式神召唤到你场上。单次对多个式神同时造成的过量恢复仅生效1次。\n（X为本次过量恢复的{命}）",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_90.webp?v=3.2.1.2",
     "attack": 2,
     "health": 8
   },  "BPP091": {

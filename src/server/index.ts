@@ -236,9 +236,10 @@ wss.on("connection", (ws) => {
       }
 
       if (parsed.type === "adjust_player_hp") {
+        const targetId = parsed.payload.targetPlayerId ?? session.playerId;
         const state = roomManager.adjustPlayerHp(
           parsed.payload.roomId,
-          session.playerId,
+          targetId,
           parsed.payload.delta
         );
         roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
@@ -249,6 +250,38 @@ wss.on("connection", (ws) => {
         const state = roomManager.adjustGhostFire(
           parsed.payload.roomId,
           session.playerId,
+          parsed.payload.delta
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      if (parsed.type === "adjust_fortune_fire") {
+        const state = roomManager.adjustFortuneFire(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.delta
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      if (parsed.type === "adjust_player_poison") {
+        const targetId = parsed.payload.targetPlayerId ?? session.playerId;
+        const state = roomManager.adjustPlayerPoison(
+          parsed.payload.roomId,
+          targetId,
+          parsed.payload.delta
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      if (parsed.type === "adjust_player_damage") {
+        const targetId = parsed.payload.targetPlayerId ?? session.playerId;
+        const state = roomManager.adjustPlayerDamage(
+          parsed.payload.roomId,
+          targetId,
           parsed.payload.delta
         );
         roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
@@ -275,6 +308,85 @@ wss.on("connection", (ws) => {
           parsed.payload.roomId,
           session.playerId,
           parsed.payload.cardId
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      // 结界区添加能量标记
+      if (parsed.type === "place_barrier_token") {
+        const state = roomManager.placeBarrierToken(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.targetPlayerId,
+          parsed.payload.tokenKind
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      // 结界区移除能量标记
+      if (parsed.type === "remove_barrier_token") {
+        const state = roomManager.removeBarrierToken(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.targetPlayerId,
+          parsed.payload.tokenKind
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      // 添加自定义标记到结界区
+      if (parsed.type === "add_custom_marker") {
+        const state = roomManager.addCustomMarker(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.targetPlayerId,
+          parsed.payload.markerName,
+          parsed.payload.delta
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      // 添加自定义标记到式神
+      if (parsed.type === "add_custom_marker_to_shikigami") {
+        const state = roomManager.addCustomMarkerToShikigami(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.targetPlayerId,
+          parsed.payload.slotIndex,
+          parsed.payload.markerName,
+          parsed.payload.delta
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      // 添加自定义标记到符咒区
+      if (parsed.type === "add_custom_marker_to_spell") {
+        const state = roomManager.addCustomMarkerToSpell(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.targetPlayerId,
+          parsed.payload.cardId,
+          parsed.payload.markerName,
+          parsed.payload.delta
+        );
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
+      // 添加自定义标记到延伸区
+      if (parsed.type === "add_custom_marker_to_extend") {
+        const state = roomManager.addCustomMarkerToExtend(
+          parsed.payload.roomId,
+          session.playerId,
+          parsed.payload.targetPlayerId,
+          parsed.payload.cardId,
+          parsed.payload.markerName,
+          parsed.payload.delta
         );
         roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
         return;

@@ -14,7 +14,7 @@ type SpellZoneCard = {
   revealedToOpponent?: boolean;
   concealedForViewer?: boolean;
 };
-type ShikigamiTokenKind = "attack_plus" | "attack_minus" | "health_plus" | "health_minus" | "damage" | "energy" | "barrier" | "stun" | "silence" | "poison" | "weaken";
+type ShikigamiTokenKind = "attack_plus" | "attack_minus" | "health_plus" | "health_minus" | "damage" | "energy" | "barrier" | "stun" | "silence" | "poison" | "weaken" | "confusion";
 
 type ShikigamiZoneCard = {
   card: Card;
@@ -38,6 +38,10 @@ type ShikigamiZoneCard = {
   poisonMarkers: number;
   /** 虚弱标记 */
   weakenMarkers: number;
+  /** 混乱标记 */
+  confusionMarkers: number;
+  /** 自定义万能标记 { name: count } */
+  customMarkers?: Record<string, number>;
   /** 潜行状态 */
   stealth: boolean;
   /** 附着在该式神下方的觉醒牌 */
@@ -64,6 +68,7 @@ type PlayerState = {
   deckPeekBuffer: Card[];
   revealedHandIds?: string[];
   ghostFireCoins?: number;
+  fortuneFireCount?: number;
 };
 
 type MatchState = {
@@ -118,6 +123,7 @@ const TOKEN_STRIP: { kind: ShikigamiTokenKind; label: string; hint: string; emoj
   { kind: "silence",      label: "默",  hint: "沉默",      emoji: "🚫", color: "#475569" },
   { kind: "poison",       label: "毒",  hint: "毒伤",      emoji: "☠️", color: "#84cc16" },
   { kind: "weaken",       label: "弱",  hint: "虚弱",      emoji: "💤", color: "#f59e0b" },
+  { kind: "confusion",    label: "乱",  hint: "混乱",      emoji: "👹", color: "#e879f9" },
 ];
 
 function setDragPayload(e: DragEvent, cardId: string, from: DragFrom, cardType?: string) {
@@ -161,6 +167,8 @@ function ShikigamiCardFace({
   onCardDragStart,
   onHoverEnter,
   onHoverLeave,
+  onTokenBadgeClick,
+  onCustomTokenBadgeClick,
 }: {
   slot: ShikigamiZoneCard;
   interactive: boolean;
@@ -172,10 +180,13 @@ function ShikigamiCardFace({
   onCardDragStart: (e: DragEvent<HTMLImageElement>) => void;
   onHoverEnter?: () => void;
   onHoverLeave?: () => void;
+  /** 点击圆形标记的回调（固定标记传 kind，自定义标记传 customName） */
+  onTokenBadgeClick?: (kind: ShikigamiTokenKind) => void;
+  onCustomTokenBadgeClick?: (customName: string) => void;
 }) {
   const atk = effectiveAttackValue(slot);
-  // card.health 已含 awaken 加血 + healthModifier（±命）；damageMarkers 为额外扣血需减掉
-  const hp = Math.max(1, (slot.card.health ?? 0) - (slot.damageMarkers ?? 0));
+  // card.health 已含 awaken 加血 + healthModifier + damageMarkers扣血（后端已合并计算），直接使用
+  const hp = Math.max(1, slot.card.health ?? 0);
   const energy = slot.energyMarkers ?? 0;
   const stealthed = slot.stealth;
   const showBack = isHidden && stealthed;
@@ -196,9 +207,13 @@ function ShikigamiCardFace({
       case "silence":      count = slot.silenceMarkers ?? 0; break;
       case "poison":       count = slot.poisonMarkers ?? 0; break;
       case "weaken":       count = slot.weakenMarkers ?? 0; break;
+      case "confusion":    count = slot.confusionMarkers ?? 0; break;
     }
     if (count > 0) activeTokens.push({ kind: t.kind, count, emoji: t.emoji, color: t.color });
   });
+
+  // 收集自定义标记
+  const customTokenEntries: [string, number][] = Object.entries(slot.customMarkers ?? {}).filter(([, c]) => c > 0);
 
   return (
     <div
@@ -224,16 +239,31 @@ function ShikigamiCardFace({
           </div>
         )}
         {/* 圆形标记徽章 - 覆盖在卡面上 */}
-        {!showBack && activeTokens.length > 0 && (
+        {!showBack && (activeTokens.length > 0 || customTokenEntries.length > 0) && (
           <div className="token-overlay">
             {activeTokens.map(({ kind, count, emoji, color }) => (
               <div
                 key={kind}
-                className="token-overlay-badge"
+                className={`token-overlay-badge${onTokenBadgeClick ? " token-overlay-badge--clickable" : ""}`}
                 style={{ background: `${color}22`, borderColor: color, color }}
-                title={`${TOKEN_STRIP.find(t => t.kind === kind)?.hint} ×${count}`}
+                title={`${TOKEN_STRIP.find(t => t.kind === kind)?.hint} ×${count}（点击调整）`}
+                onClick={(e) => { e.stopPropagation(); onTokenBadgeClick?.(kind); }}
+                onMouseDown={(e) => e.stopPropagation()}
               >
                 <span className="token-overlay-emoji">{emoji}</span>
+                {count > 1 && <span className="token-overlay-count">{count}</span>}
+              </div>
+            ))}
+            {customTokenEntries.map(([name, count]) => (
+              <div
+                key={`custom-${name}`}
+                className={`token-overlay-badge${onCustomTokenBadgeClick ? " token-overlay-badge--clickable" : ""}`}
+                style={{ background: "rgba(56,189,248,0.13)", borderColor: "#38bdf8", color: "#38bdf8" }}
+                title={`${name} ×${count}（点击调整）`}
+                onClick={(e) => { e.stopPropagation(); onCustomTokenBadgeClick?.(name); }}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <span className="token-overlay-emoji">🏷️</span>
                 {count > 1 && <span className="token-overlay-count">{count}</span>}
               </div>
             ))}
@@ -258,17 +288,26 @@ function ShikigamiCardFace({
 function ShikigamiTokenBelt({
   slot,
   interactive,
-  onRemoveToken
+  expandedKind,
+  expandedCustomName,
+  onAddToken,
+  onRemoveToken,
+  onAddCustomToken,
+  onRemoveCustomToken,
 }: {
   slot: ShikigamiZoneCard;
   interactive: boolean;
+  /** 当前展开的固定标记类型 */
+  expandedKind: ShikigamiTokenKind | null;
+  /** 当前展开的自定义标记名称 */
+  expandedCustomName: string | null;
+  onAddToken?: (kind: ShikigamiTokenKind) => void;
   onRemoveToken?: (kind: ShikigamiTokenKind) => void;
+  onAddCustomToken?: (name: string) => void;
+  onRemoveCustomToken?: (name: string) => void;
 }) {
-  // 只在 interactive 模式（己方）下显示可移除按钮行
-  if (!interactive) return null;
   const stop = (e: MouseEvent) => e.stopPropagation();
 
-  // 有任何标记才渲染
   const am = slot.attackModifier ?? 0;
   const hm = slot.healthModifier ?? 0;
   const dm = slot.damageMarkers ?? 0;
@@ -278,25 +317,69 @@ function ShikigamiTokenBelt({
   const poison = slot.poisonMarkers ?? 0;
   const weaken = slot.weakenMarkers ?? 0;
   const energy = slot.energyMarkers ?? 0;
+  const confusion = slot.confusionMarkers ?? 0;
 
-  const hasAny = am !== 0 || hm !== 0 || dm > 0 || barrier > 0 || stun > 0 || silence > 0 || poison > 0 || weaken > 0 || energy > 0;
+  type TokenItem = { count: number; kind: ShikigamiTokenKind; icon: string; color: string; title: string };
+  const tokenConfig: TokenItem[] = [
+    { count: energy, kind: "energy", icon: "⚡", color: "#60a5fa", title: "能量" },
+    { count: barrier, kind: "barrier", icon: "🛡️", color: "#94a3b8", title: "屏障" },
+    { count: stun, kind: "stun", icon: "💫", color: "#a78bfa", title: "眩晕" },
+    { count: silence, kind: "silence", icon: "🚫", color: "#64748b", title: "沉默" },
+    { count: poison, kind: "poison", icon: "☠️", color: "#84cc16", title: "毒伤" },
+    { count: weaken, kind: "weaken", icon: "💤", color: "#f59e0b", title: "虚弱" },
+    { count: confusion, kind: "confusion", icon: "👹", color: "#e879f9", title: "混乱" },
+    { count: am > 0 ? am : 0, kind: "attack_plus", icon: "⚔️", color: "#fb923c", title: "+攻" },
+    { count: am < 0 ? -am : 0, kind: "attack_minus", icon: "⚔️", color: "#94a3b8", title: "-攻" },
+    { count: hm > 0 ? hm : 0, kind: "health_plus", icon: "💚", color: "#4ade80", title: "+命" },
+    { count: hm < 0 ? -hm : 0, kind: "health_minus", icon: "💔", color: "#c084fc", title: "-命" },
+    { count: dm, kind: "damage", icon: "🩸", color: "#f87171", title: "伤害" },
+  ].filter(t => t.count > 0);
+
+  // 收集自定义标记
+  const customEntries = Object.entries(slot.customMarkers ?? {}).filter(([, c]) => c > 0);
+
+  const hasAny = tokenConfig.length > 0 || customEntries.length > 0;
   if (!hasAny) return null;
 
-  return (
-    <div className="unit-token-remove-row" onClick={stop}>
-      {energy > 0 && <button type="button" className="token-rm-btn" style={{ color: "#60a5fa" }} onClick={(e) => { stop(e); onRemoveToken?.("energy"); }} title="移除能量">⚡-</button>}
-      {barrier > 0 && <button type="button" className="token-rm-btn" style={{ color: "#94a3b8" }} onClick={(e) => { stop(e); onRemoveToken?.("barrier"); }} title="移除屏障">🛡️-</button>}
-      {stun > 0 && <button type="button" className="token-rm-btn" style={{ color: "#a78bfa" }} onClick={(e) => { stop(e); onRemoveToken?.("stun"); }} title="移除眩晕">💫-</button>}
-      {silence > 0 && <button type="button" className="token-rm-btn" style={{ color: "#64748b" }} onClick={(e) => { stop(e); onRemoveToken?.("silence"); }} title="移除沉默">🚫-</button>}
-      {poison > 0 && <button type="button" className="token-rm-btn" style={{ color: "#84cc16" }} onClick={(e) => { stop(e); onRemoveToken?.("poison"); }} title="移除毒伤">☠️-</button>}
-      {weaken > 0 && <button type="button" className="token-rm-btn" style={{ color: "#f59e0b" }} onClick={(e) => { stop(e); onRemoveToken?.("weaken"); }} title="移除虚弱">💤-</button>}
-      {am > 0 && <button type="button" className="token-rm-btn" style={{ color: "#fb923c" }} onClick={(e) => { stop(e); onRemoveToken?.("attack_plus"); }} title="移除+攻">⚔️+</button>}
-      {am < 0 && <button type="button" className="token-rm-btn" style={{ color: "#94a3b8" }} onClick={(e) => { stop(e); onRemoveToken?.("attack_minus"); }} title="移除-攻">⚔️-</button>}
-      {hm > 0 && <button type="button" className="token-rm-btn" style={{ color: "#4ade80" }} onClick={(e) => { stop(e); onRemoveToken?.("health_plus"); }} title="移除+命">💚+</button>}
-      {hm < 0 && <button type="button" className="token-rm-btn" style={{ color: "#c084fc" }} onClick={(e) => { stop(e); onRemoveToken?.("health_minus"); }} title="移除-命">💔-</button>}
-      {dm > 0 && <button type="button" className="token-rm-btn" style={{ color: "#f87171" }} onClick={(e) => { stop(e); onRemoveToken?.("damage"); }} title="移除伤害">🩸-</button>}
-    </div>
-  );
+  // 非交互模式：不显示下方控制区
+  if (!interactive) return null;
+
+  // 展开了固定标记：显示 emoji + 标签名 + [-] + 数量 + [+]
+  if (expandedKind) {
+    const t = tokenConfig.find(t => t.kind === expandedKind);
+    if (!t) return null;
+    return (
+      <div className="unit-token-ctrl-row" onClick={stop} onMouseDown={(e) => e.stopPropagation()}>
+        <span className="token-ctrl-label" style={{ color: t.color }}>
+          <span className="token-ctrl-emoji">{t.icon}</span>
+          <span className="token-ctrl-name">{t.title}</span>
+        </span>
+        <button type="button" className="token-ctrl-btn token-ctrl-btn--remove" onClick={(e) => { stop(e); onRemoveToken?.(t.kind); }} title={`减少${t.title}`}>−</button>
+        <span className="token-ctrl-count" style={{ color: t.color }}>{t.count}</span>
+        <button type="button" className="token-ctrl-btn token-ctrl-btn--add" onClick={(e) => { stop(e); onAddToken?.(t.kind); }} title={`增加${t.title}`}>+</button>
+      </div>
+    );
+  }
+
+  // 展开了自定义标记
+  if (expandedCustomName) {
+    const entry = customEntries.find(([name]) => name === expandedCustomName);
+    if (!entry) return null;
+    const [name, count] = entry;
+    return (
+      <div className="unit-token-ctrl-row" onClick={stop} onMouseDown={(e) => e.stopPropagation()}>
+        <span className="token-ctrl-label" style={{ color: "#38bdf8" }}>
+          <span className="token-ctrl-emoji">🏷️</span>
+          <span className="token-ctrl-name">{name}</span>
+        </span>
+        <button type="button" className="token-ctrl-btn token-ctrl-btn--remove" onClick={(e) => { stop(e); onRemoveCustomToken?.(name); }} title={`减少${name}`}>−</button>
+        <span className="token-ctrl-count" style={{ color: "#38bdf8" }}>{count}</span>
+        <button type="button" className="token-ctrl-btn token-ctrl-btn--add" onClick={(e) => { stop(e); onAddCustomToken?.(name); }} title={`增加${name}`}>+</button>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function App() {
@@ -443,8 +526,13 @@ function App() {
   /** 通用卡牌悬停状态（用于棋盘上所有区域的卡牌） */
   const [hoveredBoardCardId, setHoveredBoardCardId] = useState<string | null>(null);
   const [hoveredBoardCardData, setHoveredBoardCardData] = useState<Card | null>(null);
-  /** 悬浮的式神槽位（含觉醒牌信息，用于 tooltip 增强展示） */
-  const [hoveredShikigamiSlot, setHoveredShikigamiSlot] = useState<ShikigamiZoneCard | null>(null);
+/** 悬浮的式神槽位（含觉醒牌信息，用于 tooltip 增强展示） */
+const [hoveredShikigamiSlot, setHoveredShikigamiSlot] = useState<ShikigamiZoneCard | null>(null);
+/** 标记展开状态：点击圆形标记时展开对应标记的加减面板 */
+const [expandedToken, setExpandedToken] = useState<{ slotCardId: string; kind: ShikigamiTokenKind } | { slotCardId: string; customName: string } | null>(null);
+/** 万能标记弹窗状态 */
+const [customTokenPrompt, setCustomTokenPrompt] = useState<{ playerId: string; slotIndex: number } | null>(null);
+const [customTokenNameInput, setCustomTokenNameInput] = useState("");
   const [mulliganSelectedIds, setMulliganSelectedIds] = useState<Set<string>>(new Set());
   const [spellFlipMode, setSpellFlipMode] = useState(false);
   /** 潜行模式：点击后选择式神进入潜行 */
@@ -504,11 +592,15 @@ function App() {
     return matchState.players[playerId] ?? null;
   }, [matchState, playerId]);
 
-  const enemy = useMemo(() => {
+  const enemyId = useMemo(() => {
     if (!matchState || !playerId) return null;
-    const targetId = Object.keys(matchState.players).find((id) => id !== playerId);
-    return targetId ? matchState.players[targetId] : null;
+    return Object.keys(matchState.players).find((id) => id !== playerId) ?? null;
   }, [matchState, playerId]);
+
+  const enemy = useMemo(() => {
+    if (!matchState || !enemyId) return null;
+    return matchState.players[enemyId];
+  }, [matchState, enemyId]);
 
   const phase = matchState?.phase ?? "playing";
   const isMulligan = phase === "mulligan";
@@ -521,6 +613,19 @@ function App() {
       setLobbyCollapsed(true);
     }
   }, [Boolean(matchState)]);
+
+  // 鼠标按下时隐藏悬浮预览并收起标记面板
+  useEffect(() => {
+    const hide = () => {
+      setHoveredHandCardId(null);
+      setHoveredBoardCardId(null);
+      setHoveredBoardCardData(null);
+      setHoveredShikigamiSlot(null);
+      setExpandedToken(null);
+    };
+    window.addEventListener("mousedown", hide);
+    return () => window.removeEventListener("mousedown", hide);
+  }, []);
 
   // 游戏开始时提示先手玩家
   useEffect(() => {
@@ -554,6 +659,7 @@ function App() {
       silenceMarkers: entry.silenceMarkers ?? 0,
       poisonMarkers: entry.poisonMarkers ?? 0,
       weakenMarkers: entry.weakenMarkers ?? 0,
+      confusionMarkers: entry.confusionMarkers ?? 0,
     };
   }
 
@@ -573,7 +679,8 @@ function App() {
       spellCardsPlayedThisTurn: player.spellCardsPlayedThisTurn ?? 0,
       deckSearchBuffer: player.deckSearchBuffer ?? [],
       deckPeekBuffer: player.deckPeekBuffer ?? [],
-      ghostFireCoins: player.ghostFireCoins ?? 0
+      ghostFireCoins: player.ghostFireCoins ?? 0,
+      fortuneFireCount: player.fortuneFireCount ?? 0
     };
   }
 
@@ -728,9 +835,22 @@ function App() {
     send({ type: "adjust_player_hp", payload: { roomId, delta } });
   }
 
+  function adjustPlayerPoisonByDelta(delta: number) {
+    send({ type: "adjust_player_poison", payload: { roomId, delta } });
+  }
+
+  function adjustPlayerDamageByDelta(delta: number) {
+    send({ type: "adjust_player_damage", payload: { roomId, delta } });
+  }
+
   function adjustGhostFireBy(delta: number) {
     if (!roomId) return;
     send({ type: "adjust_ghost_fire", payload: { roomId, delta } });
+  }
+
+  function adjustFortuneFireBy(delta: number) {
+    if (!roomId) return;
+    send({ type: "adjust_fortune_fire", payload: { roomId, delta } });
   }
 
   function onDropToZone(e: DragEvent, to: DragTo, toShikigamiSlot?: number, tokenTargetPlayerId?: string) {
@@ -939,13 +1059,29 @@ function App() {
             <div className="battlefield-right">
 
               {/* 上方玩家区（敌方） */}
-              <div className="player-area">
-                {/* 生命区 */}
-                <div className="life-area">
-                  <div className="life-num">{enemyView?.hp ?? 30}</div>
-                  <div className="life-btn">
-                    <button type="button" onClick={() => adjustSelfHpByDelta(-1)} title="敌方生命-1">-</button>
-                    <button type="button" onClick={() => adjustSelfHpByDelta(1)} title="敌方生命+1">+</button>
+              <div className="player-area" style={{ border: '2px solid #ef4444' }}>
+                {/* 毒伤/伤害胶囊（生命框外上方，只读） */}
+                <div className="life-zone">
+                  <div className="player-stats-above">
+                    <div className="stat-capsule stat-capsule--poison">
+                      <span className="stat-capsule-icon">☠️</span>
+                      <span className="stat-capsule-value">{enemyView?.poisonMarkers ?? 0}</span>
+                    </div>
+                    <div className="stat-capsule stat-capsule--damage">
+                      <span className="stat-capsule-icon">🩸</span>
+                      <span className="stat-capsule-value">{enemyView?.playerDamage ?? 0}</span>
+                    </div>
+                  </div>
+                  <div className="life-area">
+                    <div className="life-num">{enemyView?.hp ?? 30}</div>
+                    <div className="life-btn">
+                      <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
+                        onClick={() => enemyId && send({ type: "adjust_player_hp", payload: { roomId, targetPlayerId: enemyId, delta: -1 } })}
+                        title="敌方生命-1">-</button>
+                      <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
+                        onClick={() => enemyId && send({ type: "adjust_player_hp", payload: { roomId, targetPlayerId: enemyId, delta: 1 } })}
+                        title="敌方生命+1">+</button>
+                    </div>
                   </div>
                 </div>
 
@@ -1009,6 +1145,13 @@ function App() {
                   <span className="area-count">{enemyView?.deckCount ?? 0}张</span>
                 </div>
                 <div className="area spell-area area--enemy" id="enemy-spell-zone">
+                  {/* 左上角：符咒区卡牌数量 */}
+                  <span className="spell-count-badge">{enemyView?.spellZone.length ?? 0}</span>
+                  {/* 右上角：鬼火数量（只读） */}
+                  <div className="fortune-fire-panel fortune-fire-panel--enemy">
+                    <span className="fortune-fire-icon">🔥</span>
+                    <span className="fortune-fire-count">{enemyView?.fortuneFireCount ?? 0}</span>
+                  </div>
                   <div
                     className="spell-drop-zone"
                     onDragOver={(e) => allowBoardDrag && e.preventDefault()}
@@ -1037,6 +1180,11 @@ function App() {
                         />
                       );
                     })}
+                  </div>
+                  {/* 鬼火硬币（敌方，只读） */}
+                  <div className="ghost-fire-panel ghost-fire-panel--enemy">
+                    <span className="ghost-fire-icon" title="鬼火硬币">🪙</span>
+                    <span className="ghost-fire-count">{enemyView?.ghostFireCoins ?? 0}</span>
                   </div>
                 </div>
                 <div className="area ratio-7-9 area--enemy">
@@ -1107,7 +1255,7 @@ function App() {
                                 ))}
                               </div>
                             )}
-                            {!slot.stealth && <ShikigamiTokenBelt slot={slot} interactive={false} />}
+                            {!slot.stealth && <ShikigamiTokenBelt slot={slot} interactive={false} expandedKind={null} />}
                           </div>
                         )}
                       </div>
@@ -1219,6 +1367,20 @@ function App() {
                         onDrop={(event) => {
                           event.preventDefault();
                           if (!allowBoardDrag || !roomId || !playerId) { setDragOverSlot(null); return; }
+                          // 检查是否是万能标记拖入
+                          const raw = event.dataTransfer.getData("application/json");
+                          if (raw) {
+                            try {
+                              const o = JSON.parse(raw) as Record<string, unknown>;
+                              if (o.dragType === "custom_token") {
+                                // 弹出自定义名称输入框
+                                setCustomTokenPrompt({ playerId, slotIndex: renderIndex });
+                                setCustomTokenNameInput("");
+                                setDragOverSlot(null);
+                                return;
+                              }
+                            } catch { /* not custom token */ }
+                          }
                           const p = readBoardDragPayload(event);
                           if (!p) { setDragOverSlot(null); return; }
                           if (p.kind === "token") {
@@ -1253,6 +1415,20 @@ function App() {
                                 isHidden={false}
                                 onRevealStealth={() => toggleShikigamiStealth(slot.card.id, false)}
                                 onCardDragStart={(e) => setDragPayload(e, slot.card.id, "shikigami", slot.card.type)}
+                                onTokenBadgeClick={(kind) => {
+                                  setExpandedToken(prev =>
+                                    prev && prev.slotCardId === slot.card.id && 'kind' in prev && prev.kind === kind
+                                      ? null
+                                      : { slotCardId: slot.card.id, kind }
+                                  );
+                                }}
+                                onCustomTokenBadgeClick={(customName) => {
+                                  setExpandedToken(prev =>
+                                    prev && prev.slotCardId === slot.card.id && 'customName' in prev && prev.customName === customName
+                                      ? null
+                                      : { slotCardId: slot.card.id, customName }
+                                  );
+                                }}
                               />
                             </div>
                             {/* 觉醒牌徽章列表 */}
@@ -1274,7 +1450,16 @@ function App() {
                               <ShikigamiTokenBelt
                                 slot={slot}
                                 interactive={allowBoardDrag}
+                                expandedKind={expandedToken?.slotCardId === slot.card.id && 'kind' in expandedToken ? expandedToken.kind : null}
+                                expandedCustomName={expandedToken?.slotCardId === slot.card.id && 'customName' in expandedToken ? expandedToken.customName : null}
+                                onAddToken={(kind) => placeTokenOnShikigami(playerId, renderIndex, kind)}
                                 onRemoveToken={(kind) => removeTokenFromShikigami(playerId, renderIndex, kind)}
+                                onAddCustomToken={(name) => {
+                                  if (playerId && roomId) send({ type: "add_custom_marker_to_shikigami", payload: { roomId, targetPlayerId: playerId, slotIndex: renderIndex, markerName: name, delta: 1 } });
+                                }}
+                                onRemoveCustomToken={(name) => {
+                                  if (playerId && roomId) send({ type: "add_custom_marker_to_shikigami", payload: { roomId, targetPlayerId: playerId, slotIndex: renderIndex, markerName: name, delta: -1 } });
+                                }}
                               />
                             </div>
                           </div>
@@ -1318,6 +1503,25 @@ function App() {
                   </div>
                 </div>
                 <div className="area spell-area area--self" id="self-spell-zone">
+                  {/* 左上角：符咒区卡牌数量 */}
+                  <span className="spell-count-badge">{selfView?.spellZone.length ?? 0}</span>
+                  {/* 右上角：鬼火数量（可调整） */}
+                  <div className="fortune-fire-panel">
+                    <span className="fortune-fire-icon">🔥</span>
+                    <span className="fortune-fire-count">{selfView?.fortuneFireCount ?? 0}</span>
+                    <button
+                      type="button"
+                      className="fortune-fire-btn fortune-fire-btn--add"
+                      onClick={() => adjustFortuneFireBy(1)}
+                      title="增加鬼火数量"
+                    >+</button>
+                    <button
+                      type="button"
+                      className="fortune-fire-btn fortune-fire-btn--sub"
+                      onClick={() => adjustFortuneFireBy(-1)}
+                      title="减少鬼火数量"
+                    >−</button>
+                  </div>
                   <div
                     className="spell-drop-zone"
                     onDragOver={(e) => allowBoardDrag && e.preventDefault()}
@@ -1416,15 +1620,35 @@ function App() {
                 </div>
               </div>
 
-              <div className="player-area player-area--self">
-                {/* 生命区 */}
-                <div className="life-area">
-                  <div className="life-num self-life">{selfView?.hp ?? 30}</div>
-                  <div className="life-btn">
-                    <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
-                      onClick={() => adjustSelfHpByDelta(-1)} title="己方生命-1">-</button>
-                    <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
-                      onClick={() => adjustSelfHpByDelta(1)} title="己方生命+1">+</button>
+              <div className="player-area player-area--self" style={{ border: '2px solid #3b82f6' }}>
+                {/* 毒伤/伤害胶囊（生命框外上方） */}
+                <div className="life-zone">
+                  <div className="player-stats-above">
+                    <div className="stat-capsule stat-capsule--poison">
+                      <span className="stat-capsule-icon">☠️</span>
+                      <span className="stat-capsule-value">{selfView?.poisonMarkers ?? 0}</span>
+                      <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
+                        onClick={() => adjustPlayerPoisonByDelta(-1)} className="stat-capsule-btn">-</button>
+                      <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
+                        onClick={() => adjustPlayerPoisonByDelta(1)} className="stat-capsule-btn">+</button>
+                    </div>
+                    <div className="stat-capsule stat-capsule--damage">
+                      <span className="stat-capsule-icon">🩸</span>
+                      <span className="stat-capsule-value">{selfView?.playerDamage ?? 0}</span>
+                      <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
+                        onClick={() => adjustPlayerDamageByDelta(-1)} className="stat-capsule-btn">-</button>
+                      <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
+                        onClick={() => adjustPlayerDamageByDelta(1)} className="stat-capsule-btn">+</button>
+                    </div>
+                  </div>
+                  <div className="life-area">
+                    <div className="life-num self-life">{selfView?.hp ?? 30}</div>
+                    <div className="life-btn">
+                      <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
+                        onClick={() => adjustSelfHpByDelta(-1)} title="己方生命-1">-</button>
+                      <button type="button" disabled={!roomId || gameOver || !allowBoardDrag}
+                        onClick={() => adjustSelfHpByDelta(1)} title="己方生命+1">+</button>
+                    </div>
                   </div>
                 </div>
 
@@ -1432,7 +1656,7 @@ function App() {
                 <div style={{
                   width: "780px",
                   height: "180px",
-                  border: "2px dashed rgba(255,255,255,0.2)",
+                  border: "2px dashed rgba(59,130,246,0.4)",
                   borderRadius: "8px",
                   background: "rgba(0,0,0,0.3)",
                   overflow: "hidden",
@@ -1630,6 +1854,10 @@ function App() {
                             top: "4px",
                             right: "4px",
                             fontSize: "12px",
+                            background: "rgba(59, 130, 246, 0.75)",
+                            borderRadius: "4px",
+                            padding: "1px 3px",
+                            lineHeight: "1.2",
                           }}>👁</span>}
                         </button>
                       );
@@ -1670,31 +1898,6 @@ function App() {
                     )}
                   </div>
 
-                  {/* 卡牌悬浮预览 */}
-                  {hoveredHandCardId && (() => {
-                    const hoveredCard = selfView?.hand.find(c => c.id === hoveredHandCardId);
-                    if (!hoveredCard) return null;
-                    return (
-                      <div className="card-preview">
-                        <img className="card-preview-art" src={hoveredCard.img || CARD_IMAGE_URL} alt={hoveredCard.name} />
-                        <div className="card-preview-info">
-                          <div className="card-preview-name">{hoveredCard.name}</div>
-                          <div className="card-preview-stats">
-                            <span className="preview-stat">费用 {hoveredCard.cost}</span>
-                            {hoveredCard.type === 'shikigami' && (
-                              <>
-                                <span className="preview-stat">攻击 {hoveredCard.attack}</span>
-                                <span className="preview-stat">生命 {hoveredCard.health}</span>
-                              </>
-                            )}
-                          </div>
-                          {hoveredCard.ability && (
-                            <div className="card-preview-ability">{hoveredCard.ability}</div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
                 </div>
 
                 {/* 移除区 */}
@@ -1758,6 +1961,22 @@ function App() {
                     <span className="token-chip-bottom-label">{t.label}</span>
                   </div>
                 ))}
+                {/* 万能标记 - 拖到式神上时弹出自定义名称输入框 */}
+                <div
+                  className="token-chip-bottom"
+                  style={{ borderColor: "#38bdf8", color: "#38bdf8", background: "rgba(56,189,248,0.09)" }}
+                  draggable={allowBoardDrag}
+                  onDragStart={(e) => {
+                    if (allowBoardDrag) {
+                      e.dataTransfer.setData("application/json", JSON.stringify({ dragType: "custom_token" }));
+                      e.dataTransfer.effectAllowed = "copy";
+                    }
+                  }}
+                  title="万能标记（拖到式神上自定义名称）"
+                >
+                  <span className="token-chip-bottom-emoji">🏷️</span>
+                  <span className="token-chip-bottom-label">万能</span>
+                </div>
               </div>
 
             </div>{/* /battlefield-right */}
@@ -1843,6 +2062,32 @@ function App() {
         )}
       </section>
 
+      {/* ========== 手牌悬浮预览 ========== */}
+      {hoveredHandCardId && (() => {
+        const hoveredCard = selfView?.hand.find(c => c.id === hoveredHandCardId);
+        if (!hoveredCard) return null;
+        return (
+          <div className="card-preview">
+            <img className="card-preview-art" src={hoveredCard.img || CARD_IMAGE_URL} alt={hoveredCard.name} />
+            <div className="card-preview-info">
+              <div className="card-preview-name">{hoveredCard.name}</div>
+              <div className="card-preview-stats">
+                <span className="preview-stat">费用 {hoveredCard.cost}</span>
+                {hoveredCard.type === 'shikigami' && (
+                  <>
+                    <span className="preview-stat">攻击 {hoveredCard.attack}</span>
+                    <span className="preview-stat">生命 {hoveredCard.health}</span>
+                  </>
+                )}
+              </div>
+              {hoveredCard.ability && (
+                <div className="card-preview-ability">{hoveredCard.ability}</div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ========== 通用卡牌悬停预览（棋盘区域） ========== */}
       {hoveredBoardCardData && (
         <div className="card-preview">
@@ -1892,6 +2137,45 @@ function App() {
                 ))}
               </div>
             )}
+            {/* 标记信息 */}
+            {hoveredShikigamiSlot && (() => {
+              const s = hoveredShikigamiSlot;
+              const markers: { icon: string; color: string; label: string; count: number }[] = [];
+              if ((s.energyMarkers ?? 0) > 0) markers.push({ icon: "⚡", color: "#60a5fa", label: "能量", count: s.energyMarkers! });
+              if ((s.barrierMarkers ?? 0) > 0) markers.push({ icon: "🛡️", color: "#94a3b8", label: "屏障", count: s.barrierMarkers! });
+              if ((s.stunMarkers ?? 0) > 0) markers.push({ icon: "💫", color: "#a78bfa", label: "眩晕", count: s.stunMarkers! });
+              if ((s.silenceMarkers ?? 0) > 0) markers.push({ icon: "🚫", color: "#64748b", label: "沉默", count: s.silenceMarkers! });
+              if ((s.poisonMarkers ?? 0) > 0) markers.push({ icon: "☠️", color: "#84cc16", label: "毒伤", count: s.poisonMarkers! });
+              if ((s.weakenMarkers ?? 0) > 0) markers.push({ icon: "💤", color: "#f59e0b", label: "虚弱", count: s.weakenMarkers! });
+              if ((s.confusionMarkers ?? 0) > 0) markers.push({ icon: "👹", color: "#e879f9", label: "混乱", count: s.confusionMarkers! });
+              const am = s.attackModifier ?? 0;
+              const hm = s.healthModifier ?? 0;
+              if (am > 0) markers.push({ icon: "⚔️", color: "#fb923c", label: "+攻", count: am });
+              if (am < 0) markers.push({ icon: "⚔️", color: "#94a3b8", label: "-攻", count: -am });
+              if (hm > 0) markers.push({ icon: "💚", color: "#4ade80", label: "+命", count: hm });
+              if (hm < 0) markers.push({ icon: "💔", color: "#c084fc", label: "-命", count: -hm });
+              if ((s.damageMarkers ?? 0) > 0) markers.push({ icon: "🩸", color: "#f87171", label: "伤害", count: s.damageMarkers! });
+              // 自定义标记
+              const customEntries = Object.entries(s.customMarkers ?? {}).filter(([, c]) => c > 0);
+              for (const [name, count] of customEntries) {
+                markers.push({ icon: "🏷️", color: "#38bdf8", label: name, count });
+              }
+              if (markers.length === 0) return null;
+              return (
+                <div className="card-preview-markers">
+                  <div className="card-preview-markers-title">标记</div>
+                  <div className="card-preview-markers-list">
+                    {markers.map(m => (
+                      <span key={m.label} className="card-preview-marker-chip" style={{ color: m.color, borderColor: m.color }}>
+                        <span>{m.icon}</span>
+                        <span>{m.label}</span>
+                        <span style={{ fontWeight: 700 }}>×{m.count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -2193,6 +2477,53 @@ function App() {
           </div>
         </div>
       ) : null}
+
+      {/* ========== 万能标记名称输入弹窗 ========== */}
+      {customTokenPrompt && (
+        <div
+          className="deck-modal-backdrop"
+          role="presentation"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setCustomTokenPrompt(null); }}
+        >
+          <div className="deck-modal" role="dialog" aria-modal="true" style={{ maxWidth: "360px" }}>
+            <h3>🏷️ 添加自定义标记</h3>
+            <p style={{ fontSize: "0.85rem", color: "#94a3b8", marginBottom: "12px" }}>请输入标记名称</p>
+            <input
+              type="text"
+              className="deck-view-input"
+              value={customTokenNameInput}
+              onChange={(e) => setCustomTokenNameInput(e.target.value)}
+              onKeyDown={(e) => {
+                const prompt = customTokenPrompt;
+                if (e.key === "Enter" && prompt && customTokenNameInput.trim()) {
+                  send({ type: "add_custom_marker_to_shikigami", payload: { roomId, targetPlayerId: prompt.playerId, slotIndex: prompt.slotIndex, markerName: customTokenNameInput.trim(), delta: 1 } });
+                  setCustomTokenPrompt(null);
+                  setCustomTokenNameInput("");
+                } else if (e.key === "Escape") {
+                  setCustomTokenPrompt(null);
+                  setCustomTokenNameInput("");
+                }
+              }}
+              autoFocus
+              placeholder="标记名称..."
+            />
+            <div style={{ display: "flex", gap: "8px", marginTop: "12px", justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => { setCustomTokenPrompt(null); setCustomTokenNameInput(""); }}>取消</button>
+              <button
+                type="button"
+                disabled={!customTokenNameInput.trim() || !roomId}
+                onClick={() => {
+                  const prompt = customTokenPrompt;
+                  if (!prompt || !roomId) return;
+                  send({ type: "add_custom_marker_to_shikigami", payload: { roomId, targetPlayerId: prompt.playerId, slotIndex: prompt.slotIndex, markerName: customTokenNameInput.trim(), delta: 1 } });
+                  setCustomTokenPrompt(null);
+                  setCustomTokenNameInput("");
+                }}
+              >确定</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========== 召唤物(TOKEN)弹窗 ========== */}
       {tokenModalOpen ? (

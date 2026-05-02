@@ -83,17 +83,22 @@ export function cardFromBuilder(builderCard) {
         case "barrier":
             type = "barrier";
             break;
+        case "token":
+            type = "token";
+            break;
         default:
             console.warn(`[cardFromBuilder] 未知卡牌类型: "${builderCard.type}" (${builderCard.name})，默认为 spell`);
             type = "spell";
             break;
     }
-    // 攻击/生命：从卡牌数据读取（如有），否则使用 Lua 格式的 power/life
-    const isShikigami = type === "shikigami";
+    // 攻击/生命：优先使用 attack/health 字段；兼容 Lua 格式的 power/life；觉醒牌也有 attack/health；TOKEN 牌也使用原始数据
     const rawAttack = builderCard.attack ?? builderCard.power;
     const rawHealth = builderCard.health ?? builderCard.life;
-    const attack = isShikigami && rawAttack !== undefined ? rawAttack : (isShikigami ? Math.max(1, Math.min(10, cost + Math.floor(Math.random() * 3) - 1)) : 0);
-    const health = isShikigami && rawHealth !== undefined ? rawHealth : (isShikigami ? Math.max(1, Math.max(2, cost + Math.floor(Math.random() * 4) - 1)) : 0);
+    const isShikigami = type === "shikigami";
+    const isToken = type === "token";
+    // 有原始数据时直接用；式神/TOKEN 没有原始数据时随机生成；其他类型无数据时为 0
+    const attack = rawAttack !== undefined ? rawAttack : (isShikigami || isToken ? Math.max(1, Math.min(10, cost + Math.floor(Math.random() * 3) - 1)) : 0);
+    const health = rawHealth !== undefined ? rawHealth : (isShikigami || isToken ? Math.max(1, Math.max(2, cost + Math.floor(Math.random() * 4) - 1)) : 0);
     return {
         id: nanoid(10),
         name: String(builderCard.name ?? "未知卡牌"),
@@ -138,7 +143,11 @@ export function createPlayer(playerId, name, customDeck) {
         spellCardsPlayedThisTurn: 0,
         deckSearchBuffer: [],
         deckPeekBuffer: [],
-        revealedHandIds: []
+        revealedHandIds: [],
+        ghostFireCoins: 0,
+        fortuneFireCount: 0,
+        poisonMarkers: 0,
+        playerDamage: 0
     };
 }
 /** 对局开始：洗牌并起手 5 张，进入同步调度阶段 */
@@ -282,8 +291,21 @@ function newShikigamiEntry(card, stealth = false) {
         energyMarkers: 0,
         barrierMarkers: 0,
         stunMarkers: 0,
+        silenceMarkers: 0,
+        poisonMarkers: 0,
+        weakenMarkers: 0,
+        confusionMarkers: 0,
         stealth,
-        awakenCards: []
+        awakenCards: [],
+        customMarkers: {}
+    };
+}
+function newBarrierEntry(card) {
+    return {
+        card,
+        exhausted: false,
+        energyMarkers: 0,
+        customMarkers: {}
     };
 }
 function effectiveAttack(slot) {
@@ -345,12 +367,12 @@ function removeCardFromSource(state, player, from, cardId) {
             return { card: slot.card, shikigamiFromIndex: i, shikigamiEntry: slot };
         }
         case "barrier": {
-            if (!player.barrier || player.barrier.id !== cardId) {
+            if (!player.barrier || player.barrier.card.id !== cardId) {
                 return null;
             }
             const c = player.barrier;
             player.barrier = null;
-            return { card: c };
+            return { card: c.card };
         }
         case "deck_top": {
             if (player.deck.length === 0 || player.deck[0].id !== cardId) {
@@ -414,6 +436,10 @@ shikigamiEntry) {
             return true;
         }
         case "graveyard": {
+            // TOKEN 牌离场时直接删除（不保留在墓地）
+            if (card.type === "token") {
+                return true; // 已从场上移除，不保留
+            }
             player.graveyard.push({ ...card }); // 浅拷贝，防止后续槽位复用时意外污染墓地的卡牌数据
             return true;
         }
@@ -446,9 +472,9 @@ shikigamiEntry) {
         }
         case "barrier": {
             if (player.barrier) {
-                player.graveyard.push({ ...player.barrier }); // 浅拷贝
+                player.graveyard.push({ ...player.barrier.card }); // 浅拷贝
             }
-            player.barrier = card;
+            player.barrier = newBarrierEntry(card);
             return true;
         }
         case "deck_top": {
@@ -505,7 +531,7 @@ function restoreCardToSource(player, from, card, spellEntry, shikigamiFromIndex,
             break;
         }
         case "barrier":
-            player.barrier = card;
+            player.barrier = spellEntry ? { ...spellEntry } : newBarrierEntry(card);
             break;
         case "deck_top":
             player.deck.unshift(card);
@@ -744,6 +770,39 @@ export function deckPeek(state, actorId, count) {
     p.deckPeekBuffer = p.deck.slice(0, n).map((c) => ({ ...c }));
     return state;
 }
+/** 将召唤物（TOKEN）卡牌从召唤物库置于展示区 */
+export function placeTokenToShowcase(state, actorId, tokenId, tokenName, tokenAttack, tokenHealth, tokenImg) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    // TOKEN 卡牌 ID 必须以 "TOKEN" 开头
+    if (!tokenId.startsWith("TOKEN")) {
+        return state;
+    }
+    const tokenCard = {
+        id: nanoid(10),
+        name: tokenName,
+        type: "token",
+        cost: 0,
+        attack: tokenAttack,
+        health: tokenHealth,
+        img: tokenImg
+    };
+    state.showcaseZone.push(tokenCard);
+    return state;
+}
+/** 从展示区移除召唤物卡牌（直接删除，不保留到墓地） */
+export function removeTokenCard(state, _actorId, cardId) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const idx = state.showcaseZone.findIndex(c => c.id === cardId);
+    if (idx === -1)
+        return state;
+    // 直接删除，不保留到墓地
+    state.showcaseZone.splice(idx, 1);
+    return state;
+}
 export function placeShikigamiToken(state, _actorId, targetPlayerId, slotIndex, tokenKind) {
     if (state.winnerId || state.phase !== "playing") {
         return state;
@@ -762,6 +821,10 @@ export function placeShikigamiToken(state, _actorId, targetPlayerId, slotIndex, 
     slot.energyMarkers = slot.energyMarkers ?? 0;
     slot.barrierMarkers = slot.barrierMarkers ?? 0;
     slot.stunMarkers = slot.stunMarkers ?? 0;
+    slot.silenceMarkers = slot.silenceMarkers ?? 0;
+    slot.poisonMarkers = slot.poisonMarkers ?? 0;
+    slot.weakenMarkers = slot.weakenMarkers ?? 0;
+    slot.confusionMarkers = slot.confusionMarkers ?? 0;
     switch (tokenKind) {
         case "attack_plus":
             slot.attackModifier += 1;
@@ -790,6 +853,18 @@ export function placeShikigamiToken(state, _actorId, targetPlayerId, slotIndex, 
         case "stun":
             slot.stunMarkers += 1;
             slot.exhausted = true;
+            break;
+        case "silence":
+            slot.silenceMarkers += 1;
+            break;
+        case "poison":
+            slot.poisonMarkers += 1;
+            break;
+        case "weaken":
+            slot.weakenMarkers += 1;
+            break;
+        case "confusion":
+            slot.confusionMarkers = (slot.confusionMarkers ?? 0) + 1;
             break;
         default:
             return state;
@@ -823,6 +898,10 @@ export function removeShikigamiToken(state, _actorId, targetPlayerId, slotIndex,
     slot.energyMarkers = slot.energyMarkers ?? 0;
     slot.barrierMarkers = slot.barrierMarkers ?? 0;
     slot.stunMarkers = slot.stunMarkers ?? 0;
+    slot.silenceMarkers = slot.silenceMarkers ?? 0;
+    slot.poisonMarkers = slot.poisonMarkers ?? 0;
+    slot.weakenMarkers = slot.weakenMarkers ?? 0;
+    slot.confusionMarkers = slot.confusionMarkers ?? 0;
     switch (tokenKind) {
         case "attack_plus":
             if (slot.attackModifier <= 0) {
@@ -876,9 +955,57 @@ export function removeShikigamiToken(state, _actorId, targetPlayerId, slotIndex,
             slot.stunMarkers -= 1;
             // 所有眩晕标记移除后，不再强制横置（如果回合开始已刷新过则保持刷新状态）
             break;
+        case "silence":
+            if (slot.silenceMarkers <= 0)
+                return state;
+            slot.silenceMarkers -= 1;
+            break;
+        case "poison":
+            if (slot.poisonMarkers <= 0)
+                return state;
+            slot.poisonMarkers -= 1;
+            break;
+        case "weaken":
+            if (slot.weakenMarkers <= 0)
+                return state;
+            slot.weakenMarkers -= 1;
+            break;
+        case "confusion":
+            slot.confusionMarkers = slot.confusionMarkers ?? 0;
+            if (slot.confusionMarkers <= 0)
+                return state;
+            slot.confusionMarkers -= 1;
+            break;
         default:
             return state;
     }
+    return state;
+}
+/** 在式神上添加/减少自定义标记 */
+export function addCustomMarkerToShikigami(state, _actorId, targetPlayerId, slotIndex, markerName, delta) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const player = state.players[targetPlayerId];
+    if (!player || slotIndex < 0 || slotIndex >= SHIKIGAMI_SLOTS) {
+        return state;
+    }
+    const slot = player.shikigamiZone[slotIndex];
+    if (!slot) {
+        return state;
+    }
+    if (!slot.customMarkers) {
+        slot.customMarkers = {};
+    }
+    const current = slot.customMarkers[markerName] ?? 0;
+    const next = Math.max(0, current + delta);
+    if (next === 0) {
+        delete slot.customMarkers[markerName];
+    }
+    else {
+        slot.customMarkers[markerName] = next;
+    }
+    console.log(`[gameEngine] addCustomMarkerToShikigami: 玩家 ${targetPlayerId} 的式神 ${slotIndex} 添加标记 "${markerName}" ${delta > 0 ? "+" : ""}${delta}，当前值=${next}`);
     return state;
 }
 /** 发往客户端前脱敏：调度阶段隐藏对手手牌；对手牌库/搜索/查看区不可见；符咒区按觉醒与翻转规则 */
@@ -939,12 +1066,64 @@ export function adjustPlayerHp(state, actorId, delta) {
     player.hp += delta;
     return state;
 }
+/** 增减鬼火硬币 */
+export function adjustGhostFire(state, actorId, delta) {
+    if (state.winnerId)
+        return state;
+    const player = state.players[actorId];
+    if (!player)
+        return state;
+    player.ghostFireCoins = Math.max(0, (player.ghostFireCoins ?? 0) + delta);
+    return state;
+}
+/** 增减鬼火数量 */
+export function adjustFortuneFire(state, actorId, delta) {
+    if (state.winnerId)
+        return state;
+    const player = state.players[actorId];
+    if (!player)
+        return state;
+    player.fortuneFireCount = Math.max(0, (player.fortuneFireCount ?? 0) + delta);
+    return state;
+}
+/** 增减玩家的毒伤标记数量 */
+export function adjustPlayerPoison(state, actorId, delta) {
+    if (state.winnerId)
+        return state;
+    const player = state.players[actorId];
+    if (!player)
+        return state;
+    player.poisonMarkers = Math.max(0, (player.poisonMarkers ?? 0) + delta);
+    return state;
+}
+/** 增减玩家的伤害记录 */
+export function adjustPlayerDamage(state, actorId, delta) {
+    if (state.winnerId)
+        return state;
+    const player = state.players[actorId];
+    if (!player)
+        return state;
+    player.playerDamage = Math.max(0, (player.playerDamage ?? 0) + delta);
+    return state;
+}
 export function createMatchState(roomId, playerA, playerB) {
+    // 随机决定先手（50/50）
+    const isFirstRandom = Math.random() < 0.5;
+    const firstPlayerId = isFirstRandom ? playerA.id : playerB.id;
+    const secondPlayerId = isFirstRandom ? playerB.id : playerA.id;
+    // 后手玩家获得 1 枚鬼火硬币
+    if (secondPlayerId === playerB.id) {
+        playerB.ghostFireCoins = 1;
+    }
+    else {
+        playerA.ghostFireCoins = 1;
+    }
     return {
         roomId,
         phase: "mulligan",
         turn: 1,
-        currentPlayerId: playerA.id,
+        currentPlayerId: firstPlayerId,
+        firstPlayerId,
         players: {
             [playerA.id]: playerA,
             [playerB.id]: playerB
@@ -1059,8 +1238,8 @@ export function toggleSpellExhaust(state, actorId, cardId) {
     const targetSpellCard = actor.spellZone.find((entry) => entry.card.id === cardId);
     if (!targetSpellCard) {
         // 尝试结界区
-        if (actor.barrier && actor.barrier.id === cardId) {
-            actor.barrierExhausted = !actor.barrierExhausted;
+        if (actor.barrier && actor.barrier.card.id === cardId) {
+            actor.barrier.exhausted = !actor.barrier.exhausted;
             return state;
         }
         // 尝试延伸区
@@ -1106,6 +1285,135 @@ export function toggleShikigamiStealth(state, actorId, cardId, stealth) {
     targetShikigami.stealth = stealth;
     return state;
 }
+export function placeBarrierToken(state, _actorId, targetPlayerId, tokenKind) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const player = state.players[targetPlayerId];
+    if (!player || !player.barrier) {
+        return state;
+    }
+    switch (tokenKind) {
+        case "energy":
+            player.barrier.energyMarkers += 1;
+            break;
+        case "barrier":
+            // barrier 标记暂不支持（与结界区冲突）
+            break;
+        case "stun":
+            // 结界区眩晕效果
+            break;
+        case "silence":
+            // 结界区沉默效果（可存标记）
+            break;
+        case "poison":
+            // 结界区毒伤标记
+            break;
+        case "weaken":
+            // 结界区虚弱标记
+            break;
+        default:
+            return state;
+    }
+    return state;
+}
+export function removeBarrierToken(state, _actorId, targetPlayerId, tokenKind) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const player = state.players[targetPlayerId];
+    if (!player || !player.barrier) {
+        return state;
+    }
+    switch (tokenKind) {
+        case "energy":
+            player.barrier.energyMarkers = Math.max(0, player.barrier.energyMarkers - 1);
+            break;
+        case "barrier":
+        case "stun":
+        case "silence":
+        case "poison":
+        case "weaken":
+            // 这些标记暂不支持减少
+            break;
+        default:
+            return state;
+    }
+    return state;
+}
+/** 添加/减少自定义标记到结界区 */
+export function addCustomMarker(state, _actorId, targetPlayerId, markerName, delta) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const player = state.players[targetPlayerId];
+    if (!player || !player.barrier) {
+        console.warn(`[gameEngine] addCustomMarker: 玩家 ${targetPlayerId} 没有结界区卡牌，无法添加标记`);
+        return state;
+    }
+    if (!player.barrier.customMarkers) {
+        player.barrier.customMarkers = {};
+    }
+    const current = player.barrier.customMarkers[markerName] ?? 0;
+    const next = Math.max(0, current + delta);
+    if (next === 0) {
+        delete player.barrier.customMarkers[markerName];
+    }
+    else {
+        player.barrier.customMarkers[markerName] = next;
+    }
+    console.log(`[gameEngine] addCustomMarker: 玩家 ${targetPlayerId} 的结界区添加标记 "${markerName}" ${delta > 0 ? "+" : ""}${delta}，当前值=${next}`);
+    return state;
+}
+/** 添加/减少自定义标记到符咒区指定卡牌 */
+export function addCustomMarkerToSpell(state, _actorId, targetPlayerId, cardId, markerName, delta) {
+    if (state.winnerId || state.phase !== "playing")
+        return state;
+    const player = state.players[targetPlayerId];
+    if (!player)
+        return state;
+    const entry = player.spellZone.find((e) => e.card.id === cardId);
+    if (!entry)
+        return state;
+    if (!entry.customMarkers)
+        entry.customMarkers = {};
+    const current = entry.customMarkers[markerName] ?? 0;
+    const next = Math.max(0, current + delta);
+    if (next === 0) {
+        delete entry.customMarkers[markerName];
+    }
+    else {
+        entry.customMarkers[markerName] = next;
+    }
+    console.log(`[gameEngine] addCustomMarkerToSpell: 玩家 ${targetPlayerId} 的符咒区卡牌 ${cardId} 添加标记 "${markerName}" ${delta > 0 ? "+" : ""}${delta}，当前值=${next}`);
+    return state;
+}
+/** 添加/减少自定义标记到延伸区指定卡牌 */
+export function addCustomMarkerToExtend(state, _actorId, targetPlayerId, cardId, markerName, delta) {
+    if (state.winnerId || state.phase !== "playing")
+        return state;
+    const player = state.players[targetPlayerId];
+    if (!player)
+        return state;
+    for (const slotArr of player.extendZone) {
+        const entry = slotArr.find((e) => e.card.id === cardId);
+        if (entry) {
+            if (!entry.customMarkers)
+                entry.customMarkers = {};
+            const current = entry.customMarkers[markerName] ?? 0;
+            const next = Math.max(0, current + delta);
+            if (next === 0) {
+                delete entry.customMarkers[markerName];
+            }
+            else {
+                entry.customMarkers[markerName] = next;
+            }
+            console.log(`[gameEngine] addCustomMarkerToExtend: 玩家 ${targetPlayerId} 的延伸区卡牌 ${cardId} 添加标记 "${markerName}" ${delta > 0 ? "+" : ""}${delta}，当前值=${next}`);
+            return state;
+        }
+    }
+    return state;
+}
 export function endTurn(state, actorId) {
     if (state.winnerId || state.phase !== "playing" || state.currentPlayerId !== actorId) {
         return state;
@@ -1117,5 +1425,27 @@ export function endTurn(state, actorId) {
     state.currentPlayerId = nextPlayerId;
     state.turn += 1;
     applyTurnStart(state, nextPlayerId, actorId);
+    return state;
+}
+/**
+ * 切换延伸区卡牌顺序（将最底层的卡置于顶层）
+ * 敌方也可操作（用于查看）
+ */
+export function toggleExtendCardOrder(state, _actorId, targetPlayerId, slotIndex) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const player = state.players[targetPlayerId];
+    if (!player || slotIndex < 0 || slotIndex >= player.extendZone.length) {
+        return state;
+    }
+    const slot = player.extendZone[slotIndex];
+    if (!slot || slot.length <= 1) {
+        return state; // 只有0或1张卡时无需切换
+    }
+    // 将最底层的卡（数组第一个元素）移到顶层（数组末尾）
+    const bottomCard = slot.shift();
+    slot.push(bottomCard);
+    console.log(`[gameEngine] toggleExtendCardOrder: 玩家 ${targetPlayerId} 的延伸区槽位 ${slotIndex} 切换卡牌顺序，最底层卡 ${bottomCard.card.name} 已置于顶层`);
     return state;
 }

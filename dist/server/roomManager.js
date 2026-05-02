@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import WebSocket from "ws";
-import { adjustPlayerHp as engineAdjustPlayerHp, attack, createMatchState, createPlayer, deckDraw, deckPeek, deckSearch, deckSearchReturn, deckShuffle, endTurn, moveCard, attachAwaken as engineAttachAwaken, detachAwaken as engineDetachAwaken, placeShikigamiToken as enginePlaceShikigamiToken, playCard, preparePlayerForMatch, removeShikigamiToken as engineRemoveShikigamiToken, sanitizeMatchStateForPlayer, submitMulligan, toggleShikigamiExhaust, toggleShikigamiStealth as engineToggleShikigamiStealth, toggleSpellExhaust, toggleSpellReveal, toggleHandReveal } from "./gameEngine.js";
+import { adjustGhostFire as engineAdjustGhostFire, adjustFortuneFire as engineAdjustFortuneFire, adjustPlayerPoison as engineAdjustPlayerPoison, adjustPlayerDamage as engineAdjustPlayerDamage, adjustPlayerHp as engineAdjustPlayerHp, addCustomMarker as engineAddCustomMarker, addCustomMarkerToShikigami as engineAddCustomMarkerToShikigami, addCustomMarkerToSpell as engineAddCustomMarkerToSpell, addCustomMarkerToExtend as engineAddCustomMarkerToExtend, placeBarrierToken as enginePlaceBarrierToken, removeBarrierToken as engineRemoveBarrierToken, attack, createMatchState, createPlayer, deckDraw, deckPeek, deckSearch, deckSearchReturn, deckShuffle, endTurn, moveCard, attachAwaken as engineAttachAwaken, detachAwaken as engineDetachAwaken, placeShikigamiToken as enginePlaceShikigamiToken, placeTokenToShowcase, removeTokenCard, playCard, preparePlayerForMatch, removeShikigamiToken as engineRemoveShikigamiToken, sanitizeMatchStateForPlayer, submitMulligan, toggleShikigamiExhaust, toggleShikigamiStealth as engineToggleShikigamiStealth, toggleSpellExhaust, toggleSpellReveal, toggleHandReveal } from "./gameEngine.js";
 export class RoomManager {
     rooms = new Map();
     createRoom(ws, name) {
@@ -168,6 +168,20 @@ export class RoomManager {
         }
         return deckPeek(room.matchState, playerId, count);
     }
+    placeTokenToShowcase(roomId, playerId, tokenId, tokenName, tokenAttack, tokenHealth, tokenImg) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState) {
+            throw new Error("match not started");
+        }
+        return placeTokenToShowcase(room.matchState, playerId, tokenId, tokenName, tokenAttack, tokenHealth, tokenImg);
+    }
+    removeTokenCard(roomId, playerId, cardId) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState) {
+            throw new Error("match not started");
+        }
+        return removeTokenCard(room.matchState, playerId, cardId);
+    }
     placeShikigamiToken(roomId, playerId, targetPlayerId, slotIndex, tokenKind) {
         const room = this.getRoomOrThrow(roomId);
         if (!room.matchState) {
@@ -188,6 +202,66 @@ export class RoomManager {
             throw new Error("match not started");
         }
         return engineAdjustPlayerHp(room.matchState, playerId, delta);
+    }
+    adjustGhostFire(roomId, playerId, delta) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAdjustGhostFire(room.matchState, playerId, delta);
+    }
+    adjustFortuneFire(roomId, playerId, delta) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAdjustFortuneFire(room.matchState, playerId, delta);
+    }
+    adjustPlayerPoison(roomId, playerId, delta) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAdjustPlayerPoison(room.matchState, playerId, delta);
+    }
+    adjustPlayerDamage(roomId, playerId, delta) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAdjustPlayerDamage(room.matchState, playerId, delta);
+    }
+    placeBarrierToken(roomId, playerId, targetPlayerId, tokenKind) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return enginePlaceBarrierToken(room.matchState, playerId, targetPlayerId, tokenKind);
+    }
+    removeBarrierToken(roomId, playerId, targetPlayerId, tokenKind) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineRemoveBarrierToken(room.matchState, playerId, targetPlayerId, tokenKind);
+    }
+    addCustomMarker(roomId, playerId, targetPlayerId, markerName, delta) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAddCustomMarker(room.matchState, playerId, targetPlayerId, markerName, delta);
+    }
+    addCustomMarkerToShikigami(roomId, playerId, targetPlayerId, slotIndex, markerName, delta) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAddCustomMarkerToShikigami(room.matchState, playerId, targetPlayerId, slotIndex, markerName, delta);
+    }
+    addCustomMarkerToSpell(roomId, playerId, targetPlayerId, cardId, markerName, delta) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAddCustomMarkerToSpell(room.matchState, playerId, targetPlayerId, cardId, markerName, delta);
+    }
+    addCustomMarkerToExtend(roomId, playerId, targetPlayerId, cardId, markerName, delta) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState)
+            throw new Error("match not started");
+        return engineAddCustomMarkerToExtend(room.matchState, playerId, targetPlayerId, cardId, markerName, delta);
     }
     toggleShikigamiStealth(roomId, playerId, cardId, stealth) {
         const room = this.getRoomOrThrow(roomId);

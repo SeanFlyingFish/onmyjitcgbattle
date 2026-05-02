@@ -408,57 +408,173 @@ body {
   border: 2px solid #ef4444;
   border-radius: 8px;
   padding: 8px 12px;
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(239, 68, 68, 0.12);
+  box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.08);
 }
 /* 己方区域：蓝色边框 */
 .player-area--self {
   border: 2px solid #3b82f6;
   border-radius: 8px;
   padding: 8px 12px;
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.08);
   overflow: hidden; /* 防止子元素溢出 */
 }
 
-/* 生命区 */
+/* 生命区容器（垂直堆叠：毒伤 | 伤害 | 生命） */
+.life-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .life-area {
   width: 100px;
-  height: 160px;
+  height: 100px;
   border: 3px solid #e0e0e0;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #1e293b;
   color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  flex-shrink: 0;
+  gap: 4px;
   box-shadow: 0 0 12px rgba(79, 79, 255, 0.3);
 }
 .life-num {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   color: #f1f5f9;
+  line-height: 1;
 }
 .life-num.self-life {
   color: #f87171;
 }
 .life-btn {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 .life-btn button {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: none;
   border-radius: 6px;
   background: #3b82f6;
   color: #fff;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: bold;
   cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .life-btn button:active { background: #2563eb; }
 .life-btn button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 伤害记录面板（生命区上方） */
+.damage-player-panel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(10, 10, 30, 0.88);
+  border: 1px solid #f87171;
+  border-radius: 8px;
+  padding: 3px 8px;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.3);
+  z-index: 99;
+}
+.damage-player-icon {
+  font-size: 14px;
+  filter: drop-shadow(0 0 3px #f87171);
+}
+.damage-player-count {
+  font-size: 13px;
+  font-weight: bold;
+  color: #f87171;
+  min-width: 24px;
+  text-align: center;
+}
+.damage-player-btns {
+  display: flex;
+  gap: 2px;
+}
+.damage-player-btns button {
+  background: rgba(248, 113, 113, 0.2);
+  border: 1px solid #f87171;
+  border-radius: 4px;
+  color: #f87171;
+  font-size: 13px;
+  font-weight: bold;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.damage-player-btns button:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.4);
+}
+.damage-player-btns button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 毒伤标记面板（伤害区上方） */
+.poison-player-panel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(10, 10, 30, 0.88);
+  border: 1px solid #84cc16;
+  border-radius: 8px;
+  padding: 3px 8px;
+  box-shadow: 0 0 8px rgba(132, 204, 22, 0.3);
+  z-index: 99;
+}
+.poison-player-icon {
+  font-size: 14px;
+  filter: drop-shadow(0 0 3px #84cc16);
+}
+.poison-player-count {
+  font-size: 13px;
+  font-weight: bold;
+  color: #84cc16;
+  min-width: 24px;
+  text-align: center;
+}
+.poison-player-btns {
+  display: flex;
+  gap: 2px;
+}
+.poison-player-btns button {
+  background: rgba(132, 204, 22, 0.2);
+  border: 1px solid #84cc16;
+  border-radius: 4px;
+  color: #84cc16;
+  font-size: 13px;
+  font-weight: bold;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.poison-player-btns button:hover:not(:disabled) {
+  background: rgba(132, 204, 22, 0.4);
+}
+.poison-player-btns button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* 手牌区（战场.html 的 .hand-area） */
 .hand-area {
@@ -603,7 +719,7 @@ body {
 
 /* 视觉框 */
 .area {
-  border: none;
+  border: 2px solid #94a3b8;
   border-radius: 8px;
   background: rgba(30, 41, 59, 0.85);
   color: #f1f5f9;
@@ -614,17 +730,15 @@ body {
   font-size: 15px;
   font-weight: bold;
   position: relative;
-  box-shadow: 0 0 0 3px #cbd5e1, 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 0 0 3px #94a3b8, 0 4px 12px rgba(0,0,0,0.4);
   overflow: visible;
   padding: 4px;
 }
-/* 敌方区域（上方）：红色边框 */
-.area--enemy {
-  box-shadow: 0 0 0 3px #ef4444, 0 4px 12px rgba(0,0,0,0.4);
-}
-/* 己方区域（下方）：蓝色边框 */
-.area--self {
-  box-shadow: 0 0 0 3px #3b82f6, 0 4px 12px rgba(0,0,0,0.4);
+/* 式神区视觉层（无边框，仅用于定位） */
+.area.shikigami-visual {
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 .area-label {
   font-size: 12px;
@@ -640,11 +754,13 @@ body {
 .ratio-7-9 {
   aspect-ratio: 5/7;
   width: 110px;
+  height: 154px;  /* 110 * 7 / 5 = 154 */
   padding: 6px 4px;
 }
 .ratio-7-4 {
   aspect-ratio: 7/4;
   width: 110px;
+  height: 63px;  /* 110 * 4 / 7 ≈ 63 */
 }
 
 /* 符咒区 */
@@ -668,17 +784,24 @@ body {
   border: 1px solid #b45309;
   border-radius: 8px;
   padding: 3px 6px;
-  z-index: 20;
+  z-index: 99;
   box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
 }
 .ghost-fire-icon {
-  font-size: 14px;
-  filter: drop-shadow(0 0 3px #f97316);
+  font-size: 13px;
+  background: #eab308;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 6px rgba(234, 179, 8, 0.6);
 }
 .ghost-fire-count {
   font-size: 13px;
   font-weight: bold;
-  color: #fb923c;
+  color: #fbbf24;
   min-width: 14px;
   text-align: center;
 }
@@ -711,7 +834,125 @@ body {
 }
 .ghost-fire-btn--sub:hover {
   background: rgba(239, 68, 68, 0.4);
-}/* 符咒区内的drop-zone（绝对定位覆盖整个区域） */
+}
+
+/* 敌方鬼火面板（只读） */
+.ghost-fire-panel--enemy {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  pointer-events: none;
+}
+.ghost-fire-panel--enemy .ghost-fire-btn {
+  display: none;
+}
+
+/* 符咒数量徽章（显示在符咒区角落） */
+.spell-count-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(10, 10, 30, 0.88);
+  border: 1px solid #6366f1;
+  border-radius: 8px;
+  padding: 3px 8px;
+  z-index: 99;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+  font-size: 13px;
+  font-weight: bold;
+  color: #a5b4fc;
+  text-align: center;
+  min-width: 28px;
+}
+
+/* 鬼火数量面板 — 符咒区右上角 */
+.fortune-fire-panel {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(10, 10, 30, 0.88);
+  border: 1px solid #b45309;
+  border-radius: 8px;
+  padding: 3px 6px;
+  z-index: 99;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+.fortune-fire-icon {
+  font-size: 14px;
+  filter: drop-shadow(0 0 4px #ef4444);
+}
+.fortune-fire-count {
+  font-size: 13px;
+  font-weight: bold;
+  color: #fbbf24;
+  min-width: 14px;
+  text-align: center;
+}
+.fortune-fire-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+.fortune-fire-btn--add {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+.fortune-fire-btn--add:hover {
+  background: rgba(34, 197, 94, 0.4);
+}
+.fortune-fire-btn--sub {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.fortune-fire-btn--sub:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+/* 敌方鬼火数量面板（只读） */
+.fortune-fire-panel--enemy {
+  pointer-events: none;
+}
+.fortune-fire-panel--enemy .fortune-fire-btn {
+  display: none;
+}
+
+/* 符咒数量统计面板 — 左上角 */
+.spell-count-panel {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(10, 10, 30, 0.88);
+  border: 1px solid #6366f1;
+  border-radius: 8px;
+  padding: 3px 8px;
+  z-index: 99;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+}
+.spell-count {
+  font-size: 13px;
+  font-weight: bold;
+  color: #a5b4fc;
+  text-align: center;
+}
+
+/* 符咒区内的drop-zone（绝对定位覆盖整个区域） */
 .spell-drop-zone {
   position: absolute;
   top: 0;
@@ -753,13 +994,92 @@ body {
   align-items: center;
   position: relative;
 }
-.shikigami-extend {
-  margin-top: -15%;
+
+/* 实线框（最底层，纯显示，无交互） */
+.solid-frame {
+  display: block;
+  pointer-events: none;
+  width: 110px;
+  height: 154px;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: 0 0 0 3px #3b82f6, 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 1;
+}
+/* 敌方区域：红色边框 */
+.solid-frame.area--enemy {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px #ef4444, 0 4px 12px rgba(0,0,0,0.4);
+}
+/* 己方区域：蓝色边框 */
+.solid-frame.area--self {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px #3b82f6, 0 4px 12px rgba(0,0,0,0.4);
+}
+/* 延伸区实线框（最底层） */
+.solid-frame.extend-solid {
+  height: 63px;
   z-index: 0;
+}
+
+/* 透明卡牌层：位于实线框之上，承载卡牌交互 */
+.card-layer-shikigami {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 154px;
+  z-index: 4;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 调试用紫色边框，完成后改为 transparent */
+  border: 2px dashed rgba(168, 85, 247, 0.5);
+  border-radius: 8px;
+  background: rgba(168, 85, 247, 0.05);
+}
+.card-layer-extend {
+  position: absolute;
+  top: 154px;  /* 与式神框高度相同，从式神框下方开始 */
+  left: 0;
+  width: 110px;
+  height: 63px;  /* 与 .ratio-7-4 高度一致 */
+  z-index: 3;
+  pointer-events: all;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 4px;
+  /* 调试用紫色边框，完成后改为 transparent */
+  border: 2px dashed rgba(168, 85, 247, 0.5);
+  border-radius: 8px;
+  background: rgba(168, 85, 247, 0.05);
+}
+
+/* 旧 shikigami-extend / ratio-7-9 z-index 重置 */
+.shikigami-extend {
+  position: relative;
+  width: 110px;
+  z-index: 1;
+  height: 63px;  /* 与 .ratio-7-4 实际高度一致 */
 }
 .shikigami-item > .ratio-7-9 {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+}
+
+/* 延伸区标记行（放在卡牌下方） */
+.extend-marker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  padding: 1px 0 0;
+  width: 100%;
 }
 
 /* 结界 */
@@ -783,7 +1103,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 10;
   background: transparent;
   pointer-events: all;
   display: flex;
@@ -1008,7 +1328,7 @@ body {
 
 /* 延伸区拖放提示 */
 .extend-drop-zone {
-  position: absolute;
+  position: relative;  /* 作为卡牌的绝对定位参考 */
   top: 0; left: 0;
   width: 100%; height: 100%;
   border-radius: inherit;
@@ -1017,7 +1337,7 @@ body {
 /* 延伸区卡牌 */
 .extend-card {
   position: absolute;
-  bottom: 4px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 96px;
@@ -1025,6 +1345,37 @@ body {
   z-index: 20;
   border: 2px solid #fbbf24;
   box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+  pointer-events: all;
+}
+/* 延伸区卡牌横置效果 */
+.extend-card.is-exhausted {
+  transform: translateX(-50%) rotate(90deg);
+}
+
+/* 延伸区切换按钮 */
+.extend-toggle-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  z-index: 999;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fbbf24;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fbbf24;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  pointer-events: all;
+}
+
+.extend-toggle-btn:hover {
+  background: rgba(251, 191, 36, 0.3);
+  transform: scale(1.1);
 }
 
 /* 指示物栏（左侧面板内竖向，棋盘内横向兼容） */
@@ -1073,19 +1424,136 @@ body {
 }
 .shikigami-card-stage.is-exhausted {
   transform: rotate(90deg);
-  opacity: 0.8;
 }
 
 /* 结界区横置（卡牌居中，直接旋转90度） */
 .card--mini.is-exhausted {
   transform: rotate(90deg);
-  opacity: 0.8;
 }
 
-/* 延伸区横置（居中 + 旋转90度） */
-.extend-card.is-exhausted {
-  transform: translateX(-50%) rotate(90deg) !important;
-  opacity: 0.8;
+/* 结界区样式 */
+.barrier-zone {
+  position: relative;
+}
+
+.barrier-card-container {
+  position: relative;
+  display: inline-block;
+}
+
+.barrier-energy-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  border: 2px solid #3b82f6;
+  z-index: 10;
+}
+
+.barrier-custom-markers {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.barrier-add-energy-btn,
+.barrier-add-marker-btn {
+  position: absolute;
+  bottom: -30px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.barrier-add-energy-btn {
+  left: -10px;
+  border-color: #3b82f6;
+}
+
+.barrier-add-energy-btn:hover {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.barrier-add-marker-btn {
+  right: -10px;
+  border-color: #f59e0b;
+}
+
+.barrier-add-marker-btn:hover {
+  background: rgba(245, 158, 11, 0.3);
+}
+
+/* 自定义标记徽章 */
+.custom-marker-badge {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.custom-marker-item {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.custom-marker-remove {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.custom-marker-remove:hover {
+  color: #f87171;
+}
+
+/* 延伸区单卡容器（Z轴层叠，作为卡牌定位参考） */
+.extend-card-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+/* 延伸区标记行（放在卡牌下方） */
+.extend-marker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  padding: 1px 0 0;
+  width: 100%;
 }
 
 /* ============================================================
@@ -1306,6 +1774,180 @@ body {
   transition: opacity 0.1s, transform 0.1s;
 }
 .token-rm-btn:hover { opacity: 1; transform: scale(1.1); }
+
+/* 标记调整按钮组（+/-同组显示） */
+.token-adj-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.token-adj-btn {
+  background: rgba(10, 18, 35, 0.85);
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.1s, transform 0.1s;
+}
+.token-adj-btn:hover { opacity: 1; transform: scale(1.1); }
+
+/* 标记行：紧凑 [-] 图标 数量 [+] 布局 */
+.token-belt-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(10, 18, 35, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 1px 3px;
+  line-height: 1;
+}
+.token-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+.token-count {
+  min-width: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: #f0f6fc;
+  font-variant-numeric: tabular-nums;
+}
+.token-btn {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.15s, transform 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.token-btn:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+.token-btn:active {
+  transform: scale(0.95);
+}
+.token-btn--add { color: #4ade80; border-color: #4ade80; }
+.token-btn--remove { color: #f87171; border-color: #f87171; }
+
+/* 展开的标记项高亮 */
+.token-belt-item--expanded {
+  border-color: currentColor;
+  background: rgba(10, 18, 35, 0.92);
+  box-shadow: 0 0 8px currentColor;
+  animation: token-expand-glow 0.2s ease;
+}
+@keyframes token-expand-glow {
+  from { box-shadow: 0 0 2px currentColor; }
+  to { box-shadow: 0 0 8px currentColor; }
+}
+
+/* 圆形标记可点击样式 */
+.token-overlay-badge--clickable {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.token-overlay-badge--clickable:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px currentColor;
+}
+.token-overlay-badge--clickable:active {
+  transform: scale(0.95);
+}
+
+/* 标记展开控制行：emoji + 标签名 + [-] + 数量 + [+] */
+.unit-token-ctrl-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(10, 18, 35, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  animation: token-expand-glow 0.2s ease;
+}
+.token-ctrl-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 0;
+}
+.token-ctrl-emoji {
+  font-size: 12px;
+  line-height: 1;
+}
+.token-ctrl-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48px;
+}
+.token-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.1s, transform 0.1s;
+}
+.token-ctrl-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  transform: scale(1.1);
+}
+.token-ctrl-btn:active {
+  transform: scale(0.9);
+}
+.token-ctrl-btn--remove:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+.token-ctrl-btn--add:hover {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+.token-ctrl-count {
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 16px;
+  text-align: center;
+}
 
 /* ============================================================
    能量/眩晕徽章（保留兼容旧代码，但新版不再使用） */
@@ -1529,23 +2171,51 @@ body {
    ============================================================ */
 .card-preview {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 12px;
+  right: 12px;
+  z-index: 99999;
+  display: flex;
+  gap: 16px;
+  max-width: 480px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #4a90d9;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(74,144,217,0.3);
+  animation: 0.2s fadeIn;
+  pointer-events: none;
+}
+
+/* 动态居中定位预览（鼠标在左则显示在右侧，鼠标在右则显示在左侧） */
+.card-preview--dynamic {
+  position: fixed;
+  bottom: auto;
+  top: 50%;
+  left: auto;
+  right: auto;
+  transform: translateY(-50%);
+  max-width: 480px;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border: 2px solid #4a90d9;
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
   gap: 16px;
-  max-width: 500px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(74, 144, 217, 0.3);
-  z-index: 1000;
   animation: fadeIn 0.2s ease;
 }
+.card-preview--dynamic.left-side {
+  left: calc(50% + 160px);
+  right: auto;
+}
+.card-preview--dynamic.right-side {
+  left: auto;
+  right: calc(50% + 160px);
+}
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from { opacity: 0; transform: translateY(-50%) translateX(10px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
 }
 .card-preview-art {
   width: 140px;
@@ -1553,11 +2223,48 @@ body {
   border-radius: 6px;
   object-fit: contain;
 }
+/* 大尺寸卡图（预览时） */
+.card-preview-art--large {
+  width: 180px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  border: 2px solid #4a90d9;
+}
 .card-preview-info {
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 200px;
+  flex: 1;
+}
+
+/* 标记显示区域 */
+.card-preview-markers {
+  border-top: 1px solid #334155;
+  padding-top: 6px;
+  margin-top: 2px;
+}
+.card-preview-markers-title {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.card-preview-markers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.card-preview-marker-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .card-preview-name {
   font-size: 1.1rem;
@@ -1582,6 +2289,29 @@ body {
   border-top: 1px solid #2d4a6b;
   padding-top: 8px;
 }
+
+/* 预览标记样式 */
+.preview-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.preview-token--damage { background: rgba(239,68,68,0.2); border-color: #ef4444; color: #fca5a5; }
+.preview-token--energy { background: rgba(234,179,8,0.2); border-color: #eab308; color: #fde047; }
+.preview-token--barrier { background: rgba(59,130,246,0.2); border-color: #3b82f6; color: #93c5fd; }
+.preview-token--stun { background: rgba(168,85,247,0.2); border-color: #a855f7; color: #d8b4fe; }
+.preview-token--silence { background: rgba(107,114,128,0.2); border-color: #6b7280; color: #d1d5db; }
+.preview-token--poison { background: rgba(132,204,22,0.2); border-color: #84cc16; color: #bef264; }
+.preview-token--weaken { background: rgba(244,114,182,0.2); border-color: #f472b6; color: #f9a8d4; }
+.preview-token--atk { background: rgba(249,115,22,0.2); border-color: #f97316; color: #fdba74; }
+.preview-token--hp { background: rgba(20,184,166,0.2); border-color: #14b8a6; color: #5eead4; }
+.preview-token--stealth { background: rgba(99,102,241,0.2); border-color: #6366f1; color: #a5b4fc; }
 
 /* 觉醒牌信息区域（式神 tooltip 中） */
 .card-preview-awaken-section {
@@ -2041,3 +2771,302 @@ body {
   pointer-events: none;
 }
 
+/* ============================================================
+   结界区标记面板
+   ============================================================ */
+.barrier-token-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  padding: 2px 4px;
+  background: rgba(10, 18, 35, 0.85);
+  border: 1px solid #334155;
+  border-radius: 6px;
+  max-width: 100px;
+}
+.barrier-token-panel--enemy {
+  background: transparent;
+  border: none;
+  margin-top: 0;
+  padding: 0;
+}
+.barrier-token-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.barrier-token-readonly {
+  font-size: 10px;
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.15);
+  border: 1px solid #60a5fa;
+  border-radius: 4px;
+  padding: 1px 4px;
+  white-space: nowrap;
+}
+.barrier-token-panel--enemy .barrier-token-readonly {
+  font-size: 9px;
+  padding: 1px 3px;
+  margin-right: 2px;
+}
+
+/* 结界区能量按钮 */
+.btn-energy-barrier {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(96, 165, 250, 0.3);
+  border: 1px solid #60a5fa;
+  color: #60a5fa;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background 0.15s, transform 0.1s;
+  padding: 0;
+}
+.btn-energy-barrier:hover {
+  background: rgba(96, 165, 250, 0.5);
+  transform: scale(1.15);
+}
+
+/* 添加自定义标记按钮 */
+.btn-add-custom-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(192, 132, 252, 0.2);
+  border: 1px solid #c084fc;
+  color: #c084fc;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-add-custom-marker:hover:not(:disabled) {
+  background: rgba(192, 132, 252, 0.4);
+  transform: scale(1.1);
+}
+.btn-add-custom-marker:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 自定义标记输入行 */
+.custom-marker-input-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+.custom-marker-input {
+  flex: 1;
+  min-width: 0;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid #6366f1;
+  border-radius: 4px;
+  color: #e2e8f0;
+  outline: none;
+}
+.custom-marker-input:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.3);
+}
+.custom-marker-input::placeholder {
+  color: #64748b;
+  font-size: 9px;
+}
+
+/* ============================================================
+   自定义标记按钮样式
+   ============================================================ */
+.token-chip-bottom--custom {
+  cursor: grab;
+}
+.token-chip-bottom--custom:active {
+  cursor: grabbing;
+}
+.token-chip-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.token-chip-btn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px currentColor;
+}
+.token-chip-btn:active {
+  transform: scale(0.95);
+}
+
+/* ============================================================
+   自定义标记输入弹窗
+   ============================================================ */
+.custom-marker-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.custom-marker-popup {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #c084fc;
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 280px;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.2);
+}
+.custom-marker-popup-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #e2e8f0;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.custom-marker-popup-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid #6366f1;
+  border-radius: 8px;
+  color: #e2e8f0;
+  outline: none;
+  margin-bottom: 8px;
+}
+.custom-marker-popup-input:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.3);
+}
+.custom-marker-popup-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.custom-marker-popup-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.custom-marker-popup-buttons button {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.custom-marker-popup-buttons .btn-cancel {
+  background: #334155;
+  color: #e2e8f0;
+}
+.custom-marker-popup-buttons .btn-cancel:hover {
+  background: #475569;
+}
+.custom-marker-popup-buttons .btn-confirm {
+  background: #7c3aed;
+  color: #ffffff;
+}
+.custom-marker-popup-buttons .btn-confirm:hover {
+  background: #6d28d9;
+}
+.custom-marker-popup-buttons .btn-confirm:disabled {
+  background: #4b5563;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Life stat capsules (poison/damage above life box)
+   ============================================================ */
+.player-stats-above {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+.stat-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  line-height: 1.5;
+}
+.stat-capsule--poison {
+  background: rgba(34,197,94,0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34,197,94,0.25);
+}
+.stat-capsule--damage {
+  background: rgba(239,68,68,0.15);
+  color: #f87171;
+  border: 1px solid rgba(239,68,68,0.25);
+}
+.stat-capsule-icon {
+  font-size: 13px;
+}
+.stat-capsule-value {
+  min-width: 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.stat-capsule-btn {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.10);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stat-capsule-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.22);
+}
+.stat-capsule-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

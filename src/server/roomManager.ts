@@ -3,7 +3,16 @@ import WebSocket from "ws";
 import { BuilderCard, MatchState, PlayerId, PlayerState, RoomId, ServerEvent } from "../shared/types.js";
 import {
   adjustGhostFire as engineAdjustGhostFire,
+  adjustFortuneFire as engineAdjustFortuneFire,
+  adjustPlayerPoison as engineAdjustPlayerPoison,
+  adjustPlayerDamage as engineAdjustPlayerDamage,
   adjustPlayerHp as engineAdjustPlayerHp,
+  addCustomMarker as engineAddCustomMarker,
+  addCustomMarkerToShikigami as engineAddCustomMarkerToShikigami,
+  addCustomMarkerToSpell as engineAddCustomMarkerToSpell,
+  addCustomMarkerToExtend as engineAddCustomMarkerToExtend,
+  placeBarrierToken as enginePlaceBarrierToken,
+  removeBarrierToken as engineRemoveBarrierToken,
   attack,
   createMatchState,
   createPlayer,
@@ -336,6 +345,60 @@ export class RoomManager {
     const room = this.getRoomOrThrow(roomId);
     if (!room.matchState) throw new Error("match not started");
     return engineAdjustGhostFire(room.matchState, playerId, delta);
+  }
+
+  adjustFortuneFire(roomId: RoomId, playerId: PlayerId, delta: number): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAdjustFortuneFire(room.matchState, playerId, delta);
+  }
+
+  adjustPlayerPoison(roomId: RoomId, playerId: PlayerId, delta: number): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAdjustPlayerPoison(room.matchState, playerId, delta);
+  }
+
+  adjustPlayerDamage(roomId: RoomId, playerId: PlayerId, delta: number): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAdjustPlayerDamage(room.matchState, playerId, delta);
+  }
+
+  placeBarrierToken(roomId: RoomId, playerId: PlayerId, targetPlayerId: PlayerId, tokenKind: "energy" | "barrier" | "stun" | "silence" | "poison" | "weaken"): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return enginePlaceBarrierToken(room.matchState, playerId, targetPlayerId, tokenKind);
+  }
+
+  removeBarrierToken(roomId: RoomId, playerId: PlayerId, targetPlayerId: PlayerId, tokenKind: "energy" | "barrier" | "stun" | "silence" | "poison" | "weaken"): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineRemoveBarrierToken(room.matchState, playerId, targetPlayerId, tokenKind);
+  }
+
+  addCustomMarker(roomId: RoomId, playerId: PlayerId, targetPlayerId: PlayerId, markerName: string, delta: number): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAddCustomMarker(room.matchState, playerId, targetPlayerId, markerName, delta);
+  }
+
+  addCustomMarkerToShikigami(roomId: RoomId, playerId: PlayerId, targetPlayerId: PlayerId, slotIndex: number, markerName: string, delta: number): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAddCustomMarkerToShikigami(room.matchState, playerId, targetPlayerId, slotIndex, markerName, delta);
+  }
+
+  addCustomMarkerToSpell(roomId: RoomId, playerId: PlayerId, targetPlayerId: PlayerId, cardId: string, markerName: string, delta: number): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAddCustomMarkerToSpell(room.matchState, playerId, targetPlayerId, cardId, markerName, delta);
+  }
+
+  addCustomMarkerToExtend(roomId: RoomId, playerId: PlayerId, targetPlayerId: PlayerId, cardId: string, markerName: string, delta: number): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) throw new Error("match not started");
+    return engineAddCustomMarkerToExtend(room.matchState, playerId, targetPlayerId, cardId, markerName, delta);
   }
 
   toggleShikigamiStealth(roomId: RoomId, playerId: PlayerId, cardId: string, stealth: boolean): MatchState {

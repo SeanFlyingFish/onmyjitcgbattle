@@ -47,6 +47,8 @@ export type SpellZoneCard = {
   revealedToOpponent: boolean;
   /** 仅脱敏给对手：为 true 时强制显示牌背 */
   concealedForViewer?: boolean;
+  /** 自定义标记 { name: count } */
+  customMarkers?: Record<string, number>;
 };
 
 /** 式神位上的指示物类型 */
@@ -55,7 +57,8 @@ export type ShikigamiTokenKind =
   | "health_plus" | "health_minus"
   | "damage"
   | "energy" | "barrier" | "stun"
-  | "silence" | "poison" | "weaken";
+  | "silence" | "poison" | "weaken"
+  | "confusion";
 
 export type ShikigamiZoneCard = {
   card: Card;
@@ -82,16 +85,38 @@ export type ShikigamiZoneCard = {
   poisonMarkers: number;
   /** 虚弱标记 */
   weakenMarkers: number;
+  /** 混乱标记 */
+  confusionMarkers: number;
   /** 潜行状态：true 时对手只能看到牌背 */
   stealth: boolean;
   /** 附在该式神下方的觉醒牌（alias 匹配） */
   awakenCards?: Card[];
+  /** 自定义标记 { name: count } */
+  customMarkers: Record<string, number>;
 };
 
 /** 延伸区卡牌条目 */
 export type ExtendZoneCard = {
   card: Card;
   exhausted: boolean;
+  /** 自定义标记 { name: count } */
+  customMarkers?: Record<string, number>;
+};
+
+/** 结界区卡牌条目 */
+export type BarrierZoneCard = {
+  card: Card;
+  exhausted: boolean;
+  /** 能量标记 */
+  energyMarkers: number;
+  /** 自定义标记 { name: count } */
+  customMarkers: Record<string, number>;
+};
+
+/** 自定义标记条目 */
+export type CustomMarker = {
+  name: string;
+  count: number;
 };
 
 export type PlayerState = {
@@ -110,7 +135,7 @@ export type PlayerState = {
   shikigamiZone: Array<ShikigamiZoneCard | null>;
   /** 延伸区：每个式神位（0-5）对应一个数组，存放附加在该式神上的卡牌 */
   extendZone: ExtendZoneCard[][];
-  barrier: Card | null;
+  barrier: BarrierZoneCard | null;
   barrierExhausted: boolean;
   spellCardsPlayedThisTurn: number;
   /** 搜索：从牌库顶取出暂放于此，可拖出到任意区域 */
@@ -119,8 +144,14 @@ export type PlayerState = {
   deckPeekBuffer: Card[];
   /** 手牌中已向对手公开的卡牌 ID 集合 */
   revealedHandIds: string[];
-  /** 鬼火硬币数量 */
+  /** 鬼火硬币数量（后手奖励） */
   ghostFireCoins: number;
+  /** 鬼火数量（双方初始为0，手动调整） */
+  fortuneFireCount: number;
+  /** 毒伤标记数量（作用于玩家生命值） */
+  poisonMarkers: number;
+  /** 累计伤害记录 */
+  playerDamage: number;
 };
 
 export type MatchPhase = "mulligan" | "playing";
@@ -279,7 +310,7 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
       /** 式神所属玩家（可为己方或对方） */
       targetPlayerId: z.string().min(1),
       slotIndex: z.number().int().min(0).max(5),
-      tokenKind: z.enum(["attack_plus", "attack_minus", "health_plus", "health_minus", "damage", "energy", "barrier", "stun", "silence", "poison", "weaken"])
+      tokenKind: z.enum(["attack_plus", "attack_minus", "health_plus", "health_minus", "damage", "energy", "barrier", "stun", "silence", "poison", "weaken", "confusion"])
     })
   }),
   z.object({
@@ -288,13 +319,15 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
       roomId: z.string().min(1),
       targetPlayerId: z.string().min(1),
       slotIndex: z.number().int().min(0).max(5),
-      tokenKind: z.enum(["attack_plus", "attack_minus", "health_plus", "health_minus", "damage", "energy", "barrier", "stun", "silence", "poison", "weaken"])
+      tokenKind: z.enum(["attack_plus", "attack_minus", "health_plus", "health_minus", "damage", "energy", "barrier", "stun", "silence", "poison", "weaken", "confusion"])
     })
   }),
   z.object({
     type: z.literal("adjust_player_hp"),
     payload: z.object({
       roomId: z.string().min(1),
+      /** 要调整的目标玩家ID，不传则默认为操作者自身 */
+      targetPlayerId: z.string().min(1).optional(),
       /** 增加或减少的生命值（可为负） */
       delta: z.number().int()
     })
@@ -304,6 +337,34 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     payload: z.object({
       roomId: z.string().min(1),
       /** 增加（正）或减少（负）的鬼火硬币数量 */
+      delta: z.number().int()
+    })
+  }),
+  z.object({
+    type: z.literal("adjust_fortune_fire"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 增加（正）或减少（负）的鬼火数量 */
+      delta: z.number().int()
+    })
+  }),
+  z.object({
+    type: z.literal("adjust_player_poison"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 要调整的目标玩家ID，不传则默认为操作者自身 */
+      targetPlayerId: z.string().min(1).optional(),
+      /** 增加（正）或减少（负）的毒伤标记数量 */
+      delta: z.number().int()
+    })
+  }),
+  z.object({
+    type: z.literal("adjust_player_damage"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 要调整的目标玩家ID，不传则默认为操作者自身 */
+      targetPlayerId: z.string().min(1).optional(),
+      /** 增加（正）或减少（负）的伤害记录 */
       delta: z.number().int()
     })
   }),
@@ -332,6 +393,79 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     payload: z.object({
       roomId: z.string().min(1),
       cardId: z.string().min(1)
+    })
+  }),
+  // 结界区添加能量标记
+  z.object({
+    type: z.literal("place_barrier_token"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 目标结界所属玩家 ID */
+      targetPlayerId: z.string().min(1),
+      tokenKind: z.enum(["energy", "barrier", "stun", "silence", "poison", "weaken"])
+    })
+  }),
+  // 结界区移除能量标记
+  z.object({
+    type: z.literal("remove_barrier_token"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 目标结界所属玩家 ID */
+      targetPlayerId: z.string().min(1),
+      tokenKind: z.enum(["energy", "barrier", "stun", "silence", "poison", "weaken"])
+    })
+  }),
+  // 添加自定义标记到结界区
+  z.object({
+    type: z.literal("add_custom_marker"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      /** 目标结界所属玩家 ID */
+      targetPlayerId: z.string().min(1),
+      markerName: z.string().min(1),
+      delta: z.number().int()
+    })
+  }),
+  // 添加自定义标记到式神
+  z.object({
+    type: z.literal("add_custom_marker_to_shikigami"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      targetPlayerId: z.string().min(1),
+      slotIndex: z.number().int().min(0).max(5),
+      markerName: z.string().min(1),
+      delta: z.number().int()
+    })
+  }),
+  // 添加自定义标记到符咒区卡牌
+  z.object({
+    type: z.literal("add_custom_marker_to_spell"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      targetPlayerId: z.string().min(1),
+      cardId: z.string().min(1),
+      markerName: z.string().min(1),
+      delta: z.number().int()
+    })
+  }),
+  // 添加自定义标记到延伸区卡牌
+  z.object({
+    type: z.literal("add_custom_marker_to_extend"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      targetPlayerId: z.string().min(1),
+      cardId: z.string().min(1),
+      markerName: z.string().min(1),
+      delta: z.number().int()
+    })
+  }),
+  // 切换延伸区卡牌顺序（将最底层的卡置于顶层）
+  z.object({
+    type: z.literal("toggle_extend_card_order"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      targetPlayerId: z.string().min(1),
+      slotIndex: z.number().int().min(0).max(5)
     })
   })
 ]);

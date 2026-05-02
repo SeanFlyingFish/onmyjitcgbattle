@@ -18,13 +18,13 @@ wss.on("connection", (ws) => {
             const parsed = ClientEventSchema.parse(JSON.parse(raw.toString()));
             if (parsed.type === "create_room") {
                 const result = roomManager.createRoom(ws, parsed.payload.name);
-                playerSocket.set(ws, result);
+                playerSocket.set(ws, { roomId: result.roomId, playerId: result.playerId, playerName: parsed.payload.name });
                 send(ws, { type: "room_created", payload: result });
                 return;
             }
             if (parsed.type === "join_room") {
                 const result = roomManager.joinRoom(parsed.payload.roomId, ws, parsed.payload.name);
-                playerSocket.set(ws, { roomId: result.roomId, playerId: result.playerId });
+                playerSocket.set(ws, { roomId: result.roomId, playerId: result.playerId, playerName: parsed.payload.name });
                 roomManager.broadcastRoom(result.roomId, { type: "room_joined", payload: result });
                 return;
             }
@@ -162,7 +162,77 @@ wss.on("connection", (ws) => {
                 return;
             }
             if (parsed.type === "adjust_player_hp") {
-                const state = roomManager.adjustPlayerHp(parsed.payload.roomId, session.playerId, parsed.payload.delta);
+                const targetId = parsed.payload.targetPlayerId ?? session.playerId;
+                const state = roomManager.adjustPlayerHp(parsed.payload.roomId, targetId, parsed.payload.delta);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            if (parsed.type === "adjust_ghost_fire") {
+                const state = roomManager.adjustGhostFire(parsed.payload.roomId, session.playerId, parsed.payload.delta);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            if (parsed.type === "adjust_fortune_fire") {
+                const state = roomManager.adjustFortuneFire(parsed.payload.roomId, session.playerId, parsed.payload.delta);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            if (parsed.type === "adjust_player_poison") {
+                const targetId = parsed.payload.targetPlayerId ?? session.playerId;
+                const state = roomManager.adjustPlayerPoison(parsed.payload.roomId, targetId, parsed.payload.delta);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            if (parsed.type === "adjust_player_damage") {
+                const targetId = parsed.payload.targetPlayerId ?? session.playerId;
+                const state = roomManager.adjustPlayerDamage(parsed.payload.roomId, targetId, parsed.payload.delta);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            if (parsed.type === "place_token_to_showcase") {
+                const state = roomManager.placeTokenToShowcase(parsed.payload.roomId, session.playerId, parsed.payload.tokenId, parsed.payload.tokenName, parsed.payload.tokenAttack, parsed.payload.tokenHealth, parsed.payload.tokenImg);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            // 移除展示区的召唤物卡牌（直接删除）
+            if (parsed.type === "remove_token_card") {
+                const state = roomManager.removeTokenCard(parsed.payload.roomId, session.playerId, parsed.payload.cardId);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            // 结界区添加能量标记
+            if (parsed.type === "place_barrier_token") {
+                const state = roomManager.placeBarrierToken(parsed.payload.roomId, session.playerId, parsed.payload.targetPlayerId, parsed.payload.tokenKind);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            // 结界区移除能量标记
+            if (parsed.type === "remove_barrier_token") {
+                const state = roomManager.removeBarrierToken(parsed.payload.roomId, session.playerId, parsed.payload.targetPlayerId, parsed.payload.tokenKind);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            // 添加自定义标记到结界区
+            if (parsed.type === "add_custom_marker") {
+                const state = roomManager.addCustomMarker(parsed.payload.roomId, session.playerId, parsed.payload.targetPlayerId, parsed.payload.markerName, parsed.payload.delta);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            // 添加自定义标记到式神
+            if (parsed.type === "add_custom_marker_to_shikigami") {
+                const state = roomManager.addCustomMarkerToShikigami(parsed.payload.roomId, session.playerId, parsed.payload.targetPlayerId, parsed.payload.slotIndex, parsed.payload.markerName, parsed.payload.delta);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            // 添加自定义标记到符咒区
+            if (parsed.type === "add_custom_marker_to_spell") {
+                const state = roomManager.addCustomMarkerToSpell(parsed.payload.roomId, session.playerId, parsed.payload.targetPlayerId, parsed.payload.cardId, parsed.payload.markerName, parsed.payload.delta);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
+            // 添加自定义标记到延伸区
+            if (parsed.type === "add_custom_marker_to_extend") {
+                const state = roomManager.addCustomMarkerToExtend(parsed.payload.roomId, session.playerId, parsed.payload.targetPlayerId, parsed.payload.cardId, parsed.payload.markerName, parsed.payload.delta);
                 roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
                 return;
             }
