@@ -8,8 +8,9 @@
     "dev:client": "tsx src/client/mockClient.ts",
     "dev:web": "npm --prefix web run dev -- --open",
     "dev:oneclick": "concurrently -n server,web -c cyan,magenta \"npm run dev:server\" \"npm run dev:web\"",
-    "build:web": "npm --prefix web run build",
+    "build:web": "cd web && npm install && npm run build && cd ..",
     "build": "tsc -p tsconfig.json",
+    "build:all": "npm run build && npm run build:web",
     "start": "node dist/server/index.js"
   },
   "keywords": [],
