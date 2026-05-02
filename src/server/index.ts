@@ -414,6 +414,5 @@ wss.on("connection", (ws) => {
 
 server.listen(PORT, () => {
   console.log(`card-battle server on port ${PORT}`);
-  console.log(`serving static files from ${WEB_DIST}`);
 });
 
