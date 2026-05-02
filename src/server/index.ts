@@ -8,7 +8,8 @@ import { RoomManager } from "./roomManager.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 8080);
-const WEB_DIST = join(__dirname, "../../web/dist");
+// 前端静态文件目录：后端编译后在 dist/server/，前端在 dist/public/
+const WEB_DIST = join(__dirname, "../public");
 const roomManager = new RoomManager();
 const playerSocket = new Map<WebSocket, { playerId: string; roomId: string; playerName: string }>();
 
@@ -472,7 +473,7 @@ wss.on("connection", (ws) => {
 });
 
 server.listen(PORT, () => {
-  // Keep bootstrap log tiny so local debug is clean.
-  console.log(`card-battle server on ws://localhost:${PORT}`);
+  console.log(`card-battle server on port ${PORT}`);
+  console.log(`serving static files from ${WEB_DIST}`);
 });
 
