@@ -383,8 +383,11 @@ function ShikigamiTokenBelt({
 }
 
 function App() {
-  // 本地开发用 ws://localhost:8080，生产环境用 VITE_WS_URL 环境变量
-  const [serverUrl, setServerUrl] = useState(import.meta.env.VITE_WS_URL || "ws://localhost:8080");
+  // 动态获取 WebSocket 地址：生产环境用当前页面的 wss://，本地开发用 localhost
+  const defaultWsUrl = typeof window !== "undefined"
+    ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`
+    : "ws://localhost:8080";
+  const [serverUrl, setServerUrl] = useState(import.meta.env.VITE_WS_URL || defaultWsUrl);
   const [name, setName] = useState("玩家");
   const [roomIdInput, setRoomIdInput] = useState("");
   /** 组卡器选择的当前牌库（BuilderCard 格式），由组卡器通过 BroadcastChannel 同步 */
