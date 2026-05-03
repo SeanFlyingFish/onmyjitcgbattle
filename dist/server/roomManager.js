@@ -431,7 +431,14 @@ export class RoomManager {
         }
         if (decks.length < 2)
             return null;
-        room.matchState = createMatchState(room.id, room.players, decks[0], decks[1]);
+        // 重建双方玩家状态并准备对局
+        const playerEntries = [...room.players.entries()];
+        for (const [id, entry] of playerEntries) {
+            entry.state = createPlayer(id, entry.state.name, entry.customDeck);
+            preparePlayerForMatch(entry.state);
+        }
+        const states = playerEntries.map((entry) => entry[1].state);
+        room.matchState = createMatchState(room.id, states[0], states[1]);
         return room.matchState;
     }
     getRoomOrThrow(roomId) {

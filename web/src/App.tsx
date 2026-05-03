@@ -530,8 +530,9 @@ function App() {
       if (msg.type === "room_created") {
         setRoomId(msg.payload.roomId);
         setPlayerId((prev) => prev || msg.payload.playerId);
-        // 持久化重连信息到 localStorage
-        localStorage.setItem("onmyoji_tcg_reconnect", JSON.stringify({
+        // 持久化重连信息到 localStorage（以用户名为 key 区分同电脑多玩家）
+        const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
+        localStorage.setItem(reconnectKey, JSON.stringify({
           roomId: msg.payload.roomId,
           playerId: msg.payload.playerId,
           reconnectToken: msg.payload.reconnectToken,
@@ -541,7 +542,8 @@ function App() {
       } else if (msg.type === "room_joined") {
         setRoomId(msg.payload.roomId);
         setPlayerId((prev) => prev || msg.payload.playerId);
-        localStorage.setItem("onmyoji_tcg_reconnect", JSON.stringify({
+        const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
+        localStorage.setItem(reconnectKey, JSON.stringify({
           roomId: msg.payload.roomId,
           playerId: msg.payload.playerId,
           reconnectToken: msg.payload.reconnectToken,
@@ -550,6 +552,7 @@ function App() {
         appendLog(`🚪 已加入房间：${msg.payload.roomId}`);
       } else if (msg.type === "match_started" || msg.type === "match_state" || msg.type === "rematch_started") {
         setMatchState(msg.payload);
+        setGameOverDismissed(false);
         if (msg.type === "match_started") appendLog("🎮 对局开始！");
         if (msg.type === "rematch_started") appendLog("🔄 对局重新开始！");
       } else if (msg.type === "reconnect_success") {
@@ -570,7 +573,10 @@ function App() {
         }
         appendLog("✅ 重连成功！");
       } else if (msg.type === "reconnect_failed") {
-        localStorage.removeItem("onmyoji_tcg_reconnect");
+        // 清除当前用户对应的重连信息
+        const username = name || localStorage.getItem("onmyoji_tcg_username") || "";
+        const reconnectKey = username ? `onmyoji_tcg_reconnect_${username}` : "onmyoji_tcg_reconnect";
+        localStorage.removeItem(reconnectKey);
         appendLog(`❌ 重连失败：${msg.payload.message}`);
       } else if (msg.type === "player_disconnected") {
         appendLog("⚠️ 对手已断线");
@@ -789,6 +795,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
   const enemyView = withDefaultZones(enemy);
 
   const gameOver = Boolean(matchState?.winnerId);
+  const [gameOverDismissed, setGameOverDismissed] = useState(false);
   const allowBoardDrag = !isMulligan && phase === "playing" && !gameOver;
 
   function appendLog(message: string) {
@@ -861,19 +868,18 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
   /** 页面加载时检查 localStorage，尝试自动重连 */
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("onmyoji_tcg_reconnect");
+      // 使用当前保存的用户名查找对应的重连信息（以用户名为 key 区分同电脑多玩家）
+      const username = localStorage.getItem("onmyoji_tcg_username") || "";
+      const reconnectKey = username ? `onmyoji_tcg_reconnect_${username}` : "onmyoji_tcg_reconnect";
+      const saved = localStorage.getItem(reconnectKey);
       if (saved) {
         const data = JSON.parse(saved);
-        if (data.roomId && data.reconnectToken) {
+        if (data.roomId && data.reconnectToken && data.name) {
           // 恢复 roomId（用于UI状态）
           setRoomId(data.roomId);
+          setName(data.name);
+          setIsLoggedIn(true);
           appendLog("🔄 检测到未结束的对局，正在重连...");
-          // 重连时恢复登录状态
-          if (data.name) {
-            setName(data.name);
-            setIsLoggedIn(true);
-            localStorage.setItem("onmyoji_tcg_username", data.name);
-          }
           connect((ws) => {
             ws.send(JSON.stringify({
               type: "reconnect",
@@ -892,7 +898,10 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
     send({ type: "leave_room", payload: { roomId } });
     setRoomId("");
     setMatchState(null);
-    localStorage.removeItem("onmyoji_tcg_reconnect");
+    // 清除当前用户对应的重连信息
+    const username = name || localStorage.getItem("onmyoji_tcg_username") || "";
+    const reconnectKey = username ? `onmyoji_tcg_reconnect_${username}` : "onmyoji_tcg_reconnect";
+    localStorage.removeItem(reconnectKey);
   }
 
   function quickCreateRoom() {
@@ -2421,9 +2430,9 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
       )}
 
       {/* ========== 游戏结束遮罩 ========== */}
-      {matchState?.winnerId ? (
-        <div className="game-over-overlay" role="alertdialog" aria-live="assertive" aria-label="对局结束">
-          <div className="game-over-card">
+      {matchState?.winnerId && !gameOverDismissed ? (
+        <div className="game-over-overlay" role="alertdialog" aria-live="assertive" aria-label="对局结束" onClick={() => setGameOverDismissed(true)}>
+          <div className="game-over-card" onClick={(e) => e.stopPropagation()}>
             <h3 className="game-over-title">对局结束</h3>
             <p className="game-over-body">
               胜者：<strong>{matchState.players[matchState.winnerId]?.name ?? matchState.winnerId}</strong>
@@ -2433,6 +2442,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
             ) : (
               <p className="game-over-sub game-over-lose">💀 对方获胜。</p>
             )}
+            <p className="game-over-hint">点击任意处关闭</p>
           </div>
         </div>
       ) : null}

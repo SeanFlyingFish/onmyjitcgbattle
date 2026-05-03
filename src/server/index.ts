@@ -3,6 +3,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import { ClientEventSchema, ServerEvent } from "../shared/types.js";
 import { RoomManager } from "./roomManager.js";
 import { AuthManager } from "./authManager.js";
+import { sanitizeMatchStateForPlayer } from "./gameEngine.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const roomManager = new RoomManager();
@@ -61,7 +62,9 @@ wss.on("connection", (ws) => {
           const foundPlayerId = roomManager.getPlayerIdByToken(roomId, reconnectToken) ?? "";
           const playerName = state.players[foundPlayerId]?.name ?? "";
           sessions.set(ws, { playerId: foundPlayerId, name: playerName, roomId, reconnectToken });
-          send(ws, { type: "reconnect_success", payload: { playerId: foundPlayerId, matchState: state } });
+          // 脱敏后发送给对应玩家（隐藏对手手牌等信息）
+          const sanitizedState = sanitizeMatchStateForPlayer(state, foundPlayerId);
+          send(ws, { type: "reconnect_success", payload: { playerId: foundPlayerId, matchState: sanitizedState } });
         } else {
           send(ws, { type: "reconnect_failed", payload: { message: "重连失败，房间或令牌无效" } });
         }
