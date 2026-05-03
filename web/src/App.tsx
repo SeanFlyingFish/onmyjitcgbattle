@@ -503,14 +503,41 @@ function App() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
 
+  const [pendingReconnectData, setPendingReconnectData] = useState<{
+    roomId: string;
+    reconnectToken: string;
+    playerId: string;
+  } | null>(null);
+
+  const [reconnectPayload, setReconnectPayload] = useState<{
+    roomId: string;
+    reconnectToken: string;
+    playerId: string;
+  } | null>(null);
+
+  // 当登录完成且重连信息就绪时，确保 socket 已连接再发送重连请求
+  useEffect(() => {
+    if (!reconnectPayload || !socket || socket.readyState !== WebSocket.OPEN) return;
+    console.log('[游戏] 登录后自动重连，roomId=', reconnectPayload.roomId);
+    socket.send(JSON.stringify({
+      type: "reconnect",
+      payload: {
+        roomId: reconnectPayload.roomId,
+        reconnectToken: reconnectPayload.reconnectToken,
+        playerId: reconnectPayload.playerId
+      }
+    }));
+    setReconnectPayload(null);
+  }, [reconnectPayload, socket]);
+
   // send 函数使用 useCallback 确保能访问最新的 socket
-  const send = useCallback((payload: unknown) => {
+  const send = useCallback((payload: any) => {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      console.log('[游戏] 未连接或未就绪，无法发送:', (payload as any).type);
+      console.log('[游戏] 未连接或未就绪，无法发送:', payload.type);
       return false;
     }
     socket.send(JSON.stringify(payload));
-    console.log('[游戏] 发送成功:', (payload as any).type);
+    console.log('[游戏] 发送成功:', payload.type);
     return true;
   }, [socket]);
 
@@ -585,15 +612,23 @@ function App() {
       } else {
         appendLog(`💬 ${msg.payload.playerName}：${msg.payload.message}`);
       }
-    } else if (msg.type === "login_success") {
-      setIsLoggedIn(true);
-      setName(msg.payload.name);
-      setPlayerId(msg.payload.playerId);
-      localStorage.setItem("onmyoji_tcg_username", msg.payload.name);
-      setAuthError("");
-      appendLog(`🔑 登录成功：${msg.payload.name}`);
-      const cb = (socket as any)?._loginCallback;
-      if (cb) { cb(socket); delete (socket as any)._loginCallback; }
+    /** 登录成功：保存昵称，如有断线信息则自动重连 */
+  } else if (msg.type === "login_success") {
+    setIsLoggedIn(true);
+    setName(msg.payload.name);
+    setPlayerId(msg.payload.playerId);
+    localStorage.setItem("onmyoji_tcg_username", msg.payload.name);
+    setAuthError("");
+    appendLog(`🔑 登录成功：${msg.payload.name}`);
+
+    // 如果有待重连的信息，发起重连
+    if (pendingReconnectData) {
+      setReconnectPayload(pendingReconnectData);
+      setPendingReconnectData(null);
+    }
+
+    const cb = (socket as any)?._loginCallback;
+    if (cb) { cb(socket); delete (socket as any)._loginCallback; }
     } else if (msg.type === "register_success") {
       appendLog(`📝 注册成功：${msg.payload.name}，请登录`);
       setName(msg.payload.name);
@@ -871,32 +906,20 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
     appendLog("🔓 已登出");
   }
 
-  /** 页面加载时检查 localStorage，尝试自动重连 */
+  /** 页面加载时检查 localStorage，存储断线重连信息（不自动登录） */
   useEffect(() => {
     try {
-      // 使用当前保存的用户名查找对应的重连信息（以用户名为 key 区分同电脑多玩家）
       const username = localStorage.getItem("onmyoji_tcg_username") || "";
       const reconnectKey = username ? `onmyoji_tcg_reconnect_${username}` : "onmyoji_tcg_reconnect";
       const saved = localStorage.getItem(reconnectKey);
       if (saved) {
         const data = JSON.parse(saved);
         if (data.roomId && data.reconnectToken && data.name) {
-          // 恢复 roomId（用于UI状态）
-          setRoomId(data.roomId);
-          setName(data.name);
-          setIsLoggedIn(true);
-          appendLog("🔄 检测到未结束的对局，正在重连...");
-          connect((ws) => {
-            ws.send(JSON.stringify({
-              type: "reconnect",
-              payload: { roomId: data.roomId, reconnectToken: data.reconnectToken, playerId: data.playerId }
-            }));
-          });
+          setPendingReconnectData(data);
+          appendLog("🔄 检测到未结束的对局，请登录后重连...");
         }
       }
-    } catch {
-      // localStorage 不可用或数据损坏，忽略
-    }
+    } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** 主动离开房间 */
