@@ -57,6 +57,7 @@ wss.on("connection", (ws) => {
       // 断线重连：需同时验证 reconnectToken 与 playerId 匹配
       if (parsed.type === "reconnect") {
         const { roomId, reconnectToken, playerId: requestPlayerId } = parsed.payload;
+        console.log(`[服务器] 重连请求: roomId=${roomId}, requestPlayerId=${requestPlayerId}`);
         const state = roomManager.reconnect(roomId, reconnectToken, requestPlayerId, ws);
         if (state) {
           const foundPlayerId = roomManager.getPlayerIdByToken(roomId, reconnectToken) ?? "";
@@ -65,11 +66,15 @@ wss.on("connection", (ws) => {
             const playerName = state.players[foundPlayerId]?.name ?? "";
             sessions.set(ws, { playerId: foundPlayerId, name: playerName, roomId, reconnectToken });
             const sanitizedState = sanitizeMatchStateForPlayer(state, foundPlayerId);
+            console.log(`[服务器] 重连成功: playerId=${foundPlayerId}, name=${playerName}, roomId=${roomId}`);
+            console.log(`[服务器] matchState.players keys: ${JSON.stringify(Object.keys(state.players))}`);
             send(ws, { type: "reconnect_success", payload: { playerId: foundPlayerId, matchState: sanitizedState } });
           } else {
+            console.log(`[服务器] 重连失败: playerId不匹配 foundPlayerId=${foundPlayerId} requestPlayerId=${requestPlayerId}`);
             send(ws, { type: "reconnect_failed", payload: { message: "重连失败：玩家ID与令牌不匹配" } });
           }
         } else {
+          console.log(`[服务器] 重连失败: 房间或令牌无效 roomId=${roomId}`);
           send(ws, { type: "reconnect_failed", payload: { message: "重连失败，房间或令牌无效" } });
         }
         return;

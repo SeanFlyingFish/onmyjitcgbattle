@@ -514,6 +514,106 @@ function App() {
     return true;
   }, [socket]);
 
+  // 消息处理函数引用 —— 始终指向最新的 handler，避免 useEffect 时序问题
+  const handleMessageRef = useRef<(event: MessageEvent) => void>(() => {});
+
+  // 消息处理逻辑（依赖最新 state，每次渲染都更新 ref）
+  handleMessageRef.current = (event: MessageEvent) => {
+    const msg = JSON.parse(event.data) as ServerEvent;
+    if (msg.type === "room_created") {
+      setRoomId(msg.payload.roomId);
+      setPlayerId((prev) => prev || msg.payload.playerId);
+      const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
+      localStorage.setItem(reconnectKey, JSON.stringify({
+        roomId: msg.payload.roomId,
+        playerId: msg.payload.playerId,
+        reconnectToken: msg.payload.reconnectToken,
+        name
+      }));
+      appendLog(`🏠 房间已创建：${msg.payload.roomId}`);
+    } else if (msg.type === "room_joined") {
+      setRoomId(msg.payload.roomId);
+      setPlayerId((prev) => prev || msg.payload.playerId);
+      const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
+      localStorage.setItem(reconnectKey, JSON.stringify({
+        roomId: msg.payload.roomId,
+        playerId: msg.payload.playerId,
+        reconnectToken: msg.payload.reconnectToken,
+        name
+      }));
+      appendLog(`🚪 已加入房间：${msg.payload.roomId}`);
+    } else if (msg.type === "match_started" || msg.type === "match_state" || msg.type === "rematch_started") {
+      console.log(`[游戏] 收到 ${msg.type}, 当前 playerId=${playerId}, matchState.players keys:`, Object.keys(msg.payload.players));
+      setMatchState(msg.payload);
+      setGameOverDismissed(false);
+      if (msg.type === "match_started") appendLog("🎮 对局开始！");
+      if (msg.type === "rematch_started") appendLog("🔄 对局重新开始！");
+    } else if (msg.type === "reconnect_success") {
+      setPlayerId(msg.payload.playerId);
+      console.log('[游戏] 重连成功，playerId =', msg.payload.playerId);
+      if (msg.payload.matchState) {
+        console.log('[游戏] 重连 matchState.players keys:', Object.keys(msg.payload.matchState.players));
+        console.log('[游戏] 重连后己方手牌数:', msg.payload.matchState.players[msg.payload.playerId]?.hand?.length ?? 'undefined');
+        setMatchState(msg.payload.matchState);
+        setRoomId(msg.payload.matchState.roomId);
+      } else {
+        const saved = localStorage.getItem("onmyoji_tcg_reconnect");
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            if (data.roomId) setRoomId(data.roomId);
+          } catch {}
+        }
+      }
+      appendLog("✅ 重连成功！");
+    } else if (msg.type === "reconnect_failed") {
+      const username = name || localStorage.getItem("onmyoji_tcg_username") || "";
+      const reconnectKey = username ? `onmyoji_tcg_reconnect_${username}` : "onmyoji_tcg_reconnect";
+      localStorage.removeItem(reconnectKey);
+      appendLog(`❌ 重连失败：${msg.payload.message}`);
+    } else if (msg.type === "player_disconnected") {
+      appendLog("⚠️ 对手已断线");
+    } else if (msg.type === "player_reconnected") {
+      appendLog("✅ 对手已重连");
+    } else if (msg.type === "left_room") {
+      appendLog("🚪 玩家离开了房间");
+    } else if (msg.type === "error") {
+      appendLog(`❌ 错误：${msg.payload.message}`);
+    } else if (msg.type === "chat") {
+      if (msg.payload.playerId === "system") {
+        appendLog(`📢 ${msg.payload.message}`);
+      } else {
+        appendLog(`💬 ${msg.payload.playerName}：${msg.payload.message}`);
+      }
+    } else if (msg.type === "login_success") {
+      setIsLoggedIn(true);
+      setName(msg.payload.name);
+      setPlayerId(msg.payload.playerId);
+      localStorage.setItem("onmyoji_tcg_username", msg.payload.name);
+      setAuthError("");
+      appendLog(`🔑 登录成功：${msg.payload.name}`);
+      const cb = (socket as any)?._loginCallback;
+      if (cb) { cb(socket); delete (socket as any)._loginCallback; }
+    } else if (msg.type === "register_success") {
+      appendLog(`📝 注册成功：${msg.payload.name}，请登录`);
+      setName(msg.payload.name);
+      setRegisterPassword("");
+    } else if (msg.type === "auth_error") {
+      setAuthError(msg.payload.message);
+      appendLog(`❌ ${msg.payload.message}`);
+      const cb = (socket as any)?._loginCallback;
+      if (cb) { delete (socket as any)._loginCallback; }
+    } else {
+      appendLog(`📨 事件：${(msg as { type: string }).type}`);
+    }
+  };
+
+  // WebSocket 消息处理 —— 使用 ref 绑定，避免 useEffect 时序问题导致消息丢失
+  useEffect(() => {
+    if (!socket) return;
+    socket.onmessage = (event) => handleMessageRef.current(event);
+  }, [socket]);
+
   // 当加入房间后，如果已有牌库（加入房间前导入的），立即发送到服务器
   useEffect(() => {
     if (roomId && playerId && builderDeck && builderDeck.length > 0) {
@@ -521,102 +621,6 @@ function App() {
       console.log('[游戏] 加入房间后自动发送已存储的牌库:', builderDeck.length, '张');
     }
   }, [roomId, playerId, builderDeck, send]);
-
-  // WebSocket 消息处理
-  useEffect(() => {
-    if (!socket) return;
-    socket.onmessage = (event) => {
-      const msg = JSON.parse(event.data) as ServerEvent;
-      if (msg.type === "room_created") {
-        setRoomId(msg.payload.roomId);
-        setPlayerId((prev) => prev || msg.payload.playerId);
-        // 持久化重连信息到 localStorage（以用户名为 key 区分同电脑多玩家）
-        const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
-        localStorage.setItem(reconnectKey, JSON.stringify({
-          roomId: msg.payload.roomId,
-          playerId: msg.payload.playerId,
-          reconnectToken: msg.payload.reconnectToken,
-          name
-        }));
-        appendLog(`🏠 房间已创建：${msg.payload.roomId}`);
-      } else if (msg.type === "room_joined") {
-        setRoomId(msg.payload.roomId);
-        setPlayerId((prev) => prev || msg.payload.playerId);
-        const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
-        localStorage.setItem(reconnectKey, JSON.stringify({
-          roomId: msg.payload.roomId,
-          playerId: msg.payload.playerId,
-          reconnectToken: msg.payload.reconnectToken,
-          name
-        }));
-        appendLog(`🚪 已加入房间：${msg.payload.roomId}`);
-      } else if (msg.type === "match_started" || msg.type === "match_state" || msg.type === "rematch_started") {
-        setMatchState(msg.payload);
-        setGameOverDismissed(false);
-        if (msg.type === "match_started") appendLog("🎮 对局开始！");
-        if (msg.type === "rematch_started") appendLog("🔄 对局重新开始！");
-      } else if (msg.type === "reconnect_success") {
-        setPlayerId(msg.payload.playerId);
-        // 恢复 roomId（从 matchState 中获取）
-        if (msg.payload.matchState) {
-          setMatchState(msg.payload.matchState);
-          setRoomId(msg.payload.matchState.roomId);
-        } else {
-          // 如果没有 matchState，尝试从 localStorage 恢复 roomId
-          const saved = localStorage.getItem("onmyoji_tcg_reconnect");
-          if (saved) {
-            try {
-              const data = JSON.parse(saved);
-              if (data.roomId) setRoomId(data.roomId);
-            } catch {}
-          }
-        }
-        appendLog("✅ 重连成功！");
-      } else if (msg.type === "reconnect_failed") {
-        // 清除当前用户对应的重连信息
-        const username = name || localStorage.getItem("onmyoji_tcg_username") || "";
-        const reconnectKey = username ? `onmyoji_tcg_reconnect_${username}` : "onmyoji_tcg_reconnect";
-        localStorage.removeItem(reconnectKey);
-        appendLog(`❌ 重连失败：${msg.payload.message}`);
-      } else if (msg.type === "player_disconnected") {
-        appendLog("⚠️ 对手已断线");
-      } else if (msg.type === "player_reconnected") {
-        appendLog("✅ 对手已重连");
-      } else if (msg.type === "left_room") {
-        appendLog("🚪 玩家离开了房间");
-      } else if (msg.type === "error") {
-        appendLog(`❌ 错误：${msg.payload.message}`);
-      } else if (msg.type === "chat") {
-        if (msg.payload.playerId === "system") {
-          appendLog(`📢 ${msg.payload.message}`);
-        } else {
-          appendLog(`💬 ${msg.payload.playerName}：${msg.payload.message}`);
-        }
-      } else if (msg.type === "login_success") {
-        setIsLoggedIn(true);
-        setName(msg.payload.name);
-        setPlayerId(msg.payload.playerId);
-        localStorage.setItem("onmyoji_tcg_username", msg.payload.name);
-        setAuthError("");
-        appendLog(`🔑 登录成功：${msg.payload.name}`);
-        // 执行登录回调（如果有）
-        const cb = (socket as any)?._loginCallback;
-        if (cb) { cb(socket); delete (socket as any)._loginCallback; }
-      } else if (msg.type === "register_success") {
-        appendLog(`📝 注册成功：${msg.payload.name}，请登录`);
-        setName(msg.payload.name);
-        setRegisterPassword("");
-      } else if (msg.type === "auth_error") {
-        setAuthError(msg.payload.message);
-        appendLog(`❌ ${msg.payload.message}`);
-        const cb = (socket as any)?._loginCallback;
-        if (cb) { delete (socket as any)._loginCallback; }
-      } else {
-        appendLog(`📨 事件：${(msg as { type: string }).type}`);
-      }
-    };
-    setSocket(socket);
-  }, [socket, name]);
 
   const [hoveredHandCardId, setHoveredHandCardId] = useState<string | null>(null);
   /** 通用卡牌悬停状态（用于棋盘上所有区域的卡牌） */
@@ -809,6 +813,9 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
       return;
     }
     const ws = new WebSocket(serverUrl);
+    // 立即绑定 onmessage（使用 ref 确保总是调用最新的处理函数）
+    // 这修复了 useEffect 绑定延迟导致 reconnect_success 等消息丢失的问题
+    ws.onmessage = (event) => handleMessageRef.current(event);
     ws.onopen = () => {
       appendLog(`✅ 已连接至 ${serverUrl}`);
       if (onOpen) onOpen(ws);
@@ -818,7 +825,6 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
       // 连接断开时不重置登录状态（断线重连不依赖登录）
     };
     ws.onerror = () => appendLog("❌ 连接异常");
-    // onmessage 由 useEffect 处理
     setSocket(ws);
   }
 
