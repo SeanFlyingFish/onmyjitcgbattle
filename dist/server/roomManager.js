@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import WebSocket from "ws";
-import { adjustGhostFire as engineAdjustGhostFire, adjustFortuneFire as engineAdjustFortuneFire, adjustPlayerPoison as engineAdjustPlayerPoison, adjustPlayerDamage as engineAdjustPlayerDamage, adjustPlayerHp as engineAdjustPlayerHp, addCustomMarker as engineAddCustomMarker, addCustomMarkerToShikigami as engineAddCustomMarkerToShikigami, addCustomMarkerToSpell as engineAddCustomMarkerToSpell, addCustomMarkerToExtend as engineAddCustomMarkerToExtend, placeBarrierToken as enginePlaceBarrierToken, removeBarrierToken as engineRemoveBarrierToken, attack, createMatchState, createPlayer, deckDraw, deckPeek, deckSearch, deckSearchReturn, deckShuffle, endTurn, moveCard, attachAwaken as engineAttachAwaken, detachAwaken as engineDetachAwaken, placeShikigamiToken as enginePlaceShikigamiToken, placeTokenToShowcase, removeTokenCard, playCard, preparePlayerForMatch, removeShikigamiToken as engineRemoveShikigamiToken, sanitizeMatchStateForPlayer, submitMulligan, toggleShikigamiExhaust, toggleShikigamiStealth as engineToggleShikigamiStealth, toggleSpellExhaust, toggleSpellReveal, toggleHandReveal } from "./gameEngine.js";
+import { adjustGhostFire as engineAdjustGhostFire, adjustFortuneFire as engineAdjustFortuneFire, adjustPlayerPoison as engineAdjustPlayerPoison, adjustPlayerDamage as engineAdjustPlayerDamage, adjustPlayerHp as engineAdjustPlayerHp, addCustomMarker as engineAddCustomMarker, addCustomMarkerToShikigami as engineAddCustomMarkerToShikigami, addCustomMarkerToSpell as engineAddCustomMarkerToSpell, addCustomMarkerToExtend as engineAddCustomMarkerToExtend, placeBarrierToken as enginePlaceBarrierToken, removeBarrierToken as engineRemoveBarrierToken, attack, createMatchState, createPlayer, deckDraw, deckPeek, deckSearch, deckSearchReorder, deckSearchReturn, deckShuffle, endTurn, moveCard, attachAwaken as engineAttachAwaken, detachAwaken as engineDetachAwaken, placeShikigamiToken as enginePlaceShikigamiToken, placeTokenToShowcase, removeTokenCard, playCard, preparePlayerForMatch, removeShikigamiToken as engineRemoveShikigamiToken, sanitizeMatchStateForPlayer, submitMulligan, toggleShikigamiExhaust, toggleShikigamiStealth as engineToggleShikigamiStealth, toggleSpellExhaust, toggleSpellReveal, toggleHandReveal } from "./gameEngine.js";
 export class RoomManager {
     rooms = new Map();
     createRoom(ws, name) {
@@ -160,6 +160,13 @@ export class RoomManager {
             throw new Error("match not started");
         }
         return deckSearchReturn(room.matchState, playerId);
+    }
+    deckSearchReorder(roomId, playerId, orderedIds) {
+        const room = this.getRoomOrThrow(roomId);
+        if (!room.matchState) {
+            throw new Error("match not started");
+        }
+        return deckSearchReorder(room.matchState, playerId, orderedIds);
     }
     deckPeek(roomId, playerId, count) {
         const room = this.getRoomOrThrow(roomId);

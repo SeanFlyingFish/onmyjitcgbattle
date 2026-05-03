@@ -707,7 +707,7 @@ export function deckDraw(state, actorId, count, opponentId) {
     return state;
 }
 export function deckShuffle(state, actorId) {
-    if (state.winnerId || state.phase !== "playing" || state.currentPlayerId !== actorId) {
+    if (state.winnerId || state.phase !== "playing") {
         return state;
     }
     const p = state.players[actorId];
@@ -741,7 +741,7 @@ export function deckSearch(state, actorId, count) {
     p.deckCount = p.deck.length;
     return state;
 }
-/** 将 deckSearchBuffer 中的牌放回牌库顶，不洗牌 */
+/** 将 deckSearchBuffer 中的牌放回牌库顶（若牌库已有牌说明用户已手动置顶/置底，此时放回牌库底） */
 export function deckSearchReturn(state, actorId) {
     if (state.winnerId || state.phase !== "playing") {
         return state;
@@ -751,11 +751,44 @@ export function deckSearchReturn(state, actorId) {
         return state;
     }
     if (p.deckSearchBuffer.length > 0) {
-        p.deck = [...p.deckSearchBuffer, ...p.deck];
+        // 如果牌库中已有牌，说明用户在查看弹窗中进行了置顶/置底操作，
+        // 此时将剩余牌放到牌库底，避免覆盖用户手动调整的顺序
+        if (p.deck.length > 0) {
+            p.deck = [...p.deck, ...p.deckSearchBuffer];
+        }
+        else {
+            p.deck = [...p.deckSearchBuffer, ...p.deck];
+        }
         p.deckSearchBuffer = [];
     }
     p.deckPeekBuffer = [];
     p.deckCount = p.deck.length;
+    return state;
+}
+/** 按指定的 card ID 顺序重排 deckSearchBuffer（查看全部牌时前端本地排序后同步） */
+export function deckSearchReorder(state, actorId, orderedIds) {
+    if (state.winnerId || state.phase !== "playing") {
+        return state;
+    }
+    const p = state.players[actorId];
+    if (!p) {
+        return state;
+    }
+    const buffer = p.deckSearchBuffer;
+    const idMap = new Map(buffer.map((c) => [c.id, c]));
+    const reordered = [];
+    for (const id of orderedIds) {
+        const card = idMap.get(id);
+        if (card) {
+            reordered.push(card);
+            idMap.delete(id);
+        }
+    }
+    // 剩余未指定的牌追加到末尾
+    for (const card of idMap.values()) {
+        reordered.push(card);
+    }
+    p.deckSearchBuffer = reordered;
     return state;
 }
 export function deckPeek(state, actorId, count) {

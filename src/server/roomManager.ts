@@ -19,6 +19,7 @@ import {
   deckDraw,
   deckPeek,
   deckSearch,
+  deckSearchReorder,
   deckSearchReturn,
   deckShuffle,
   endTurn,
@@ -267,6 +268,14 @@ export class RoomManager {
       throw new Error("match not started");
     }
     return deckSearchReturn(room.matchState, playerId);
+  }
+
+  deckSearchReorder(roomId: RoomId, playerId: PlayerId, orderedIds: string[]): MatchState {
+    const room = this.getRoomOrThrow(roomId);
+    if (!room.matchState) {
+      throw new Error("match not started");
+    }
+    return deckSearchReorder(room.matchState, playerId, orderedIds);
   }
 
   deckPeek(roomId: RoomId, playerId: PlayerId, count: number): MatchState {

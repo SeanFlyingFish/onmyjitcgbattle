@@ -5,7 +5,11 @@ import { RoomManager } from "./roomManager.js";
 const PORT = Number(process.env.PORT ?? 8080);
 const roomManager = new RoomManager();
 const playerSocket = new Map();
-const server = createServer();
+const server = createServer((req, res) => {
+    // 后端只处理 WebSocket，HTTP 请求返回 200 即可
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("onmyoji-tcg server");
+});
 const wss = new WebSocketServer({ server });
 function send(ws, event) {
     if (ws.readyState === WebSocket.OPEN) {
@@ -134,6 +138,11 @@ wss.on("connection", (ws) => {
                 roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
                 return;
             }
+            if (parsed.type === "deck_search_reorder") {
+                const state = roomManager.deckSearchReorder(parsed.payload.roomId, session.playerId, parsed.payload.orderedIds);
+                roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+                return;
+            }
             if (parsed.type === "deck_peek") {
                 const state = roomManager.deckPeek(parsed.payload.roomId, session.playerId, parsed.payload.count);
                 roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
@@ -252,6 +261,5 @@ wss.on("connection", (ws) => {
     });
 });
 server.listen(PORT, () => {
-    // Keep bootstrap log tiny so local debug is clean.
-    console.log(`card-battle server on ws://localhost:${PORT}`);
+    console.log(`card-battle server on port ${PORT}`);
 });

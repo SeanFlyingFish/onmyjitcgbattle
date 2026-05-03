@@ -197,6 +197,12 @@ wss.on("connection", (ws) => {
         return;
       }
 
+      if (parsed.type === "deck_search_reorder") {
+        const state = roomManager.deckSearchReorder(parsed.payload.roomId, session.playerId, parsed.payload.orderedIds);
+        roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        return;
+      }
+
       if (parsed.type === "deck_peek") {
         const state = roomManager.deckPeek(parsed.payload.roomId, session.playerId, parsed.payload.count);
         roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });

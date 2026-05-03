@@ -300,6 +300,10 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     payload: z.object({ roomId: z.string().min(1) })
   }),
   z.object({
+    type: z.literal("deck_search_reorder"),
+    payload: z.object({ roomId: z.string().min(1), orderedIds: z.array(z.string()) })
+  }),
+  z.object({
     type: z.literal("deck_peek"),
     payload: z.object({ roomId: z.string().min(1), count: z.number().int().min(1).max(60) })
   }),

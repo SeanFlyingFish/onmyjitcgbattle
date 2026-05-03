@@ -557,14 +557,25 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
   const [deckViewConfirmed, setDeckViewConfirmed] = useState(false);
   /** 查看弹窗中已选择的卡牌 ID（按选择顺序排列） */
   const [deckViewSelectedIds, setDeckViewSelectedIds] = useState<string[]>([]);
+  /**
+   * 查看全部牌时的本地 buffer 副本。
+   * 当 deckCount === 0（全部牌在 buffer 中）时，置顶/置底只改变此本地顺序，不发送后端消息。
+   * 关闭弹窗时通过 deck_search_reorder 同步到后端。
+   */
+  const [localDeckViewBuffer, setLocalDeckViewBuffer] = useState<Card[]>([]);
   /** 关闭查看弹窗：若已确认查看则将 buffer 牌放回牌库顶（不洗） */
   function closeDeckView() {
     if (deckViewConfirmed) {
+      // 如果有本地重排的 buffer，先同步到后端
+      if (localDeckViewBuffer.length > 0) {
+        send({ type: "deck_search_reorder", payload: { roomId, orderedIds: localDeckViewBuffer.map((c) => c.id) } });
+      }
       send({ type: "deck_search_return", payload: { roomId } });
     }
     setDeckViewModalOpen(false);
     setDeckViewConfirmed(false);
     setDeckViewSelectedIds([]);
+    setLocalDeckViewBuffer([]);
   }
   /** 置入牌库模式：选中后再次点击弹出确认 */
   const [deckPlaceMode, setDeckPlaceMode] = useState(false);
@@ -1735,9 +1746,9 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                         <button
                           type="button"
                           className="btn-draw"
-                          disabled={!roomId || gameOver || (selfView?.deckCount ?? 0) === 0}
+                          disabled={!roomId || gameOver || (selfView?.deckCount ?? 0) === 0 || deckViewConfirmed}
                           onClick={() => send({ type: "deck_draw", payload: { roomId, count: 1 } })}
-                          title="从牌库抽1张"
+                          title={deckViewConfirmed ? "请先关闭牌库查看弹窗" : "从牌库抽1张"}
                         >
                           🃏 抽牌
                         </button>
@@ -2320,11 +2331,18 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                   <button type="button" onClick={() => { setDeckViewModalOpen(false); setDeckViewConfirmed(false); }}>取消</button>
                   <button type="button" disabled={!roomId || !allowBoardDrag || (selfView?.deckCount ?? 0) === 0}
                     onClick={() => {
-                      const count = deckViewInput ? Math.min(Number(deckViewInput), selfView?.deckCount ?? 60) : selfView?.deckCount ?? 0;
+                      const total = selfView?.deckCount ?? 0;
+                      const count = deckViewInput ? Math.min(Number(deckViewInput), total) : total;
                       if (count === 0) return;
                       send({ type: "deck_search", payload: { roomId, count } });
                       setDeckViewConfirmed(true);
                       setDeckViewSelectedIds([]);
+                      // 查看全部牌时，初始化本地 buffer（用于纯前端排序）
+                      if (count >= total) {
+                        setLocalDeckViewBuffer([...selfView.deck.slice(0, count)]);
+                      } else {
+                        setLocalDeckViewBuffer([]);
+                      }
                     }}>
                     确认查看
                   </button>
@@ -2332,10 +2350,15 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
               </>
             ) : (
               <>
-                <p className="deck-modal-meta">搜索区共 {selfView?.deckSearchBuffer.length} 张 · 已选 {deckViewSelectedIds.length} 张</p>
+                {/* 使用本地 buffer（查看全部时）或后端 buffer（查看部分时） */}
+                {(() => {
+                  const displayBuffer = localDeckViewBuffer.length > 0 ? localDeckViewBuffer : (selfView?.deckSearchBuffer ?? []);
+                  const isViewAll = localDeckViewBuffer.length > 0;
+                  return (<>
+                <p className="deck-modal-meta">搜索区共 {displayBuffer.length} 张 · 已选 {deckViewSelectedIds.length} 张</p>
                 <div className="deck-modal-scroll">
                   <div className="deck-modal-grid">
-                    {selfView.deckSearchBuffer.map((card, index) => {
+                    {displayBuffer.map((card, index) => {
                       const selIdx = deckViewSelectedIds.indexOf(card.id);
                       const isSelected = selIdx !== -1;
                       return (
@@ -2363,33 +2386,64 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                 <div className="deck-modal-actions deck-modal-actions--wrap">
                   <button type="button" disabled={deckViewSelectedIds.length === 0}
                     onClick={() => {
-                      deckViewSelectedIds.forEach((cardId) => moveCardPayload(cardId, "deck_search", "showcase"));
+                      if (isViewAll) {
+                        // 查看全部：从本地 buffer 移除选中的牌，发后端展示
+                        const selectedSet = new Set(deckViewSelectedIds);
+                        setLocalDeckViewBuffer((prev) => prev.filter((c) => !selectedSet.has(c.id)));
+                        deckViewSelectedIds.forEach((cardId) => moveCardPayload(cardId, "deck_search", "showcase"));
+                      } else {
+                        deckViewSelectedIds.forEach((cardId) => moveCardPayload(cardId, "deck_search", "showcase"));
+                      }
                       setDeckViewSelectedIds([]);
                     }}>
                     📋 展示
                   </button>
                   <button type="button" disabled={deckViewSelectedIds.length === 0}
                     onClick={() => {
-                      // 按选择顺序置顶：倒序发送使第一张选中的在最顶
-                      [...deckViewSelectedIds].reverse().forEach((cardId) => moveCardPayload(cardId, "deck_search", "deck_top"));
+                      if (isViewAll) {
+                        // 查看全部：纯前端排序，将选中的牌按选择顺序移到本地 buffer 顶部
+                        const selectedSet = new Set(deckViewSelectedIds);
+                        const selected = deckViewSelectedIds.map((id) => localDeckViewBuffer.find((c) => c.id === id)!).filter(Boolean);
+                        const rest = localDeckViewBuffer.filter((c) => !selectedSet.has(c.id));
+                        setLocalDeckViewBuffer([...selected, ...rest]);
+                      } else {
+                        // 查看部分：发后端 moveCard
+                        [...deckViewSelectedIds].reverse().forEach((cardId) => moveCardPayload(cardId, "deck_search", "deck_top"));
+                      }
                       setDeckViewSelectedIds([]);
                     }}>
                     ⬆️ 置顶
                   </button>
                   <button type="button" disabled={deckViewSelectedIds.length === 0}
                     onClick={() => {
-                      // 按选择顺序置底
-                      deckViewSelectedIds.forEach((cardId) => moveCardPayload(cardId, "deck_search", "deck_bottom"));
+                      if (isViewAll) {
+                        // 查看全部：纯前端排序，将选中的牌移到本地 buffer 底部
+                        const selectedSet = new Set(deckViewSelectedIds);
+                        const selected = deckViewSelectedIds.map((id) => localDeckViewBuffer.find((c) => c.id === id)!).filter(Boolean);
+                        const rest = localDeckViewBuffer.filter((c) => !selectedSet.has(c.id));
+                        setLocalDeckViewBuffer([...rest, ...selected]);
+                      } else {
+                        // 查看部分：发后端 moveCard
+                        deckViewSelectedIds.forEach((cardId) => moveCardPayload(cardId, "deck_search", "deck_bottom"));
+                      }
                       setDeckViewSelectedIds([]);
                     }}>
                     ⬇️ 置底
                   </button>
                   <button type="button"
                     onClick={() => {
+                      // 洗入剩余牌：同步本地 buffer 顺序到后端，然后洗牌
+                      if (deckViewConfirmed) {
+                        if (localDeckViewBuffer.length > 0) {
+                          send({ type: "deck_search_reorder", payload: { roomId, orderedIds: localDeckViewBuffer.map((c) => c.id) } });
+                        }
+                        send({ type: "deck_search_return", payload: { roomId } });
+                      }
                       send({ type: "deck_shuffle", payload: { roomId } });
                       setDeckViewModalOpen(false);
                       setDeckViewConfirmed(false);
                       setDeckViewSelectedIds([]);
+                      setLocalDeckViewBuffer([]);
                     }}>
                     🔀 洗入剩余牌
                   </button>
@@ -2398,6 +2452,8 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                     ✖ 关闭
                   </button>
                 </div>
+                  </>);
+                })()}
               </>
             )}
           </div>
