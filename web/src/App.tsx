@@ -543,6 +543,8 @@ function App() {
 
   // 消息处理函数引用 —— 始终指向最新的 handler，避免 useEffect 时序问题
   const handleMessageRef = useRef<(event: MessageEvent) => void>(() => {});
+  /** 标记：当前玩家是否主动发起了 join_room，防止 room_joined 广播污染 localStorage */
+  const expectingJoinRef = useRef(false);
 
   // 消息处理逻辑（依赖最新 state，每次渲染都更新 ref）
   handleMessageRef.current = (event: MessageEvent) => {
@@ -561,13 +563,17 @@ function App() {
     } else if (msg.type === "room_joined") {
       setRoomId(msg.payload.roomId);
       setPlayerId((prev) => prev || msg.payload.playerId);
-      const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
-      localStorage.setItem(reconnectKey, JSON.stringify({
-        roomId: msg.payload.roomId,
-        playerId: msg.payload.playerId,
-        reconnectToken: msg.payload.reconnectToken,
-        name
-      }));
+      // 只有主动发起 join_room 的玩家才保存重连信息（通过 expectingJoinRef 判断）
+      if (expectingJoinRef.current) {
+        expectingJoinRef.current = false;
+        const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
+        localStorage.setItem(reconnectKey, JSON.stringify({
+          roomId: msg.payload.roomId,
+          playerId: msg.payload.playerId,
+          reconnectToken: msg.payload.reconnectToken,
+          name
+        }));
+      }
       appendLog(`🚪 已加入房间：${msg.payload.roomId}`);
     } else if (msg.type === "match_started" || msg.type === "match_state" || msg.type === "rematch_started") {
       console.log(`[游戏] 收到 ${msg.type}, 当前 playerId=${playerId}, matchState.players keys:`, Object.keys(msg.payload.players));
@@ -933,6 +939,15 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
     localStorage.removeItem(reconnectKey);
   }
 
+  /** 主动加入房间（设置 expectingJoinRef 防止 room_joined 广播污染 localStorage） */
+  function joinRoom() {
+    const rid = roomIdInput.trim();
+    if (!rid) return;
+    expectingJoinRef.current = true;
+    send({ type: "join_room", payload: { roomId: rid, name } });
+    setRoomIdInput("");
+  }
+
   function quickCreateRoom() {
     const payload = { type: "create_room", payload: { name } };
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -1244,7 +1259,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                         value={roomIdInput}
                         onChange={(e) => setRoomIdInput(e.target.value)}
                       />
-                      <button onClick={() => send({ type: "join_room", payload: { roomId: roomIdInput, name } })}>
+                      <button onClick={joinRoom}>
                         加入
                       </button>
                     </div>
