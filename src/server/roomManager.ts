@@ -529,17 +529,19 @@ export class RoomManager {
     return null;
   }
 
-  /** 断线重连：通过 reconnectToken 找到玩家，恢复 WebSocket 连接 */
-  reconnect(roomId: RoomId, reconnectToken: string, newWs: WebSocket): MatchState | null {
+  /** 断线重连：通过 reconnectToken 找到玩家，恢复 WebSocket 连接；需校验 playerId 与 token 匹配 */
+  reconnect(roomId: RoomId, reconnectToken: string, playerId: string, newWs: WebSocket): MatchState | null {
     const room = this.rooms.get(roomId);
     if (!room) return null;
-    for (const [playerId, entry] of room.players.entries()) {
+    for (const [pid, entry] of room.players.entries()) {
       if (entry.reconnectToken === reconnectToken) {
+        // 双重校验：token 对应的 playerId 必须与请求中的 playerId 一致
+        if (pid !== playerId) return null;
         entry.ws = newWs;
         delete entry.disconnectedAt;
         this.broadcastRoom(roomId, {
           type: "player_reconnected",
-          payload: { playerId }
+          payload: { playerId: pid }
         });
         return room.matchState ?? null;
       }

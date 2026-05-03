@@ -480,10 +480,10 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("admin_list_accounts"), payload: z.object({}) }),
   z.object({ type: z.literal("admin_delete_account"), payload: z.object({ name: z.string().min(1) }) }),
   z.object({ type: z.literal("admin_reset_password"), payload: z.object({ name: z.string().min(1), newPassword: z.string().min(1) }) }),
-  // 断线重连
+  // 断线重连（需同时验证 reconnectToken 与 playerId 匹配）
   z.object({
     type: z.literal("reconnect"),
-    payload: z.object({ roomId: z.string().min(1), reconnectToken: z.string().min(1) })
+    payload: z.object({ roomId: z.string().min(1), reconnectToken: z.string().min(1), playerId: z.string().min(1) })
   }),
   // 主动离开房间
   z.object({

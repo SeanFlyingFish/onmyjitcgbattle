@@ -883,7 +883,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
           connect((ws) => {
             ws.send(JSON.stringify({
               type: "reconnect",
-              payload: { roomId: data.roomId, reconnectToken: data.reconnectToken }
+              payload: { roomId: data.roomId, reconnectToken: data.reconnectToken, playerId: data.playerId }
             }));
           });
         }

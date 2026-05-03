@@ -47,17 +47,22 @@ wss.on("connection", (ws) => {
                 }
                 return;
             }
-            // 断线重连
+            // 断线重连：需同时验证 reconnectToken 与 playerId 匹配
             if (parsed.type === "reconnect") {
-                const { roomId, reconnectToken } = parsed.payload;
-                const state = roomManager.reconnect(roomId, reconnectToken, ws);
+                const { roomId, reconnectToken, playerId: requestPlayerId } = parsed.payload;
+                const state = roomManager.reconnect(roomId, reconnectToken, requestPlayerId, ws);
                 if (state) {
                     const foundPlayerId = roomManager.getPlayerIdByToken(roomId, reconnectToken) ?? "";
-                    const playerName = state.players[foundPlayerId]?.name ?? "";
-                    sessions.set(ws, { playerId: foundPlayerId, name: playerName, roomId, reconnectToken });
-                    // 脱敏后发送给对应玩家（隐藏对手手牌等信息）
-                    const sanitizedState = sanitizeMatchStateForPlayer(state, foundPlayerId);
-                    send(ws, { type: "reconnect_success", payload: { playerId: foundPlayerId, matchState: sanitizedState } });
+                    // 双重校验：token 查到的 playerId 必须与请求中的 playerId 一致
+                    if (foundPlayerId && foundPlayerId === requestPlayerId) {
+                        const playerName = state.players[foundPlayerId]?.name ?? "";
+                        sessions.set(ws, { playerId: foundPlayerId, name: playerName, roomId, reconnectToken });
+                        const sanitizedState = sanitizeMatchStateForPlayer(state, foundPlayerId);
+                        send(ws, { type: "reconnect_success", payload: { playerId: foundPlayerId, matchState: sanitizedState } });
+                    }
+                    else {
+                        send(ws, { type: "reconnect_failed", payload: { message: "重连失败：玩家ID与令牌不匹配" } });
+                    }
                 }
                 else {
                     send(ws, { type: "reconnect_failed", payload: { message: "重连失败，房间或令牌无效" } });
