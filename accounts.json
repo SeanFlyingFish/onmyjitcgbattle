@@ -1,0 +1,17 @@
+[
+  {
+    "name": "admin",
+    "password": "admin123",
+    "playerId": "admin-account-preset"
+  },
+  {
+    "name": "player1",
+    "password": "123456",
+    "playerId": "player1-preset-id"
+  },
+  {
+    "name": "player2",
+    "password": "654321",
+    "playerId": "player2-preset-id"
+  }
+]

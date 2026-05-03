@@ -3,17 +3,19 @@ import WebSocket from "ws";
 import { adjustGhostFire as engineAdjustGhostFire, adjustFortuneFire as engineAdjustFortuneFire, adjustPlayerPoison as engineAdjustPlayerPoison, adjustPlayerDamage as engineAdjustPlayerDamage, adjustPlayerHp as engineAdjustPlayerHp, addCustomMarker as engineAddCustomMarker, addCustomMarkerToShikigami as engineAddCustomMarkerToShikigami, addCustomMarkerToSpell as engineAddCustomMarkerToSpell, addCustomMarkerToExtend as engineAddCustomMarkerToExtend, placeBarrierToken as enginePlaceBarrierToken, removeBarrierToken as engineRemoveBarrierToken, attack, createMatchState, createPlayer, deckDraw, deckPeek, deckSearch, deckSearchReorder, deckSearchReturn, deckShuffle, endTurn, moveCard, attachAwaken as engineAttachAwaken, detachAwaken as engineDetachAwaken, placeShikigamiToken as enginePlaceShikigamiToken, placeTokenToShowcase, removeTokenCard, playCard, preparePlayerForMatch, removeShikigamiToken as engineRemoveShikigamiToken, sanitizeMatchStateForPlayer, submitMulligan, toggleShikigamiExhaust, toggleShikigamiStealth as engineToggleShikigamiStealth, toggleSpellExhaust, toggleSpellReveal, toggleHandReveal } from "./gameEngine.js";
 export class RoomManager {
     rooms = new Map();
-    createRoom(ws, name) {
+    /** 定期清理超时断线房间的定时器 */
+    cleanupTimer;
+    createRoom(ws, playerId, name) {
         const roomId = nanoid(8);
-        const playerId = nanoid(8);
+        const reconnectToken = nanoid(12);
         const room = {
             id: roomId,
-            players: new Map([[playerId, { ws, state: createPlayer(playerId, name) }]])
+            players: new Map([[playerId, { ws, state: createPlayer(playerId, name), reconnectToken }]])
         };
         this.rooms.set(roomId, room);
-        return { roomId, playerId };
+        return { roomId, playerId, reconnectToken };
     }
-    joinRoom(roomId, ws, name) {
+    joinRoom(roomId, ws, playerId, name) {
         const room = this.rooms.get(roomId);
         if (!room) {
             throw new Error("room not found");
@@ -21,11 +23,16 @@ export class RoomManager {
         if (room.players.size >= 2) {
             throw new Error("room is full");
         }
-        const playerId = nanoid(8);
-        room.players.set(playerId, { ws, state: createPlayer(playerId, name) });
+        // 检查 playerId 是否已在本房间（防止重复加入）
+        if (room.players.has(playerId)) {
+            throw new Error("already in room");
+        }
+        const reconnectToken = nanoid(12);
+        room.players.set(playerId, { ws, state: createPlayer(playerId, name), reconnectToken });
         return {
             roomId,
             playerId,
+            reconnectToken,
             players: [...room.players.values()].map((entry) => entry.state)
         };
     }
@@ -280,21 +287,26 @@ export class RoomManager {
     broadcastRoom(roomId, event) {
         const room = this.getRoomOrThrow(roomId);
         for (const [playerId, entry] of room.players.entries()) {
-            if (entry.ws.readyState !== WebSocket.OPEN) {
+            // 修复：先检查 ws 是否为 null，再检查 readyState
+            if (!entry.ws || entry.ws.readyState !== WebSocket.OPEN) {
                 continue;
             }
-            if (event.type === "match_started" || event.type === "match_state") {
-                const payload = sanitizeMatchStateForPlayer(event.payload, playerId);
-                entry.ws.send(JSON.stringify({ ...event, payload }));
+            try {
+                if (event.type === "match_started" || event.type === "match_state") {
+                    const payload = sanitizeMatchStateForPlayer(event.payload, playerId);
+                    entry.ws.send(JSON.stringify({ ...event, payload }));
+                }
+                else {
+                    entry.ws.send(JSON.stringify(event));
+                }
             }
-            else {
-                entry.ws.send(JSON.stringify(event));
+            catch (error) {
+                console.error(`[RoomManager] Failed to send to ${playerId}:`, error);
             }
         }
     }
-    /** 处理玩家断线：清理房间状态，通知对手 */
-    handleDisconnect(ws) {
-        // 找到该 ws 所在的房间和玩家
+    /** 处理玩家断线：不直接删除，标记为断线状态，启动超时清理 */
+    markDisconnected(ws) {
         let targetRoomId = null;
         let targetPlayerId = null;
         for (const [roomId, room] of this.rooms.entries()) {
@@ -311,32 +323,116 @@ export class RoomManager {
         if (!targetRoomId || !targetPlayerId)
             return;
         const room = this.rooms.get(targetRoomId);
-        // 通知房间内其他玩家有人断线
-        const disconnectEvent = {
-            type: "error",
-            payload: { message: `玩家 ${room.players.get(targetPlayerId)?.state.name ?? "未知"} 已断线` }
-        };
+        const entry = room.players.get(targetPlayerId);
+        entry.ws = null;
+        entry.disconnectedAt = Date.now();
+        // 广播断线通知（使用 player_disconnected 事件）
+        this.broadcastRoom(targetRoomId, {
+            type: "player_disconnected",
+            payload: { playerId: targetPlayerId }
+        });
+        // 启动定时清理（如果还没启动）
+        this.ensureCleanupTimer();
+    }
+    /** 确保清理定时器已启动 */
+    ensureCleanupTimer() {
+        if (this.cleanupTimer)
+            return;
+        this.cleanupTimer = setInterval(() => this.cleanupTimedOutRooms(), 30_000);
+    }
+    /** 扫描并清理超时（1分钟）断线的玩家；双方均断线则删除整个房间 */
+    cleanupTimedOutRooms() {
+        const now = Date.now();
+        const TIMEOUT = 60_000; // 1 分钟
+        for (const [roomId, room] of this.rooms.entries()) {
+            let allDisconnected = true;
+            for (const [playerId, entry] of room.players.entries()) {
+                if (entry.ws === null && entry.disconnectedAt) {
+                    if (now - entry.disconnectedAt > TIMEOUT) {
+                        // 超时：删除该玩家，若对局中则判对手获胜
+                        if (room.matchState && !room.matchState.winnerId) {
+                            const opponentId = [...room.players.keys()].find((id) => id !== playerId);
+                            if (opponentId)
+                                room.matchState.winnerId = opponentId;
+                            this.broadcastRoom(roomId, { type: "match_state", payload: room.matchState });
+                        }
+                        room.players.delete(playerId);
+                    }
+                    else {
+                        allDisconnected = false;
+                    }
+                }
+                else if (entry.ws !== null) {
+                    allDisconnected = false;
+                }
+            }
+            // 双方均超时断线：直接删除整个房间
+            if (room.players.size === 0 || allDisconnected) {
+                this.rooms.delete(roomId);
+            }
+        }
+    }
+    /** 根据 reconnectToken 查找 playerId（供 index.ts 使用）*/
+    getPlayerIdByToken(roomId, reconnectToken) {
+        const room = this.rooms.get(roomId);
+        if (!room)
+            return null;
         for (const [pid, entry] of room.players.entries()) {
-            if (pid !== targetPlayerId && entry.ws.readyState === WebSocket.OPEN) {
-                entry.ws.send(JSON.stringify(disconnectEvent));
-            }
+            if (entry.reconnectToken === reconnectToken)
+                return pid;
         }
-        // 如果正在对局中，标记对手获胜
-        if (room.matchState && !room.matchState.winnerId) {
-            const opponentId = Object.keys(room.matchState.players).find((id) => id !== targetPlayerId);
-            if (opponentId) {
-                room.matchState.winnerId = opponentId;
-                this.broadcastRoom(targetRoomId, {
-                    type: "match_state",
-                    payload: room.matchState
+        return null;
+    }
+    /** 断线重连：通过 reconnectToken 找到玩家，恢复 WebSocket 连接 */
+    reconnect(roomId, reconnectToken, newWs) {
+        const room = this.rooms.get(roomId);
+        if (!room)
+            return null;
+        for (const [playerId, entry] of room.players.entries()) {
+            if (entry.reconnectToken === reconnectToken) {
+                entry.ws = newWs;
+                delete entry.disconnectedAt;
+                this.broadcastRoom(roomId, {
+                    type: "player_reconnected",
+                    payload: { playerId }
                 });
+                return room.matchState ?? null;
             }
         }
-        // 如果房间只剩一个人或没人了，销毁房间
-        room.players.delete(targetPlayerId);
-        if (room.players.size === 0) {
-            this.rooms.delete(targetRoomId);
+        return null;
+    }
+    /** 主动离开房间 */
+    leaveRoom(roomId, playerId) {
+        const room = this.rooms.get(roomId);
+        if (!room)
+            return null;
+        room.players.delete(playerId);
+        const remaining = [...room.players.keys()];
+        if (remaining.length === 0) {
+            this.rooms.delete(roomId);
         }
+        return playerId;
+    }
+    /** 重开对局：使用双方 customDeck 重新初始化 matchState */
+    rematch(roomId, playerId) {
+        const room = this.rooms.get(roomId);
+        if (!room)
+            return null;
+        // 收集双方牌库
+        const decks = [];
+        for (const [, entry] of room.players.entries()) {
+            if (entry.customDeck && entry.customDeck.length > 0) {
+                decks.push(entry.customDeck);
+            }
+            else {
+                // 没有自定义牌库则使用默认
+                decks.push([]);
+            }
+        }
+        if (decks.length < 2)
+            return null;
+        room.matchState = createMatchState(room.id, room.players, decks[0], decks[1]);
+        return room.matchState;
     }
     getRoomOrThrow(roomId) {
         const room = this.rooms.get(roomId);

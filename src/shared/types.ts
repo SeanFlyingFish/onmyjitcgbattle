@@ -471,7 +471,30 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
       targetPlayerId: z.string().min(1),
       slotIndex: z.number().int().min(0).max(5)
     })
-  })
+  }),
+  // 注册/登录
+  z.object({ type: z.literal("register"), payload: z.object({ name: z.string().min(1), password: z.string().min(1) }) }),
+  z.object({ type: z.literal("login"), payload: z.object({ name: z.string().min(1), password: z.string().min(1) }) }),
+  // 管理员
+  z.object({ type: z.literal("admin_auth"), payload: z.object({ password: z.string().min(1) }) }),
+  z.object({ type: z.literal("admin_list_accounts"), payload: z.object({}) }),
+  z.object({ type: z.literal("admin_delete_account"), payload: z.object({ name: z.string().min(1) }) }),
+  z.object({ type: z.literal("admin_reset_password"), payload: z.object({ name: z.string().min(1), newPassword: z.string().min(1) }) }),
+  // 断线重连
+  z.object({
+    type: z.literal("reconnect"),
+    payload: z.object({ roomId: z.string().min(1), reconnectToken: z.string().min(1) })
+  }),
+  // 主动离开房间
+  z.object({
+    type: z.literal("leave_room"),
+    payload: z.object({ roomId: z.string().min(1) })
+  }),
+  // 重开对局
+  z.object({
+    type: z.literal("rematch"),
+    payload: z.object({ roomId: z.string().min(1) })
+  }),
 ]);
 
 export type ClientEvent = z.infer<typeof ClientEventSchema>;
@@ -481,5 +504,17 @@ export type ServerEvent =
   | { type: "room_joined"; payload: { roomId: RoomId; playerId: PlayerId; players: PlayerState[] } }
   | { type: "match_started"; payload: MatchState }
   | { type: "match_state"; payload: MatchState }
+  | { type: "reconnect_success"; payload: { playerId: PlayerId; matchState?: MatchState } }
+  | { type: "reconnect_failed"; payload: { message: string } }
+  | { type: "player_disconnected"; payload: { playerId: PlayerId } }
+  | { type: "player_reconnected"; payload: { playerId: PlayerId } }
+  | { type: "left_room"; payload: { playerId: PlayerId } }
+  | { type: "rematch_started"; payload: MatchState }
   | { type: "error"; payload: { message: string } }
-  | { type: "chat"; payload: { playerId: PlayerId; playerName: string; message: string } };
+  | { type: "chat"; payload: { playerId: PlayerId; playerName: string; message: string } }
+  | { type: "register_success"; payload: { playerId: PlayerId; name: string } }
+  | { type: "login_success"; payload: { playerId: PlayerId; name: string } }
+  | { type: "auth_error"; payload: { message: string } }
+  | { type: "admin_auth_success"; payload: {} }
+  | { type: "admin_accounts_list"; payload: { accounts: { playerId: PlayerId; name: string }[] } }
+  | { type: "admin_action_result"; payload: { success: boolean; message: string } };

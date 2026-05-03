@@ -297,5 +297,28 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
             targetPlayerId: z.string().min(1),
             slotIndex: z.number().int().min(0).max(5)
         })
-    })
+    }),
+    // 注册/登录
+    z.object({ type: z.literal("register"), payload: z.object({ name: z.string().min(1), password: z.string().min(1) }) }),
+    z.object({ type: z.literal("login"), payload: z.object({ name: z.string().min(1), password: z.string().min(1) }) }),
+    // 管理员
+    z.object({ type: z.literal("admin_auth"), payload: z.object({ password: z.string().min(1) }) }),
+    z.object({ type: z.literal("admin_list_accounts"), payload: z.object({}) }),
+    z.object({ type: z.literal("admin_delete_account"), payload: z.object({ name: z.string().min(1) }) }),
+    z.object({ type: z.literal("admin_reset_password"), payload: z.object({ name: z.string().min(1), newPassword: z.string().min(1) }) }),
+    // 断线重连
+    z.object({
+        type: z.literal("reconnect"),
+        payload: z.object({ roomId: z.string().min(1), reconnectToken: z.string().min(1) })
+    }),
+    // 主动离开房间
+    z.object({
+        type: z.literal("leave_room"),
+        payload: z.object({ roomId: z.string().min(1) })
+    }),
+    // 重开对局
+    z.object({
+        type: z.literal("rematch"),
+        payload: z.object({ roomId: z.string().min(1) })
+    }),
 ]);

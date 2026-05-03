@@ -83,12 +83,21 @@ type MatchState = {
 };
 
 type ServerEvent =
-  | { type: "room_created"; payload: { roomId: string; playerId: string } }
-  | { type: "room_joined"; payload: { roomId: string; playerId: string; players: PlayerState[] } }
+  | { type: "room_created"; payload: { roomId: string; playerId: string; reconnectToken: string } }
+  | { type: "room_joined"; payload: { roomId: string; playerId: string; reconnectToken: string; players: PlayerState[] } }
   | { type: "match_started"; payload: MatchState }
   | { type: "match_state"; payload: MatchState }
+  | { type: "reconnect_success"; payload: { playerId: string; matchState?: MatchState } }
+  | { type: "reconnect_failed"; payload: { message: string } }
+  | { type: "player_disconnected"; payload: { playerId: string } }
+  | { type: "player_reconnected"; payload: { playerId: string } }
+  | { type: "left_room"; payload: { playerId: string } }
+  | { type: "rematch_started"; payload: MatchState }
   | { type: "error"; payload: { message: string } }
-  | { type: "chat"; payload: { playerId: string; playerName: string; message: string } };
+  | { type: "chat"; payload: { playerId: string; playerName: string; message: string } }
+  | { type: "register_success"; payload: { playerId: string; name: string } }
+  | { type: "login_success"; payload: { playerId: string; name: string } }
+  | { type: "auth_error"; payload: { message: string } };
 
 const CARD_IMAGE_URL = "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_1.webp";
 const CARD_BACK_IMAGE_URL =
@@ -387,13 +396,29 @@ function App() {
   const envWsUrl = typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_WS_URL;
   const defaultUrl = envWsUrl || (() => {
     const wsProtocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsHost = typeof window !== "undefined" ? window.location.host : "localhost:8080";
+    // 如果是 Vite 开发服务器(5173/5174)，默认使用 8080 端口（游戏服务器端口）
+    let wsHost = typeof window !== "undefined" ? window.location.host : "localhost:8080";
+    if (typeof window !== "undefined") {
+      const port = window.location.port;
+      if (port === "5173" || port === "5174") {
+        wsHost = window.location.hostname + ":8080";
+      }
+    }
     return `${wsProtocol}//${wsHost}`;
   })();
   const [serverUrl, setServerUrl] = useState(defaultUrl);
-  const [name, setName] = useState("玩家");
+  // 从 localStorage 读取用户名（仅用于预填充表单，不自动登录）
+  const savedName = localStorage.getItem("onmyoji_tcg_username") || "";
+  const [name, setName] = useState(savedName);
   const [roomIdInput, setRoomIdInput] = useState("");
-  /** 组卡器选择的当前牌库（BuilderCard 格式），由组卡器通过 BroadcastChannel 同步 */
+  // ── 认证状态 ──
+  // 默认未登录 - 每次打开页面都显示登录表单
+  // 登录成功后设为 true，页面刷新后需要重新登录
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loginPassword, setLoginPassword] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  // ── 组卡器 ──
   const [builderDeck, setBuilderDeck] = useState<BuilderCard[] | null>(null);
 
   /** 符咒区卡牌排版计算 */
@@ -505,14 +530,54 @@ function App() {
       if (msg.type === "room_created") {
         setRoomId(msg.payload.roomId);
         setPlayerId((prev) => prev || msg.payload.playerId);
+        // 持久化重连信息到 localStorage
+        localStorage.setItem("onmyoji_tcg_reconnect", JSON.stringify({
+          roomId: msg.payload.roomId,
+          playerId: msg.payload.playerId,
+          reconnectToken: msg.payload.reconnectToken,
+          name
+        }));
         appendLog(`🏠 房间已创建：${msg.payload.roomId}`);
       } else if (msg.type === "room_joined") {
         setRoomId(msg.payload.roomId);
         setPlayerId((prev) => prev || msg.payload.playerId);
+        localStorage.setItem("onmyoji_tcg_reconnect", JSON.stringify({
+          roomId: msg.payload.roomId,
+          playerId: msg.payload.playerId,
+          reconnectToken: msg.payload.reconnectToken,
+          name
+        }));
         appendLog(`🚪 已加入房间：${msg.payload.roomId}`);
-      } else if (msg.type === "match_started" || msg.type === "match_state") {
+      } else if (msg.type === "match_started" || msg.type === "match_state" || msg.type === "rematch_started") {
         setMatchState(msg.payload);
         if (msg.type === "match_started") appendLog("🎮 对局开始！");
+        if (msg.type === "rematch_started") appendLog("🔄 对局重新开始！");
+      } else if (msg.type === "reconnect_success") {
+        setPlayerId(msg.payload.playerId);
+        // 恢复 roomId（从 matchState 中获取）
+        if (msg.payload.matchState) {
+          setMatchState(msg.payload.matchState);
+          setRoomId(msg.payload.matchState.roomId);
+        } else {
+          // 如果没有 matchState，尝试从 localStorage 恢复 roomId
+          const saved = localStorage.getItem("onmyoji_tcg_reconnect");
+          if (saved) {
+            try {
+              const data = JSON.parse(saved);
+              if (data.roomId) setRoomId(data.roomId);
+            } catch {}
+          }
+        }
+        appendLog("✅ 重连成功！");
+      } else if (msg.type === "reconnect_failed") {
+        localStorage.removeItem("onmyoji_tcg_reconnect");
+        appendLog(`❌ 重连失败：${msg.payload.message}`);
+      } else if (msg.type === "player_disconnected") {
+        appendLog("⚠️ 对手已断线");
+      } else if (msg.type === "player_reconnected") {
+        appendLog("✅ 对手已重连");
+      } else if (msg.type === "left_room") {
+        appendLog("🚪 玩家离开了房间");
       } else if (msg.type === "error") {
         appendLog(`❌ 错误：${msg.payload.message}`);
       } else if (msg.type === "chat") {
@@ -521,12 +586,31 @@ function App() {
         } else {
           appendLog(`💬 ${msg.payload.playerName}：${msg.payload.message}`);
         }
+      } else if (msg.type === "login_success") {
+        setIsLoggedIn(true);
+        setName(msg.payload.name);
+        setPlayerId(msg.payload.playerId);
+        localStorage.setItem("onmyoji_tcg_username", msg.payload.name);
+        setAuthError("");
+        appendLog(`🔑 登录成功：${msg.payload.name}`);
+        // 执行登录回调（如果有）
+        const cb = (socket as any)?._loginCallback;
+        if (cb) { cb(socket); delete (socket as any)._loginCallback; }
+      } else if (msg.type === "register_success") {
+        appendLog(`📝 注册成功：${msg.payload.name}，请登录`);
+        setName(msg.payload.name);
+        setRegisterPassword("");
+      } else if (msg.type === "auth_error") {
+        setAuthError(msg.payload.message);
+        appendLog(`❌ ${msg.payload.message}`);
+        const cb = (socket as any)?._loginCallback;
+        if (cb) { delete (socket as any)._loginCallback; }
       } else {
         appendLog(`📨 事件：${(msg as { type: string }).type}`);
       }
     };
     setSocket(socket);
-  }, [socket]);
+  }, [socket, name]);
 
   const [hoveredHandCardId, setHoveredHandCardId] = useState<string | null>(null);
   /** 通用卡牌悬停状态（用于棋盘上所有区域的卡牌） */
@@ -722,10 +806,93 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
       appendLog(`✅ 已连接至 ${serverUrl}`);
       if (onOpen) onOpen(ws);
     };
-    ws.onclose = () => appendLog("🔌 连接已断开");
+    ws.onclose = () => {
+      appendLog("🔌 连接已断开");
+      // 连接断开时不重置登录状态（断线重连不依赖登录）
+    };
     ws.onerror = () => appendLog("❌ 连接异常");
     // onmessage 由 useEffect 处理
     setSocket(ws);
+  }
+
+  /** 发送登录请求 */
+  function doLogin(username: string, password: string, callback?: (ws: WebSocket) => void) {
+    setAuthError("");
+    const payload = { type: "login", payload: { name: username, password } };
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(payload));
+      // 暂存回调
+      (socket as any)._loginCallback = callback;
+      return;
+    }
+    connect((ws) => {
+      ws.send(JSON.stringify(payload));
+      (ws as any)._loginCallback = callback;
+    });
+  }
+
+  /** 发送注册请求 */
+  function doRegister(username: string, password: string) {
+    setAuthError("");
+    const payload = { type: "register", payload: { name: username, password } };
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(payload));
+      return;
+    }
+    connect((ws) => {
+      ws.send(JSON.stringify(payload));
+    });
+  }
+
+  /** 登出 */
+  function doLogout() {
+    setIsLoggedIn(false);
+    setName("玩家");
+    setPlayerId("");
+    setRoomId("");
+    setMatchState(null);
+    localStorage.removeItem("onmyoji_tcg_username");
+    localStorage.removeItem("onmyoji_tcg_reconnect");
+    setLoginPassword("");
+    setRegisterPassword("");
+    appendLog("🔓 已登出");
+  }
+
+  /** 页面加载时检查 localStorage，尝试自动重连 */
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("onmyoji_tcg_reconnect");
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.roomId && data.reconnectToken) {
+          // 恢复 roomId（用于UI状态）
+          setRoomId(data.roomId);
+          appendLog("🔄 检测到未结束的对局，正在重连...");
+          // 重连时恢复登录状态
+          if (data.name) {
+            setName(data.name);
+            setIsLoggedIn(true);
+            localStorage.setItem("onmyoji_tcg_username", data.name);
+          }
+          connect((ws) => {
+            ws.send(JSON.stringify({
+              type: "reconnect",
+              payload: { roomId: data.roomId, reconnectToken: data.reconnectToken }
+            }));
+          });
+        }
+      }
+    } catch {
+      // localStorage 不可用或数据损坏，忽略
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** 主动离开房间 */
+  function leaveRoom() {
+    send({ type: "leave_room", payload: { roomId } });
+    setRoomId("");
+    setMatchState(null);
+    localStorage.removeItem("onmyoji_tcg_reconnect");
   }
 
   function quickCreateRoom() {
@@ -958,93 +1125,149 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
         {!lobbyCollapsed && (
           <div className="collapsible-body">
             <div className="lobby-grid">
-              {/* 连接区 */}
+              {/* 连接 + 认证区 */}
               <div className="lobby-block">
-                <h3 className="lobby-block-title">服务器连接</h3>
+                <h3 className="lobby-block-title">账号 &amp; 连接</h3>
+
+                {/* 服务器地址输入 */}
                 <div className="form-row">
                   <label>服务器地址</label>
-                  <input value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="ws://..." />
+                  <input
+                    value={serverUrl}
+                    onChange={(e) => setServerUrl(e.target.value)}
+                    placeholder="ws://localhost:8080"
+                    disabled={isConnected}
+                  />
                 </div>
-                <div className="form-row">
-                  <label>玩家昵称</label>
-                  <input value={name} onChange={(e) => setName(e.target.value)} placeholder="输入昵称" />
-                </div>
-                <button className="btn-primary" onClick={() => connect()}>
-                  {isConnected ? "✅ 已连接" : "连接服务器"}
-                </button>
-                <button className="btn-import-deck" onClick={() => setImportModalOpen(true)}>
-                  📋 {builderDeck ? `已导入 ${builderDeck.length} 张` : "导入卡组"}
-                </button>
-                {builderDeck && (
-                  <button className="btn-clear-deck" onClick={() => setBuilderDeck(null)}>
-                    ❌ 清除卡组
-                  </button>
-                )}
-              </div>
 
-              {/* 房间区 */}
-              <div className="lobby-block">
-                <h3 className="lobby-block-title">房间操作</h3>
-                <div className="room-actions">
-                  <button className="btn-primary" onClick={quickCreateRoom}>⚡ 一键建房</button>
-                  <button onClick={() => send({ type: "create_room", payload: { name } })}>创建房间</button>
-                  <div className="join-row">
-                    <input
-                      placeholder="输入房间 ID"
-                      value={roomIdInput}
-                      onChange={(e) => setRoomIdInput(e.target.value)}
-                    />
-                    <button onClick={() => send({ type: "join_room", payload: { roomId: roomIdInput, name } })}>
-                      加入
+                {isLoggedIn ? (
+                  <>
+                    <div className="auth-status">
+                      <span className="auth-user-badge">👤 {name}</span>
+                      <button className="btn-logout" onClick={doLogout}>登出</button>
+                    </div>
+                    <button className="btn-primary" onClick={() => connect()}>
+                      {isConnected ? "✅ 已连接" : "连接服务器"}
                     </button>
-                  </div>
-                  <button
-                    className="btn-start"
-                    disabled={!roomId}
-                    onClick={() => {
-                      console.log('[游戏] 点击开始对局, builderDeck:', builderDeck?.length ?? 'null');
-                      send({
-                        type: "start_match",
-                        payload: { roomId }
-                      });
-                    }}
-                  >
-                    🎮 开始对局 {builderDeck ? `（${builderDeck.length}张）` : "（默认牌组）"}
-                  </button>
-                </div>
-                {roomId && (
-                  <div className="room-info">
-                    <div className="room-id-row">
-                      <span>房间：<strong id="room-id-display">{roomId}</strong></span>
-                      <button
-                        type="button"
-                        className="btn-copy-room-id"
-                        onClick={() => {
-                          navigator.clipboard.writeText(roomId).then(() => {
-                            appendLog(`📋 房间ID已复制：${roomId}`);
-                          }).catch(() => {
-                            // fallback
-                            const el = document.getElementById('room-id-display');
-                            if (el) {
-                              const range = document.createRange();
-                              range.selectNode(el);
-                              window.getSelection()?.removeAllRanges();
-                              window.getSelection()?.addRange(range);
-                              document.execCommand('copy');
-                              window.getSelection()?.removeAllRanges();
-                              appendLog(`📋 房间ID已复制：${roomId}`);
-                            }
-                          });
-                        }}
-                        title="复制房间ID"
-                      >
-                        📋 复制
+                  </>
+                ) : (
+                  <>
+                    <div className="form-row">
+                      <label>用户名</label>
+                      <input
+                        value={name}
+                        onChange={(e) => { setName(e.target.value); setAuthError(""); }}
+                        placeholder="输入用户名"
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label>密码</label>
+                      <input
+                        type="password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && doLogin(name, loginPassword)}
+                        placeholder="输入密码"
+                      />
+                    </div>
+                    <div className="auth-buttons">
+                      <button className="btn-primary" onClick={() => doLogin(name, loginPassword)}>
+                        🔑 登录
+                      </button>
+                      <button className="btn-secondary" onClick={() => doRegister(name, loginPassword)}>
+                        📝 注册
                       </button>
                     </div>
-                    <span>玩家 ID：<code>{playerId || "—"}</code></span>
-                  </div>
+                    {authError && <div className="auth-error">{authError}</div>}
+                  </>
                 )}
+
+                <div style={{ marginTop: "8px" }}>
+                  <button className="btn-import-deck" onClick={() => setImportModalOpen(true)}>
+                    📋 {builderDeck ? `已导入 ${builderDeck.length} 张` : "导入卡组"}
+                  </button>
+                  {builderDeck && (
+                    <button className="btn-clear-deck" onClick={() => setBuilderDeck(null)} style={{ marginLeft: "4px" }}>
+                      ❌ 清除卡组
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* 房间区 — 仅登录后显示 */}
+              {isLoggedIn && (
+                <div className="lobby-block">
+                  <h3 className="lobby-block-title">房间操作</h3>
+                  <div className="room-actions">
+                    <button onClick={() => send({ type: "create_room", payload: { name } })}>创建房间</button>
+                    <div className="join-row">
+                      <input
+                        placeholder="输入房间 ID"
+                        value={roomIdInput}
+                        onChange={(e) => setRoomIdInput(e.target.value)}
+                      />
+                      <button onClick={() => send({ type: "join_room", payload: { roomId: roomIdInput, name } })}>
+                        加入
+                      </button>
+                    </div>
+                    <button
+                      className="btn-start"
+                      disabled={!roomId || gameOver}
+                      onClick={() => {
+                        console.log('[游戏] 点击开始对局, builderDeck:', builderDeck?.length ?? 'null');
+                        send({
+                          type: "start_match",
+                          payload: { roomId }
+                        });
+                      }}
+                    >
+                      🎮 开始对局 {builderDeck ? `（${builderDeck.length}张）` : "（默认牌组）"}
+                    </button>
+                    {roomId && !gameOver && !matchState && (
+                      <button onClick={leaveRoom}>🚪 退出房间</button>
+                    )}
+                    {gameOver && (
+                      <button
+                        className="btn-start"
+                        onClick={() => send({ type: "rematch", payload: { roomId } })}
+                      >
+                        🔄 重开对局 {builderDeck ? `（${builderDeck.length}张）` : "（默认牌组）"}
+                      </button>
+                    )}
+                  </div>
+                  {roomId && (
+                    <div className="room-info">
+                      <div className="room-id-row">
+                        <span>房间：<strong id="room-id-display">{roomId}</strong></span>
+                        <button
+                          type="button"
+                          className="btn-copy-room-id"
+                          onClick={() => {
+                            navigator.clipboard.writeText(roomId).then(() => {
+                              appendLog(`📋 房间ID已复制：${roomId}`);
+                            }).catch(() => {
+                              const el = document.getElementById('room-id-display');
+                              if (el) {
+                                const range = document.createRange();
+                                range.selectNode(el);
+                                window.getSelection()?.removeAllRanges();
+                                window.getSelection()?.addRange(range);
+                                document.execCommand('copy');
+                                window.getSelection()?.removeAllRanges();
+                                appendLog(`📋 房间ID已复制：${roomId}`);
+                              }
+                            });
+                          }}
+                          title="复制房间ID"
+                        >
+                          📋 复制
+                        </button>
+                      </div>
+                      <span>玩家 ID：<code>{playerId || "—"}</code></span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
