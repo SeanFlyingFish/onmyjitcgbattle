@@ -398,7 +398,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 2,
     "keyword": "兽妖",
     "ability": "复活（被消灭时移除所有标记，阻止本次消灭并失去复活）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_28.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_28.webp?v=3.2.2.1",
     "attack": 3,
     "health": 2,
   },
@@ -434,7 +434,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "兽妖",
     "ability": "❶：获得复活（被消灭时移除所有标记，阻止本次消灭并失去复活）。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_30.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_30.webp?v=3.2.2.1",
     "attack": 5,
     "health": 2,
   },
@@ -470,7 +470,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "兽妖/守护灵",
     "ability": "你场上的其他式神受到攻击时，获得1{力}并反击。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_33.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_33.webp?v=3.2.2.1",
     "attack": 2,
     "health": 6,
   },
@@ -518,7 +518,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 8,
     "keyword": "兽妖/守护灵",
     "ability": "反击\n离场时，若{命}不为0，阻止离场效果的结算。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_36.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_36.webp?v=3.2.2.1",
     "attack": 4,
     "health": 10,
   },
@@ -770,7 +770,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "苍叶",
     "ability": "横置：从你墓地选择1个「桃花妖」以外的<式神>召唤到你场上。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_55.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_55.webp?v=3.2.2.1",
     "attack": 2,
     "health": 7,
   },
@@ -782,7 +782,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "苍叶",
     "ability": "横置：从你墓地选择1个<式神>召唤到你场上。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_56.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_56.webp?v=3.2.2.1",
     "attack": 2,
     "health": 7,
   },
@@ -2164,7 +2164,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 1,
     "keyword": "召唤术",
     "ability": "移除你手牌中的X个<式神>作为代价，从你手牌选择1个费用至多为2X的<式神>召唤到你场上。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_160.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_160.webp?v=3.2.2.1",
   },
   "AYK132": {
     "id": "AYK132",
@@ -2353,9 +2353,8 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "type": "spell",
     "cost": 2,
     "keyword": "妖术",
-    "ability": "有<式神>以未消耗鬼火的方式召唤进场时，响应：阻止其召唤效果，然后移除该<式神>。
-",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_179.webp",
+    "ability": "有<式神>以未消耗鬼火的方式召唤进场时，响应：阻止其召唤效果，然后移除该<式神>。",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_179.webp?v=3.2.2.1",
   },
   "AYK149": {
     "id": "AYK149",
@@ -2385,7 +2384,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 1,
     "keyword": "妖术",
     "ability": "你场上的<付丧神>受到攻击时，响应：使其免疫所有伤害，直到本次攻击结算完成。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_182.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_182.webp?v=3.2.2.1",
   },
   "AYK152": {
     "id": "AYK152",
@@ -2605,7 +2604,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 3,
     "keyword": "妖术",
     "ability": "弹回你符咒区中的所有牌。每因此弹回1张牌，使你恢复2{命}。\n本局游戏的剩余时间内，你回合开始时，你可以使你本回合抽牌阶段抽牌数-1作为代价，从你墓地选择1张牌暗置于符咒区。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_204.webp?v=3.2.1.3",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_204.webp?v=3.2.2.1",
   },
   "AYK172": {
     "id": "AYK172",
@@ -2635,7 +2634,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 3,
     "keyword": "妖术",
     "ability": "敌方控制的1个式神对你造成伤害时，响应：消灭该式神。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_207.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_207.webp?v=3.2.2.1",
   },
   "AYK175": {
     "id": "AYK175",
@@ -2665,7 +2664,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "妖术",
     "ability": "对敌方场上的所有式神各造成3点伤害，你场上每存在1个「大天狗」，费用-1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_210.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_210.webp?v=3.2.2.1",
   },
   "AYK178": {
     "id": "AYK178",
@@ -2825,7 +2824,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 1,
     "keyword": "御魂",
     "ability": "携带式神对未受伤角色造成的伤害+X。\n（X为携带式神{力}的一半，向上取整）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_226.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_226.webp?v=3.2.2.1",
   },
   "AYK192": {
     "id": "AYK192",
@@ -2835,7 +2834,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 2,
     "keyword": "御魂",
     "ability": "携带式神造成的伤害+1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_227.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_227.webp?v=3.2.2.1",
   },
   "AYK193": {
     "id": "AYK193",
@@ -2865,7 +2864,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 3,
     "keyword": "御魂",
     "ability": "携带式神成为攻击或效果的目标时，敌方须消耗1{火}，否则取消目标。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_230.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_230.webp?v=3.2.2.1",
   },
   "AYK195": {
     "id": "AYK195",
@@ -2875,7 +2874,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "御魂",
     "ability": "携带式神横置时，运势4：获得1{火}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_231.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_231.webp?v=3.2.2.1",
   },
   "AYK196": {
     "id": "AYK196",
@@ -3199,7 +3198,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "恶鬼",
     "ability": "不动\n你可以移除你牌库顶的2张牌，发起1次攻击。若因此效果移除的牌费用相同，获得1{力}和1{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_11.webp?v=3.2.1.0",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_11.webp?v=3.2.2.1",
     "attack": 5,
     "health": 5
   },  "BPP012": {
@@ -3353,7 +3352,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 5,
     "keyword": "宿水",
     "ability": "（0）：净化1个式神，并使其恢复2{命}。\n鼓舞：你场上的式神获得过量恢复时，运势 1：获得❶，然后此效果本回合运势要求+2。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_23.webp?v=3.2.1.0",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_23.webp?v=3.2.2.1",
     "attack": 0,
     "health": 8
   },  "BPP024": {
@@ -3463,7 +3462,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 2,
     "keyword": "兽妖",
     "ability": "召唤：运势 2X：抽X张牌。\n横置：你本回合下次造成的伤害+1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_33.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_33.webp?v=3.2.2.1",
     "attack": 0,
     "health": 1
   },  "BPP034": {
@@ -3914,7 +3913,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 2,
     "keyword": "虫/疾风",
     "ability": "召唤：净化1个式神，并使其恢复3{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_66.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_66.webp?v=3.2.2.1",
     "attack": 1,
     "health": 4
   },  "BPP067": {
@@ -3925,7 +3924,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 0,
     "keyword": "",
     "ability": "❷：重新触发你控制的1个「蝴蝶精」的召唤效果。你可以如瞬发<法术>般使用此效果。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_67.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_67.webp?v=3.2.2.1",
     "attack": 0,
     "health": 1
   },  "BPP068": {
@@ -3936,7 +3935,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "虫/疾风",
     "ability": "召唤：对1个式神造成3点伤害。若消灭目标，重置你符咒区的1张牌。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_68.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_68.webp?v=3.2.2.1",
     "attack": 2,
     "health": 4
   },  "BPP069": {
@@ -3947,7 +3946,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 6,
     "keyword": "虫/疾风",
     "ability": "召唤：重置1个式神。\n你的回合结束时，重置你符咒区里的2张牌。\n免疫动作效果。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_69.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_69.webp?v=3.2.2.1",
     "attack": 3,
     "health": 7
   },  "BPP070": {
@@ -4189,7 +4188,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 5,
     "keyword": "苍叶",
     "ability": "鼓舞：你控制的角色恢复{命}时，额外恢复2{命}。敌方控制的角色获得伤害指示物时，额外获得1个伤害指示物。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_88.webp",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_88.webp?v=3.2.2.1",
     "attack": 2,
     "health": 8
   },  "BPP089": {
@@ -4211,7 +4210,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 5,
     "keyword": "苍叶",
     "ability": "召唤：使你场上的1个角色恢复5{命}。\n鼓舞：你获得过量恢复时，从你墓地选择1个费用不大于X的「桃花妖」以外的式神召唤到你场上。\n（X为本次过量恢复的{命}）",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_90.webp?v=3.2.1.2",
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_90.webp?v=3.2.2.1",
     "attack": 2,
     "health": 8
   },  "BPP091": {
@@ -4958,7 +4957,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 2,
     "keyword": "妖术",
     "ability": "消灭你控制的1个<怨灵>作为代价，使你场上的1个<怨灵>本回合造成的伤害+1。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_159.webp?v=3.2.1.3"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_159.webp?v=3.2.2.1"
   },  "BPP160": {
     "id": "BPP160",
     "name": "读心",
@@ -5264,7 +5263,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 2,
     "keyword": "御魂",
     "ability": "携带式神每回合首次横置后，恢复3{命}。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_190.webp?v=3.2.1.0"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_190.webp?v=3.2.2.1"
   },  "BPP191": {
     "id": "BPP191",
     "name": "镜姬",
@@ -5273,7 +5272,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 3,
     "keyword": "御魂",
     "ability": "携带式神受到伤害时，横置：对敌方控制的1个角色造成等量的伤害。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_191.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_191.webp?v=3.2.2.1"
   },  "BPP192": {
     "id": "BPP192",
     "name": "心眼",
@@ -5291,7 +5290,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 2,
     "keyword": "御魂",
     "ability": "携带式神受到伤害时，运势 4：眩晕敌方控制的1个式神。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_193.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_193.webp?v=3.2.2.1"
   },  "BPP194": {
     "id": "BPP194",
     "name": "轮入道",
@@ -5300,7 +5299,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "御魂",
     "ability": "携带式神于你的回合内首次横置时：重置携带式神。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_194.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_194.webp?v=3.2.2.1"
   },  "BPP195": {
     "id": "BPP195",
     "name": "幽谷响",
@@ -5309,7 +5308,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 4,
     "keyword": "御魂",
     "ability": "携带式神受到动作效果时，抵消此效果，然后运势 4：你可以对敌方控制的1个式神执行此动作效果。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_195.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_195.webp?v=3.2.2.1"
   },  "BPP195-UR": {
     "id": "BPP195-UR",
     "name": "幽谷响(UR)",
@@ -5318,7 +5317,7 @@ export const CARD_DATABASE: Record<string, BuilderCard> = {
     "cost": 2,
     "keyword": "御魂",
     "ability": "携带式神受到动作效果时，运势 4：抵消此效果，你可以对敌方控制的1个式神执行此动作效果。",
-    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_235.webp"
+    "img": "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_235.webp?v=3.2.2.1"
   },  "BPP196": {
     "id": "BPP196",
     "name": "百闻馆",
