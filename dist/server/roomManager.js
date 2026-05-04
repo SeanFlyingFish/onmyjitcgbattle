@@ -289,6 +289,7 @@ export class RoomManager {
         for (const [playerId, entry] of room.players.entries()) {
             // 修复：先检查 ws 是否为 null，再检查 readyState
             if (!entry.ws || entry.ws.readyState !== WebSocket.OPEN) {
+                console.log(`[broadcastRoom] 跳过玩家 ${playerId}: ws=${entry.ws ? 'not OPEN' : 'null'}`);
                 continue;
             }
             try {
@@ -299,6 +300,7 @@ export class RoomManager {
                 else {
                     entry.ws.send(JSON.stringify(event));
                 }
+                console.log(`[broadcastRoom] 已发送 ${event.type} 给玩家 ${playerId}`);
             }
             catch (error) {
                 console.error(`[RoomManager] Failed to send to ${playerId}:`, error);

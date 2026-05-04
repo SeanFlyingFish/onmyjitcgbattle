@@ -524,7 +524,8 @@ function App() {
       payload: {
         roomId: reconnectPayload.roomId,
         reconnectToken: reconnectPayload.reconnectToken,
-        playerId: reconnectPayload.playerId
+        playerId: reconnectPayload.playerId,
+        playerName: reconnectPayload.name
       }
     }));
     setReconnectPayload(null);
@@ -562,10 +563,10 @@ function App() {
       appendLog(`🏠 房间已创建：${msg.payload.roomId}`);
     } else if (msg.type === "room_joined") {
       setRoomId(msg.payload.roomId);
-      setPlayerId((prev) => prev || msg.payload.playerId);
-      // 只有主动发起 join_room 的玩家才保存重连信息（通过 expectingJoinRef 判断）
+      // 只有主动发起 join_room 的玩家才设置 playerId 和保存重连信息（通过 expectingJoinRef 判断）
       if (expectingJoinRef.current) {
         expectingJoinRef.current = false;
+        setPlayerId(msg.payload.playerId);
         const reconnectKey = `onmyoji_tcg_reconnect_${name}`;
         localStorage.setItem(reconnectKey, JSON.stringify({
           roomId: msg.payload.roomId,
@@ -627,9 +628,25 @@ function App() {
     setAuthError("");
     appendLog(`🔑 登录成功：${msg.payload.name}`);
 
-    // 如果有待重连的信息，发起重连
-    if (pendingReconnectData) {
-      setReconnectPayload(pendingReconnectData);
+    // 登录成功后，用当前登录账号名重新读取 localStorage 中的重连信息
+    // 这样可以避免同一台电脑上账号 B 登录时，错误地使用账号 A 遗留的重连数据
+    {
+      const loggedInName = msg.payload.name;
+      const reconnectKey = `onmyoji_tcg_reconnect_${loggedInName}`;
+      try {
+        const saved = localStorage.getItem(reconnectKey);
+        if (saved) {
+          const data = JSON.parse(saved);
+          // 严格校验：重连数据中的 name 必须与当前登录账号完全一致
+          if (data.roomId && data.reconnectToken && data.playerId && data.name === loggedInName) {
+            console.log(`[游戏] 登录后检测到属于本账号(${loggedInName})的重连信息，自动重连...`);
+            setReconnectPayload(data);
+          } else if (data.name && data.name !== loggedInName) {
+            console.log(`[游戏] 忽略重连信息：存储的账号(${data.name})与当前登录账号(${loggedInName})不符`);
+          }
+        }
+      } catch {}
+      // 清除旧的 pendingReconnectData（页面加载时读取的，可能属于其他账号）
       setPendingReconnectData(null);
     }
 
@@ -912,17 +929,19 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
     appendLog("🔓 已登出");
   }
 
-  /** 页面加载时检查 localStorage，存储断线重连信息（不自动登录） */
+  /** 页面加载时检查 localStorage，仅做提示（重连数据在登录成功后按当前账号名重新读取） */
   useEffect(() => {
     try {
+      // 仅检查上一次登录账号是否有未结束的对局，仅用于显示提示
       const username = localStorage.getItem("onmyoji_tcg_username") || "";
-      const reconnectKey = username ? `onmyoji_tcg_reconnect_${username}` : "onmyoji_tcg_reconnect";
-      const saved = localStorage.getItem(reconnectKey);
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data.roomId && data.reconnectToken && data.name) {
-          setPendingReconnectData(data);
-          appendLog("🔄 检测到未结束的对局，请登录后重连...");
+      if (username) {
+        const reconnectKey = `onmyoji_tcg_reconnect_${username}`;
+        const saved = localStorage.getItem(reconnectKey);
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data.roomId && data.reconnectToken && data.name === username) {
+            appendLog(`🔄 检测到账号「${username}」有未结束的对局，请用该账号登录后自动重连...`);
+          }
         }
       }
     } catch {}
@@ -949,6 +968,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
   }
 
   function quickCreateRoom() {
+    expectingJoinRef.current = true;
     const payload = { type: "create_room", payload: { name } };
     if (socket && socket.readyState === WebSocket.OPEN) {
       send(payload);
