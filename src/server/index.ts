@@ -8,7 +8,7 @@ import { sanitizeMatchStateForPlayer } from "./gameEngine.js";
 const PORT = Number(process.env.PORT ?? 8080);
 const roomManager = new RoomManager();
 const authManager = new AuthManager();
-const sessions = new Map<WebSocket, { playerId: string; name: string; roomId?: string; reconnectToken?: string }>();
+const sessions = new Map<WebSocket, { playerId: string; name: string; roomId?: string; reconnectToken?: string; isSpectating?: boolean }>();
 const adminWsSet = new Set<WebSocket>();
 
 const server = createServer((req, res) => {
