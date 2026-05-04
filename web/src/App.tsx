@@ -698,6 +698,7 @@ const [expandedToken, setExpandedToken] = useState<{ slotCardId: string; kind: S
 const [customTokenPrompt, setCustomTokenPrompt] = useState<{ playerId: string; slotIndex: number } | null>(null);
 const [customTokenNameInput, setCustomTokenNameInput] = useState("");
   const [mulliganSelectedIds, setMulliganSelectedIds] = useState<Set<string>>(new Set());
+  const [isSpectating, setIsSpectating] = useState(false);
   const [spellFlipMode, setSpellFlipMode] = useState(false);
   /** 潜行模式：点击后选择式神进入潜行 */
   const [stealthMode, setStealthMode] = useState(false);
@@ -763,18 +764,30 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
   const [chatInput, setChatInput] = useState("");
 
   const self = useMemo(() => {
-    if (!matchState || !playerId) return null;
+    if (!matchState) return null;
+    if (isSpectating) {
+      // 观战时显示第一位玩家的信息
+      const firstId = Object.keys(matchState.players)[0];
+      return firstId ? withDefaultZones(matchState.players[firstId]) : null;
+    }
+    if (!playerId) return null;
     return matchState.players[playerId] ?? null;
-  }, [matchState, playerId]);
+  }, [matchState, playerId, isSpectating]);
 
   const enemyId = useMemo(() => {
-    if (!matchState || !playerId) return null;
+    if (!matchState) return null;
+    if (isSpectating) {
+      // 观战时显示第二位玩家的 ID
+      const ids = Object.keys(matchState.players);
+      return ids[1] ?? null;
+    }
+    if (!playerId) return null;
     return Object.keys(matchState.players).find((id) => id !== playerId) ?? null;
-  }, [matchState, playerId]);
+  }, [matchState, playerId, isSpectating]);
 
   const enemy = useMemo(() => {
     if (!matchState || !enemyId) return null;
-    return matchState.players[enemyId];
+    return withDefaultZones(matchState.players[enemyId]);
   }, [matchState, enemyId]);
 
   const phase = matchState?.phase ?? "playing";
@@ -864,7 +877,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
 
   const gameOver = Boolean(matchState?.winnerId);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
-  const allowBoardDrag = !isMulligan && phase === "playing" && !gameOver;
+  const allowBoardDrag = !isMulligan && phase === "playing" && !gameOver && !isSpectating;
 
   function appendLog(message: string) {
     setLogs((prev) => [message, ...prev].slice(0, 30));
@@ -1185,6 +1198,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
           <h1 className="app-title">⚔ 阴阳师TCG</h1>
         </div>
         <div className="app-header-actions">
+          <a href="/DeckBuilder.html" className="btn-header-link" title="打开组卡器">🃏 组卡器</a>
           <div className={`conn-dot ${isConnected ? "connected" : "disconnected"}`} title={isConnected ? "已连接" : "未连接"} />
         </div>
       </header>
@@ -1288,10 +1302,23 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                       <button onClick={joinRoom}>
                         加入
                       </button>
+                      <button
+                        className="btn-spectate"
+                        onClick={() => {
+                          const rid = roomIdInput.trim();
+                          if (!rid) return;
+                          setRoomId(rid);
+                          setRoomIdInput("");
+                          send({ type: "spectate_room", payload: { roomId: rid, name } });
+                          setIsSpectating(true);
+                        }}
+                      >
+                        🔭 观战
+                      </button>
                     </div>
                     <button
                       className="btn-start"
-                      disabled={!roomId || gameOver}
+                      disabled={!roomId || gameOver || isSpectating}
                       onClick={() => {
                         console.log('[游戏] 点击开始对局, builderDeck:', builderDeck?.length ?? 'null');
                         send({
@@ -1411,17 +1438,19 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                   onDrop={(e) => onDropToZone(e, "hand")}
                 >
                   <div className="enemy-hand-cards">
-                    {(isMulligan ? (enemyView?.concealedHandCount ?? enemyView?.hand.length ?? 0) : (enemyView?.hand.length ?? 0)) > 0 ? (
-                      (isMulligan
+                    {(isMulligan && !isSpectating
+                      ? (enemyView?.concealedHandCount ?? enemyView?.hand.length ?? 0)
+                      : (enemyView?.hand.length ?? 0)) > 0 ? (
+                      ((isMulligan && !isSpectating)
                         ? Array.from({ length: enemyView?.concealedHandCount ?? enemyView?.hand.length ?? 0 })
                         : enemyView?.hand ?? []
                       ).map((card: Card | undefined, i: number) => {
-                        // 对手公开的手牌显示正面，其余显示背面
-                        const isRevealed = !isMulligan && card && (enemyView?.revealedHandIds ?? []).includes(card.id);
+                        // 观战者看到所有手牌正面；对局中仅公开的手牌显示正面
+                        const isRevealed = isSpectating || (!isMulligan && card && (enemyView?.revealedHandIds ?? []).includes(card.id));
                         const imgSrc = isRevealed && card?.img ? card.img : CARD_BACK_IMAGE_URL;
                         return (
                           <div
-                            key={isMulligan ? i : (card as Card).id}
+                            key={(isMulligan && !isSpectating) ? i : (card as Card).id}
                             className={`card hand-card enemy-card ${isRevealed ? 'hand-card--revealed' : ''}`}
                             style={{ backgroundImage: `url(${imgSrc})` }}
                             onMouseEnter={() => { if (isRevealed && card) { setHoveredBoardCardId(card.id); setHoveredBoardCardData(card); } }}
@@ -1481,7 +1510,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                       const rotatedTransform = entry.exhausted ? 'translateY(-50%) rotate(90deg)' : transform;
                       // 觉醒牌始终公开（不管 concealedForViewer 值如何）
                       const isAwaken = entry.card.type === 'awaken';
-                      const showFace = isAwaken || entry.revealedToOpponent || entry.concealedForViewer !== true;
+                      const showFace = isSpectating || isAwaken || entry.revealedToOpponent || entry.concealedForViewer !== true;
                       const imgSrc = showFace ? (entry.card.img || CARD_IMAGE_URL) : CARD_BACK_IMAGE_URL;
                       return (
                         <div
@@ -2003,7 +2032,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                     <button
                       type="button"
                       className="btn召唤物"
-                      disabled={!roomId || gameOver}
+                      disabled={!roomId || gameOver || isSpectating}
                       onClick={() => { setTokenModalOpen(true); setTokenSelectedIds([]); }}
                       title="从召唤物库选择卡牌"
                       style={{ fontSize: "0.7rem", padding: "2px 8px" }}
@@ -2015,7 +2044,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                         <button
                           type="button"
                           className={`btn-view ${deckPlaceMode ? 'btn-reveal--active' : ''}`}
-                          disabled={!roomId || gameOver}
+                          disabled={!roomId || gameOver || isSpectating}
                           onClick={() => {
                             if (deckPlaceMode) {
                               // 再次点击：有选中则弹窗，无选中则退出模式
@@ -2037,7 +2066,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                         <button
                           type="button"
                           className="btn-view"
-                          disabled={!roomId || gameOver || (selfView?.deckCount ?? 0) === 0}
+                          disabled={!roomId || gameOver || isSpectating || (selfView?.deckCount ?? 0) === 0}
                           onClick={() => { setDeckViewModalOpen(true); setDeckViewInput(""); setDeckViewConfirmed(false); }}
                           title="查看牌库顶卡牌"
                         >
@@ -2048,7 +2077,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                         <button
                           type="button"
                           className="btn-draw"
-                          disabled={!roomId || gameOver || (selfView?.deckCount ?? 0) === 0 || deckViewConfirmed}
+                          disabled={!roomId || gameOver || isSpectating || (selfView?.deckCount ?? 0) === 0 || deckViewConfirmed}
                           onClick={() => send({ type: "deck_draw", payload: { roomId, count: 1 } })}
                           title={deckViewConfirmed ? "请先关闭牌库查看弹窗" : "从牌库抽1张"}
                         >
@@ -2059,7 +2088,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                         <button
                           type="button"
                           className={`btn-reveal ${spellFlipMode ? 'btn-reveal--active' : ''}`}
-                          disabled={!roomId || gameOver}
+                          disabled={!roomId || gameOver || isSpectating}
                           onClick={() => setSpellFlipMode((prev) => !prev)}
                         >
                           {spellFlipMode ? "👁 退出展示" : "👁 展示"}
@@ -2069,7 +2098,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                         <button
                           type="button"
                           className={`btn-reveal ${stealthMode ? 'btn-reveal--active' : ''}`}
-                          disabled={!roomId || gameOver}
+                          disabled={!roomId || gameOver || isSpectating}
                           onClick={() => setStealthMode((prev) => !prev)}
                         >
                           {stealthMode ? "👤 退出潜行" : "👤 潜行"}
@@ -2079,7 +2108,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                         <button
                           type="button"
                           className="btn-end-turn"
-                          disabled={!isMyTurn || !roomId || gameOver}
+                          disabled={!isMyTurn || !roomId || gameOver || isSpectating}
                           onClick={() => send({ type: "end_turn", payload: { roomId } })}
                         >
                           {isMyTurn ? "⚔️ 结束回合" : "⏳ 等待对手..."}
@@ -2131,8 +2160,8 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                             background: "transparent",
                             cursor: hoveredHandCardId === card.id ? "pointer" : "grab",
                           }}
-                          disabled={isMulligan ? iSubmittedMulligan : gameOver}
-                          draggable={!isMulligan && allowBoardDrag && !deckPlaceMode}
+                          disabled={isMulligan ? iSubmittedMulligan : (gameOver || isSpectating)}
+                          draggable={!isMulligan && allowBoardDrag && !deckPlaceMode && !isSpectating}
                           onMouseEnter={() => setHoveredHandCardId(card.id)}
                           onMouseLeave={() => setHoveredHandCardId((prev) => (prev === card.id ? null : prev))}
                           onDragStart={(e) => {
@@ -2207,7 +2236,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                             borderRadius: "6px",
                             cursor: "pointer",
                           }}
-                          disabled={!roomId || iSubmittedMulligan}
+                          disabled={!roomId || iSubmittedMulligan || isSpectating}
                           onClick={submitMulligan}
                         >
                           {iSubmittedMulligan ? "✅ 已提交" : "确认调度"}
@@ -2256,7 +2285,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                 <button
                   type="button"
                   className="btn-运势"
-                  disabled={!roomId || gameOver || isMulligan}
+                  disabled={!roomId || gameOver || isMulligan || isSpectating}
                   onClick={() => {
                     const dice = Math.floor(Math.random() * 6) + 1;
                     send({ type: "chat", payload: { roomId, message: `🎲 运势：【${dice}】点！` } });
@@ -2876,7 +2905,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
               <button type="button" onClick={() => { setCustomTokenPrompt(null); setCustomTokenNameInput(""); }}>取消</button>
               <button
                 type="button"
-                disabled={!customTokenNameInput.trim() || !roomId}
+                disabled={!customTokenNameInput.trim() || !roomId || isSpectating}
                 onClick={() => {
                   const prompt = customTokenPrompt;
                   if (!prompt || !roomId) return;

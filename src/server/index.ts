@@ -145,6 +145,22 @@ wss.on("connection", (ws) => {
         return;
       }
 
+      // 观战：以观战者身份加入已满员的房间
+      if (parsed.type === "spectate_room") {
+        const state = roomManager.joinAsSpectator(parsed.payload.roomId, ws, session.playerId, session.name);
+        sessions.set(ws, { ...session, roomId: parsed.payload.roomId, isSpectating: true });
+        // 向观战者发送完整对局状态（不脱敏）
+        if (state && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "match_state", payload: state }));
+        }
+        // 广播聊天消息通知对局中玩家
+        roomManager.broadcastRoom(parsed.payload.roomId, {
+          type: "chat",
+          payload: { playerId: "system", playerName: "", message: `${session.name} 开始观战` }
+        });
+        return;
+      }
+
       // ── 需要在房间里的消息 ──
       if (!session.roomId) {
         throw new Error("not in room");
@@ -164,12 +180,14 @@ wss.on("connection", (ws) => {
       if (parsed.type === "start_match") {
         const state = roomManager.startMatch(parsed.payload.roomId);
         roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_started", payload: state });
+        roomManager.broadcastToSpectators(parsed.payload.roomId, { type: "match_state", payload: state });
         return;
       }
 
       if (parsed.type === "submit_mulligan") {
         const state = roomManager.submitMulligan(parsed.payload.roomId, session.playerId, parsed.payload.cardIds);
         roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
+        roomManager.broadcastToSpectators(parsed.payload.roomId, { type: "match_state", payload: state });
         return;
       }
 
@@ -338,11 +356,12 @@ wss.on("connection", (ws) => {
       }
 
       if (parsed.type === "chat") {
+        const isSpec = session.isSpectating === true;
         roomManager.broadcastRoom(parsed.payload.roomId, {
           type: "chat",
           payload: {
             playerId: session.playerId,
-            playerName: session.name,
+            playerName: isSpec ? `${session.name}（观战）` : session.name,
             message: parsed.payload.message
           }
         });
@@ -485,7 +504,9 @@ wss.on("connection", (ws) => {
         if (leftId) {
           roomManager.broadcastRoom(session.roomId, { type: "left_room", payload: { playerId: leftId } });
         }
-        sessions.delete(ws);
+        // 保留 session（保留登录状态），只清除房间相关字段
+        const { roomId: _rid, reconnectToken: _rt, ...sessionWithoutRoom } = session;
+        sessions.set(ws, { ...sessionWithoutRoom, isSpectating: false });
         return;
       }
 
@@ -507,8 +528,17 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     const session = sessions.get(ws);
     if (session) {
-      roomManager.markDisconnected(ws);
-      if (session.roomId) {
+      if (session.isSpectating && session.roomId) {
+        // 观战者断线
+        roomManager.removeSpectator(session.roomId, session.playerId);
+        roomManager.broadcastRoom(session.roomId, {
+          type: "chat",
+          payload: { playerId: "system", playerName: "", message: `${session.name} 结束观战` }
+        });
+        console.log(`[服务器] 观战者 ${session.playerId} 断线，房间 ${session.roomId}`);
+      } else if (session.roomId) {
+        // 玩家断线（原有逻辑）
+        roomManager.markDisconnected(ws);
         console.log(`[服务器] 玩家 ${session.playerId} 断线，房间 ${session.roomId}`);
       }
       sessions.delete(ws);

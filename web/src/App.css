@@ -119,6 +119,19 @@ body {
   gap: 10px;
 }
 
+.btn-header-link {
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  background: #374151;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.btn-header-link:hover { background: #4b5563; }
+
 .conn-dot {
   width: 10px; height: 10px;
   border-radius: 50%;
@@ -2775,7 +2788,8 @@ body {
   cursor: pointer;
   transition: all 0.15s;
 }
-.btn-reveal:hover { background: #4b5563; }
+.btn-reveal:hover:not(:disabled) { background: #4b5563; }
+.btn-reveal:disabled { background: #1e293b; border-color: var(--color-border); color: #64748b; cursor: not-allowed; }
 .btn-reveal--active {
   background: linear-gradient(135deg, #d97706, #b45309);
   color: #fff;

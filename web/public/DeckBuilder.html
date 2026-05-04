@@ -1,0 +1,2706 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阴阳师TCG - 组卡器</title>
+    <style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"微软雅黑",sans-serif;}
+body{padding:15px;max-width:1500px;margin:0 auto;background:#f5f0e8;}
+h1{text-align:center;margin-bottom:20px;color:#5a3921;font-size: 24px;}
+
+/* 新增：卡组列表页面样式 */
+.deck-list-page {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.deck-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.btn-new-deck {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #9b30af, #7a248a);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.deck-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+}
+.deck-card {
+    background: #fffbf5;
+    border: 1px solid #e6d5c3;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(139, 69, 19, 0.15);
+    cursor: pointer;
+    transition: 0.2s;
+}
+.deck-card:hover {
+    transform: scale(1.02);
+    border-color: #d4a574;
+}
+.deck-card-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #5a3921;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+.deck-card-count {
+    color: #7a5230;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+.deck-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.deck-card-actions button {
+    flex: 1;
+    min-width: 60px;
+    padding: 6px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+/* 卡组详情弹窗 */
+.deck-detail-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.deck-detail-modal.show {
+    display: flex;
+}
+.deck-detail-box {
+    background: #fffbf5;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-y: auto;
+}
+.deck-detail-title {
+    font-size: 20px;
+    color: #5a3921;
+    margin-bottom: 15px;
+    text-align: center;
+}
+.deck-detail-cards {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+.deck-detail-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.search-bar{
+    display:flex; gap:10px; margin-bottom:15px;
+    flex-wrap:wrap;
+}
+.search-bar input, .search-bar select{
+    padding:8px 12px; font-size:14px; 
+    border:1px solid #d4a574;
+    background:#fffbf5;
+    color:#5a3921;
+    border-radius:8px;
+    outline:none;
+}
+.search-bar input{flex:1;}
+.search-bar select{min-width:150px;}
+
+.container{display:flex;gap:20px; margin-top:10px;}
+
+/* 新增：返回按钮样式 */
+.back-btn {
+    padding: 6px 12px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.card-library{width:70%;background:#fffbf5;padding:15px;border-radius:8px;box-shadow:0 2px 8px rgba(139, 69, 19, 0.15);border:1px solid #e6d5c3;}
+.library-title{
+    font-size:18px;
+    margin-bottom:10px;
+    font-weight:bold;
+    color:#5a3921;
+    display: flex; 
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.title-btns {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+/* 粘贴代码按钮 - 紫色 */
+.paste-inline-btn {
+    background: linear-gradient(135deg, #9b30af, #7a248a);
+}
+/* 抽卡按钮 - 保留你原来的橙色 */
+.draw-inline-btn {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+.card-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:4px;}
+.card-item{
+    border:1px solid #e8d8c8;
+    border-radius:10px;
+    padding:4px;
+    text-align:center;
+    cursor:pointer;
+    transition:0.2s;
+    position:relative;
+    background:#fff;
+    box-shadow:0 2px 6px rgba(139, 69, 19, 0.1);
+}
+.card-item.式神 { background: linear-gradient(to bottom, white 50%, #c92a2a); }
+.card-item.觉醒 { background: linear-gradient(to bottom, white 50%, #212529); }
+.card-item.法术 { background: linear-gradient(to bottom, white 50%, #2f9e44); }
+.card-item.附灵 { background: linear-gradient(to bottom, white 50%, #fd7e14); }
+.card-item.结界 { background: linear-gradient(to bottom, white 50%, #9b30af); }
+.card-item:hover{transform:scale(1.03);border-color:#d4a574; z-index:10; box-shadow:0 4px 12px rgba(139, 69, 19, 0.2);}
+.card-item img{width:100%;height:auto;object-fit:cover;border-radius:4px;margin-bottom:0px;}
+.card-name{font-size:12px;color:#FFF;line-height:1.2;}
+.card-type{display: none;}
+
+.pagination{
+    margin-top:15px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.pagination button{
+    padding:6px 12px;
+    background:#fff;
+    color:#333;
+    border:1px solid #ddd;
+    border-radius:4px;
+    font-size:14px;
+}
+.pagination button.active{
+    background:#4285f4;
+    color:#fff;
+    border-color:#4285f4;
+}
+.pagination button:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+}
+
+.deck-area{width:30%;background:#fffbf5;padding:15px;border-radius:8px;box-shadow:0 2px 8px rgba(139, 69, 19, 0.15);border:1px solid #e6d5c3;}
+.deck-title{font-size:18px;margin-bottom:10px;font-weight:bold;color:#5a3921;}
+.deck-count{margin-bottom:10px;color:#7a5230;font-size:15px;font-weight:500;}
+
+#cardPreview{
+    width: 378px;
+    height: 528px;
+    margin: 0 auto 15px;
+    border:2px solid #fff;
+    border-radius:8px;
+    box-shadow:0 0 15px rgba(0,0,0,0.2);
+    background-size:cover;
+    background-position:center;
+    display: block;
+}
+
+.deck-list{max-height:300px;overflow-y:auto;}
+.deck-item{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:15px 12px;
+    border-radius:8px;
+    margin-bottom:2px;
+    border-bottom:none;
+    color:white;
+    position:relative;
+    overflow:hidden;
+    background-repeat: no-repeat;
+    background-position: 0 0, -18px 16%;
+    background-size: 100% 100%, 40% auto;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
+
+.deck-item.式神 { background-image: linear-gradient(to right, transparent 0%, #c92a2a 35%, #c92a2a 100%); }
+.deck-item.觉醒 { background-image: linear-gradient(to right, transparent 0%, #212529 35%, #212529 100%); }
+.deck-item.法术 { background-image: linear-gradient(to right, transparent 0%, #2f9e44 35%, #2f9e44 100%); }
+.deck-item.附灵 { background-image: linear-gradient(to right, transparent 0%, #fd7e14 35%, #fd7e14 100%); }
+.deck-item.结界 { background-image: linear-gradient(to right, transparent 0%, #9b30af 35%, #9b30af 100%); }
+
+.deck-item-name,.deck-item-num,.deck-item-del{position:relative;z-index:2;}
+.deck-item-name{
+    font-size:16px;
+    margin: 0 auto;
+    transform: translateX(-5px);
+}
+.deck-item-num{
+    font-size:16px;
+    margin-left: auto;
+    margin-right: 25px;
+}
+.deck-item-del{
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.action-box{margin-top:20px;text-align:center;display:flex;flex-direction:column;gap:10px;}
+button{
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+    background: linear-gradient(135deg, #9b30af, #7a248a);
+    color:#fff;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:500;
+    transition:opacity 0.2s;
+}
+button:hover{opacity:0.9;}
+button.danger{background: linear-gradient(135deg, #c92a2a, #a02525);}
+#result-box{margin-top:15px;padding:12px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;word-break:break-all;max-height:160px;overflow-y:auto;white-space:pre-wrap;}
+
+.draw-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.draw-modal.show {
+    display: flex;
+}
+.draw-box {
+    background: #222;
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 700px;
+    text-align: center;
+}
+.draw-header {
+    color: white;
+    margin-bottom: 15px;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+}
+.draw-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+.draw-card {
+    width: 100%;
+    aspect-ratio: 378/528;
+    position: relative;
+    perspective: 1000px;
+    cursor: default;
+}
+.draw-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.4s ease;
+    transform-style: preserve-3d;
+}
+.draw-card.flip .draw-card-inner {
+    transform: rotateY(180deg);
+}
+.draw-front, .draw-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.draw-front {
+    transform: rotateY(180deg);
+}
+.draw-back img, .draw-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.draw-close {
+    margin-top: 15px;
+    padding: 8px 16px;
+    background: #f44;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+@keyframes breath-green { 0% { box-shadow: 0 0 6px 2px #00ff66; } 50% { box-shadow: 0 0 12px 4px #00ff66; } 100% { box-shadow: 0 0 6px 2px #00ff66; } }
+@keyframes breath-blue { 0% { box-shadow: 0 0 7px 2px #0066ff; } 50% { box-shadow: 0 0 15px 5px #0066ff; } 100% { box-shadow: 0 0 7px 2px #0066ff; } }
+@keyframes breath-purple { 0% { box-shadow: 0 0 8px 2px #cc00ff; } 50% { box-shadow: 0 0 17px 6px #cc00ff; } 100% { box-shadow: 0 0 8px 2px #cc00ff; } }
+@keyframes breath-gold { 0% { box-shadow: 0 0 9px 2px #ffcc00; } 50% { box-shadow: 0 0 20px 7px #ff9900; } 100% { box-shadow: 0 0 9px 2px #ffcc00; } }
+
+.draw-card.light-sp { animation: breath-green 1.8s infinite ease-in-out; }
+.draw-card.light-or { animation: breath-blue 1.8s infinite ease-in-out; }
+.draw-card.light-purple { animation: breath-purple 1.8s infinite ease-in-out; }
+.draw-card.light-gold { animation: breath-gold 1.8s infinite ease-in-out; }
+
+@media (max-width: 768px) {
+    html,body{ padding:0;margin:0;height:auto;overflow:auto; background: #f5f0e8; }
+    h1{display: none;}
+
+    /* 搜索栏移动端适配 */
+    .search-bar{
+        position:sticky;top:0;left:0;right:0;
+        background: linear-gradient(135deg, #f8f4f0, #f0e6d6);
+        padding:8px 10px;
+        margin:0;
+        z-index:999;
+        box-shadow:0 2px 8px rgba(139, 69, 19, 0.15);
+        border-bottom: 1px solid #e6d5c3;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        gap: 6px;
+    }
+    .search-bar input { 
+        grid-column: 1 / -1; 
+        grid-row: 1 / 2; 
+        margin: 0; 
+        width: 100%; 
+        border: 1px solid #d4a574; 
+        background: #fffbf5; 
+        border-radius: 6px;
+        padding: 8px 10px;
+    }
+    .search-bar .filter-row { 
+        grid-column: 1 / -1; 
+        grid-row: 2 / 3; 
+        display: flex; 
+        gap: 6px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+    }
+    .search-bar .filter-row::-webkit-scrollbar { display: none; }
+    .search-bar .filter-row select { 
+        flex: 1 1 auto; 
+        min-width: 60px;
+        max-width: 100px;
+        border: 1px solid #d4a574; 
+        background: #fffbf5; 
+        border-radius: 6px; 
+        color: #5a3921; 
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+
+    /* 主容器 */
+    .container{ flex-direction:column;gap:15px;margin:0;padding:0; }
+    .card-library{ width:100%;padding:12px;margin:0; background: transparent; box-shadow: none; }
+    #cardPreview{ display: none !important; }
+
+  .library-title {
+    gap: 6px;
+  }
+  .title-btns {
+    gap: 4px;
+  }
+  .library-title .back-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+    /* 卡组区域折叠 */
+    .deck-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 15px;
+        background: linear-gradient(135deg, #9b30af, #7a248a);
+        border-radius: 12px;
+        cursor: pointer;
+        margin-bottom: 0;
+    }
+    .deck-header .deck-title, .deck-header .deck-count {
+        color: white;
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    .deck-arrow {
+        color: white;
+        font-size: 18px;
+        transition: transform 0.3s ease;
+    }
+    .deck-header.collapsed .deck-arrow {
+        transform: rotate(-90deg);
+    }
+    .deck-content {
+        max-height: 500px;
+        overflow-y: auto;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+        padding: 15px;
+        background: #fffbf5;
+        border-radius: 0 0 12px 12px;
+    }
+    .deck-content.collapsed {
+        max-height: 0;
+        padding: 0 15px;
+        overflow: hidden;
+    }
+    .deck-area {
+        width: 100%;
+        padding: 0;
+        margin: 15px 0;
+        background: transparent;
+        box-shadow: none;
+    }
+    .deck-list {
+        max-height: 300px;
+        margin-bottom: 15px;
+    }
+
+    .draw-box { width: 95%; padding: 15px 10px; }
+    .draw-grid { gap: 6px; }
+
+    /* 卡牌网格 */
+    .card-list{ 
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 4px; 
+    }
+    .card-item{ 
+        border-radius: 6px; 
+        box-shadow: 0 1px 3px rgba(139, 69, 19, 0.1); 
+        border: 1px solid #e8d8c8; 
+        padding: 2px; 
+        display: flex;
+        flex-direction: column;
+    }
+    .card-item img{ 
+        width: 100%;
+        aspect-ratio: 63 / 88;
+        object-fit: cover; 
+        border-radius: 4px 4px 0 0; 
+        display: block;
+    }
+    .card-name {
+        font-size: 10px; 
+        line-height: 1.1;
+        padding: 3px 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .card-item > div:first-child {
+        top: 2px !important;
+        left: 2px !important;
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 10px !important;
+    }
+
+    /* ====================== 卡组列表页（我的卡组）移动端适配 ====================== */
+    .deck-list-page {
+        padding: 10px;
+        width: 100%;
+        max-width: 100%;
+    }
+    .deck-list-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        margin-bottom: 15px;
+    }
+    .deck-list-header h2 {
+        font-size: 18px;
+        color: #5a3921;
+        text-align: center;
+    }
+    .btn-new-deck {
+        width: 100%;
+        padding: 10px;
+        font-size: 15px;
+    }
+    .deck-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .deck-card {
+        padding: 12px;
+        box-shadow: 0 1px 4px rgba(139, 69, 19, 0.1);
+    }
+    .deck-card-name {
+        font-size: 16px;
+    }
+    .deck-card-count {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    .deck-card-actions {
+        gap: 6px;
+    }
+    .deck-card-actions button {
+        padding: 6px;
+        font-size: 12px;
+        min-width: 50px;
+    }
+
+    /* 卡组详情弹窗移动端 */
+    .deck-detail-box {
+        width: 95%;
+        max-height: 85vh;
+        padding: 15px;
+    }
+    .deck-detail-title {
+        font-size: 18px;
+    }
+    .deck-detail-actions {
+        gap: 8px;
+    }
+    .deck-detail-actions button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+
+.pack-grid {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  gap: 12px;
+  padding: 10px 8px;
+  cursor: grab;
+  user-select: none;
+  width: 100%;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.pack-grid::-webkit-scrollbar { display: none; }
+.pack-grid:active { cursor: grabbing; }
+.pack-item {
+  flex: 0 0 160px;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  padding: 8px;
+  background: #111;
+  transition: 0.2s;
+  cursor: pointer;
+}
+.pack-item:hover { transform: scale(1.02); background: #222; }
+.pack-item.selected { border-color: #ffcc00; box-shadow: 0 0 15px rgba(255,204,0,0.4); }
+.pack-cover { width: 100%; aspect-ratio: 512/909; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+.pack-name { color: #fff; text-align: center; font-size: 14px; line-height: 1.2; }
+
+.preview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    touch-action: pan-y;
+}
+.preview-modal.show { display: flex; }
+.preview-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 15px;
+}
+.preview-header { width: 100%; text-align: right; }
+.preview-close {
+    background: none; border: none; color: white; font-size: 36px;
+    font-weight: 200; cursor: pointer; padding: 0 10px; line-height: 1;
+}
+.preview-image-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; overflow: hidden; }
+#previewImage {
+    max-width: 85%; max-height: 70vh; border-radius: 12px;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+}
+.preview-info { width: 100%; max-width: 400px; text-align: center; margin-top: 20px; }
+.preview-card-name { color: white; font-size: 22px; font-weight: bold; margin-bottom: 8px; }
+.preview-card-count { color: #aaa; font-size: 14px; margin-bottom: 20px; }
+.preview-actions { display: flex; gap: 15px; justify-content: center; }
+.preview-actions button { flex: 1; padding: 14px 0; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+.btn-add { background: linear-gradient(135deg, #9b30af, #7a248a); color: white; }
+.btn-remove { background: linear-gradient(135deg, #c92a2a, #a02525); color: white; }
+.btn-add:disabled, .btn-remove:disabled { opacity: 0.3; cursor: not-allowed; }
+
+@media (min-width: 769px) {
+    #cardPreviewModal { display: none !important; }
+}
+
+#pasteInput {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    font-family: "微软雅黑", sans-serif;
+    font-size: 14px;
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    background:#333;
+    color:white;
+    border:1px solid #666;
+    resize:none;
+    outline:none;
+}
+#pasteInput:focus {
+    border-color: #9b30af !important;
+    box-shadow: 0 0 8px rgba(155, 48, 175, 0.6);
+}
+button.btn-gold {
+    background: linear-gradient(135deg, #ffcc00, #ff9900);
+    color: #222;
+    font-weight: bold;
+}
+button.btn-gold:hover {
+    opacity: 0.95;
+}
+
+/* ====================== 安全版 Toast ====================== */
+.toast-box {
+    position: fixed;
+    top: 20px; right: 20px;
+    z-index: 100000;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.toast-item {
+    padding: 12px 20px; border-radius: 8px;
+    color: #fff; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    background: #333; /* 默认灰色 */
+    transform: translateX(150%);
+    transition: transform 0.3s;
+}
+.toast-item.show { transform: translateX(0); }
+.toast-item.ok { background: linear-gradient(135deg, #2f9e44, #20c997); }
+.toast-item.warn { background: linear-gradient(135deg, #ff9800, #f57c00); }
+.toast-item.err { background: linear-gradient(135deg, #c92a2a, #a02525); }
+
+/* ====================== 【纯线性高度】费用柱状图样式 ====================== */
+.cost-curve-box {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    /* 取消固定高度，自动适配最高柱子，最大高度限制300px避免溢出 */
+    height: auto;
+    max-height: 300px;
+    min-height: 60px;
+    padding: 8px 8px 4px;
+    margin: 0 0 10px 0;
+    background: rgba(90, 57, 33, 0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(212, 165, 116, 0.3);
+}
+
+.cost-bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    width: 7.5%;
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+.cost-bar-item:hover {
+    transform: scaleY(1.05);
+    transform-origin: bottom;
+    z-index: 10;
+}
+
+.cost-bar-inner {
+    width: 100%;
+    max-width: 20px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.2s ease, box-shadow 0.2s ease;
+    min-height: 3px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* 文字居中显示数量 */
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 2px;
+}
+
+.cost-bar-text {
+    font-size: 11px;
+    color: #7a5230;
+    font-weight: bold;
+    margin-top: 3px;
+    user-select: none;
+}
+
+/* 高亮改为紫色 */
+.cost-bar-item.active .cost-bar-inner {
+    box-shadow: 0 0 12px rgba(155, 48, 175, 0.8);
+    border: 2px solid #fff;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .cost-curve-box {
+        max-height: 220px;
+        min-height: 50px;
+        padding: 6px 4px 2px;
+    }
+    .cost-bar-text {
+        font-size: 10px;
+    }
+    .cost-bar-inner {
+        max-width: 12px;
+    }
+}
+    </style>
+</head>
+<body>
+    <h1>阴阳师TCG - 组卡器 <a href="/" style="font-size:14px;padding:4px 12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;border:none;border-radius:6px;text-decoration:none;vertical-align:middle;margin-left:15px;">⚔ 返回对战</a></h1>
+
+    <!-- 新增：默认显示的卡组列表页面 -->
+    <div class="deck-list-page" id="deckListPage">
+        <div class="deck-list-header">
+            <h2>我的卡组</h2>
+            <button class="btn-new-deck" onclick="createNewDeck()">新建卡组</button>
+        </div>
+        <div class="deck-grid" id="deckGrid"></div>
+    </div>
+
+    <!-- 原组卡器页面（默认隐藏） -->
+    <div id="mainApp" style="display: none;">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="搜索编号/牌名/关键词..." oninput="renderCards()">
+            <div class="filter-row">
+                <select id="costFilter" onchange="renderCards()">
+                    <option value="全部">全部费用</option><option value="无">无</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10+">10+</option><option value="X">X</option>
+                </select>
+                <select id="typeFilter" onchange="renderCards()">
+                    <option value="全部">全部类型</option><option value="式神">式神</option><option value="觉醒">觉醒</option><option value="法术">法术</option><option value="附灵">附灵</option><option value="结界">结界</option>
+                </select>
+                <select id="expFilter" onchange="renderCards()">
+                    <option value="全部">全部扩展包</option><option value="妖灵觉醒">妖灵觉醒</option><option value="剑羽驱邪">剑羽驱邪</option><option value="呱太逢魔">呱太逢魔</option>
+                </select>
+                <select id="rarityFilter" onchange="renderCards()">
+                    <option value="全部">全部稀有度</option><option value="N/R">N/R</option><option value="SP">SP</option><option value="OR">OR</option><option value="UR">UR</option><option value="PC">PC</option><option value="EX">EX</option><option value="3D">3D</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card-library">
+                <!-- 新增：返回卡组列表按钮 -->
+                <div class="library-title">
+                    <button class="back-btn" onclick="backToDeckList()">◀ 返回卡组</button>
+                    <div class="title-btns">
+                        <button class="back-btn paste-inline-btn" onclick="pasteDeckCode()">◉ 粘贴代码</button>
+                        <button class="back-btn draw-inline-btn" onclick="openDrawModal()">▣ 现开赛抽卡</button>
+                    </div>
+                </div>
+                <div class="card-list" id="cardLibrary"></div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+            <div class="deck-area">
+                <div id="cardPreview"></div>
+                
+                <div class="deck-header" onclick="toggleDeck()">
+                    <div class="deck-title">当前卡组</div>
+                    <div class="deck-count">总卡牌：<span id="totalCount">0</span>/60</div>
+                    <div class="deck-arrow" id="deckArrow">▼</div>
+                </div>
+                <!-- 【新增】费用柱状图容器 -->
+                <div class="cost-curve-box" id="costCurveBox"></div>
+                <div class="deck-content" id="deckContent">
+                    <div class="deck-list" id="deckList"></div>
+                    <div class="action-box">
+                        <button class="btn-gold" onclick="saveCurrentDeck()">保存当前卡组</button>
+                        <button onclick="generateDeckCode()">生成卡组短码 (自动复制)</button>
+                        <button onclick="generateShortDeckCode()">生成卡组长码 (自动复制)</button>
+                        <button class="danger" onclick="clearDeck()">清空卡组</button>
+                    </div>
+                    <div id="result-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增：卡组详情弹窗 -->
+    <div class="deck-detail-modal" id="deckDetailModal">
+        <div class="deck-detail-box">
+            <div class="deck-detail-title" id="deckDetailTitle">卡组名称</div>
+            <div class="deck-detail-cards" id="deckDetailCards"></div>
+            <div class="deck-detail-actions">
+                <button onclick="editCurrentDeck()">修改卡组</button>
+                <button onclick="copyCurrentDeckCode()">复制短码</button>
+                <button onclick="closeDeckDetail()">关闭</button>
+            </div>
+        </div>
+    </div>
+    <div class="draw-modal" id="drawModal">
+        <div class="draw-box">
+            <div id="packSelectArea">
+                <div class="draw-header">
+                    <span>请选择卡包</span>
+                    <span>剩余抽卡次数：<span id="drawLeft">20</span></span>
+                </div>
+                <div class="pack-grid">
+                    <div class="pack-item" id="pack-AYK" onclick="selectPack('AYK')">
+                        <div class="pack-cover">
+                            <img src="https://i.ibb.co/CpqFVG1b/image.webp" alt="妖灵觉醒" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div class="pack-name">第一弹：妖灵觉醒</div>
+                    </div>
+                    <div class="pack-item" id="pack-BPP" onclick="selectPack('BPP')">
+                        <div class="pack-cover">
+                            <img src="https://i.ibb.co/NRJjNcc/image.webp" alt="剑羽驱邪" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div class="pack-name">第二弹：剑羽驱邪</div>
+                    </div>
+                </div>
+                <div style="margin-top:15px;display:flex;gap:8px;justify-content:center;align-items:center;">
+                    <button id="btnConfirmPack" onclick="confirmPackSelection()" disabled style="width:120px;height:40px;line-height:40px;padding:0;margin:0;background:#9b30af;color:white;border-radius:6px;border:none;cursor:pointer;opacity:0.5;">确认选择</button>
+                    <button class="draw-close" onclick="closeDrawModal()" style="width:80px;height:40px;line-height:40px;padding:0;margin:0;background:#666;color:white;border-radius:6px;border:none;cursor:pointer;">关闭</button>
+                </div>
+            </div>
+
+            <div id="drawArea" style="display:none;">
+                <div class="draw-header">
+                    <span id="currentPackName">当前卡包：妖灵觉醒</span>
+                    <span>剩余抽卡次数：<span id="drawLeft2">20</span></span>
+                </div>
+                <div class="draw-grid" id="drawGrid"></div>
+                <div style="margin-top:15px;display:flex;gap:8px;justify-content:center;align-items:center;">
+                  <button id="btnDraw1" onclick="drawOnePack()" style="width:100px;height:40px;line-height:40px;padding:0;margin:0;background:#4285f4;color:white;border-radius:6px;border:none;cursor:pointer;">抽1包</button>
+                  <button id="btnDraw5" onclick="drawFivePacks()" style="width:100px;height:40px;line-height:40px;padding:0;margin:0;background:#4285f4;color:white;border-radius:6px;border:none;cursor:pointer;">抽5包</button>
+                  <button class="draw-close" onclick="closeDrawModal()" style="width:80px;height:40px;line-height:40px;padding:0;margin:0;background:#666;color:white;border-radius:6px;border:none;cursor:pointer;">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="draw-modal" id="pasteModal">
+        <div class="draw-box">
+            <div class="draw-header">
+                <span>粘贴卡组代码</span>
+            </div>
+            <textarea id="pasteInput" rows="6" placeholder="请输入卡组代码（短码/长码均可）"></textarea>
+            <div style="margin-top:15px;display:flex;gap:8px;justify-content:center;align-items:center;">
+                <button onclick="confirmPasteCode()" style="width:100px;height:40px;line-height:40px;padding:0;margin:0;background:#4285f4;color:white;border-radius:6px;border:none;cursor:pointer;">确定</button>
+                <button onclick="closePasteModal()" style="width:80px;height:40px;line-height:40px;padding:0;margin:0;background:#666;color:white;border-radius:6px;border:none;cursor:pointer;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cardPreviewModal" class="preview-modal">
+        <div class="preview-container">
+            <div class="preview-header">
+                <button class="preview-close" onclick="closePreviewModal()">×</button>
+            </div>
+            <div class="preview-image-wrapper">
+                <img id="previewImage" src="" alt="卡牌大图">
+            </div>
+            <div class="preview-info">
+                <div class="preview-card-name" id="previewCardName"></div>
+                <div class="preview-card-count" id="previewCardCount">已携带: 0/4</div>
+                <div class="preview-actions">
+                    <button class="btn-remove" id="btnRemoveCard" onclick="removeCurrentCard()">移除卡组</button>
+                    <button class="btn-add" id="btnAddCard" onclick="addCurrentCard()">加入卡组</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const ALL_CARDS = [
+    { id: "AYK001", name: "天邪鬼青",   alias: "天邪鬼青", type: "式神",  cost: "1", keyword: "恶鬼/天邪鬼", ability: "鼓舞/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_1.webp?v=3.1.1.2" },
+    { id: "AYK002", name: "天邪鬼黄",   alias: "天邪鬼黄", type: "式神",  cost: "1", keyword: "恶鬼/天邪鬼", ability: "鼓舞/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_2.webp" },
+    { id: "AYK003", name: "天邪鬼绿",   alias: "天邪鬼绿", type: "式神",  cost: "2", keyword: "恶鬼/天邪鬼", ability: "连击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_3.webp" },
+    { id: "AYK004", name: "天邪鬼赤",   alias: "天邪鬼赤", type: "式神",  cost: "2", keyword: "恶鬼/天邪鬼", ability: "鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_4.webp" },
+    { id: "AYK005", name: "天邪四鬼众",   alias: "天邪四鬼众", type: "式神",  cost: "5", keyword: "恶鬼/天邪鬼", ability: "召唤/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_5.webp" },
+    { id: "AYK005-PC", name: "天邪四鬼众(PC)",   alias: "天邪四鬼众", type: "式神",  cost: "5", keyword: "恶鬼/天邪鬼", ability: "召唤/消灭/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_6.webp" },
+    { id: "AYK006", name: "帚神",   alias: "帚神", type: "式神",  cost: "1", keyword: "付丧神", ability: "耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_7.webp" },
+    { id: "AYK007", name: "灯笼鬼",   alias: "灯笼鬼", type: "式神",  cost: "2", keyword: "付丧神", ability: "横置/暴击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_8.webp" },
+    { id: "AYK008", name: "唐纸伞妖",   alias: "唐纸伞妖", type: "式神",  cost: "3", keyword: "付丧神", ability: "迅捷/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_9.webp?v=3.2.1.0" },
+    { id: "AYK009", name: "赤舌",   alias: "赤舌", type: "式神",  cost: "2", keyword: "奔雷", ability: "耗火/弹回", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_10.webp" },
+    { id: "AYK010", name: "涂壁",   alias: "涂壁", type: "式神",  cost: "2", keyword: "岿岩", ability: "守护", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_11.webp" },
+    { id: "AYK011", name: "座敷童子",   alias: "座敷童子", type: "式神",  cost: "1", keyword: "灵火/守护灵", ability: "横置/鬼火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_12.webp" },
+    { id: "AYK012", name: "觉醒·座敷童子", alias: "座敷童子", type: "觉醒", cost: "none", keyword: "", ability: "鬼火/运势/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_253.webp?v=3.2.1.3" },
+    { id: "AYK012-OR", name: "觉醒·座敷童子(OR)",   alias: "座敷童子", type: "觉醒",  cost: "none", keyword: "", ability: "鬼火/运势/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_13.webp?v=3.2.1.3" },
+    { id: "AYK013", name: "金运大吉",   alias: "座敷童子", type: "式神",  cost: "4", keyword: "灵火/守护灵", ability: "横置/运势", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_14.webp" },
+    { id: "AYK014", name: "五谷丰穰",   alias: "座敷童子", type: "式神",  cost: "4", keyword: "灵火/守护灵", ability: "召唤/鬼火/横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_15.webp?v=3.1.1.2" },
+    { id: "AYK014-UR", name: "五谷丰穰(UR)",   alias: "座敷童子", type: "式神",  cost: "4", keyword: "灵火/守护灵", ability: "召唤/鬼火/横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_16.webp" },
+    { id: "AYK015", name: "山蛙",   alias: "山蛙", type: "式神",  cost: "1", keyword: "兽妖", ability: "鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_17.webp" },
+    { id: "AYK015-SP", name: "山蛙(SP)",   alias: "山蛙", type: "式神",  cost: "1", keyword: "兽妖", ability: "鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_18.webp" },
+    { id: "AYK016", name: "山兔",   alias: "山兔", type: "式神",  cost: "3", keyword: "兽妖", ability: "召唤/过牌/耗火/横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_19.webp" },
+    { id: "AYK016-UR", name: "山兔(UR)",   alias: "山兔", type: "式神",  cost: "3", keyword: "兽妖", ability: "召唤/过牌/耗火/横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_250.webp" },
+    { id: "AYK016-EX", name: "山兔(EX)",   alias: "山兔", type: "式神",  cost: "3", keyword: "兽妖", ability: "召唤/过牌/耗火/横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_251.webp" },
+    { id: "AYK017", name: "觉醒·山兔", alias: "山兔", type: "觉醒", cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_254.webp" },
+    { id: "AYK017-OR", name: "觉醒·山兔(OR)",   alias: "山兔", type: "觉醒",  cost: "none", keyword: "", ability: "过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_20.webp?v=3.2.1.3" },
+    { id: "AYK018", name: "灵山雪兔",   alias: "山兔", type: "式神",  cost: "1", keyword: "兽妖", ability: "安魂/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_21.webp" },
+    { id: "AYK019", name: "赤胄青甲",   alias: "山兔", type: "式神",  cost: "4", keyword: "兽妖", ability: "激怒/横置/自伤/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_22.webp" },
+    { id: "AYK020", name: "萌即正义",   alias: "山兔", type: "式神",  cost: "4", keyword: "兽妖", ability: "召唤/增幅/运势/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_23.webp" },
+    { id: "AYK021", name: "三尾狐",   alias: "三尾狐", type: "式神",  cost: "2", keyword: "兽妖", ability: "远程/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_24.webp" },
+    { id: "AYK022", name: "觉醒·三尾狐",   alias: "三尾狐", type: "觉醒",  cost: "none", keyword: "", ability: "连击/耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_255.webp" },
+    { id: "AYK022-OR", name: "觉醒·三尾狐(OR)",   alias: "三尾狐", type: "觉醒",  cost: "none", keyword: "", ability: "连击/耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_25.webp?v=3.2.1.3" },
+    { id: "AYK023", name: "妖尾赤狐",   alias: "三尾狐", type: "式神",  cost: "4", keyword: "兽妖", ability: "运势/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_26.webp" },
+    { id: "AYK023-UR", name: "妖尾赤狐(UR)",   alias: "三尾狐", type: "式神",  cost: "4", keyword: "兽妖", ability: "运势/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_27.webp" },
+    { id: "AYK024", name: "九命猫",   alias: "九命猫", type: "式神",  cost: "2", keyword: "兽妖", ability: "耗火/复活", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_28.webp" },
+    { id: "AYK025", name: "觉醒·九命猫",   alias: "九命猫", type: "觉醒",  cost: "none", keyword: "", ability: "复活/远程", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_256.webp?v=3.2.1.3" },
+    { id: "AYK025-OR", name: "觉醒·九命猫(OR)",   alias: "九命猫", type: "觉醒",  cost: "none", keyword: "", ability: "复活/远程", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_29.webp?v=3.2.1.3" },
+    { id: "AYK026", name: "延命",   alias: "九命猫", type: "式神",  cost: "4", keyword: "兽妖", ability: "复活", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_30.webp" },
+    { id: "AYK027", name: "向死而生",   alias: "九命猫", type: "式神",  cost: "7", keyword: "兽妖", ability: "复活", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_31.webp" },
+    { id: "AYK028", name: "雀灵",   alias: "雀灵", type: "式神",  cost: "1", keyword: "疾风/守护灵", ability: "安魂/犬神", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_32.webp" },
+    { id: "AYK029", name: "犬神",   alias: "犬神", type: "式神",  cost: "4", keyword: "兽妖/守护灵", ability: "增幅/反击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_33.webp" },
+    { id: "AYK030", name: "觉醒·犬神",   alias: "犬神", type: "觉醒",  cost: "none", keyword: "", ability: "觉醒/恢复/暴击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_257.webp" },
+    { id: "AYK030-OR", name: "觉醒·犬神(OR)",   alias: "犬神", type: "觉醒",  cost: "none", keyword: "", ability: "觉醒/恢复/暴击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_34.webp?v=3.2.1.3" },
+    { id: "AYK031", name: "心剑乱舞",   alias: "犬神", type: "式神",  cost: "8", keyword: "兽妖/守护灵", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_35.webp" },
+    { id: "AYK032", name: "忠胆守护",   alias: "犬神", type: "式神",  cost: "8", keyword: "兽妖/守护灵", ability: "反击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_36.webp" },
+    { id: "AYK033", name: "萤草",   alias: "萤草", type: "式神",  cost: "3", keyword: "苍叶", ability: "吸血/鼓舞/过量恢复/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_37.webp" },
+    { id: "AYK034", name: "觉醒·萤草",   alias: "萤草", type: "觉醒",  cost: "none", keyword: "", ability: "远程/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_258.webp" },
+    { id: "AYK034-OR", name: "觉醒·萤草(OR)",   alias: "萤草", type: "觉醒",  cost: "none", keyword: "", ability: "远程/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_38.webp?v=3.2.1.3" },
+    { id: "AYK034-UR", name: "觉醒·萤草(UR)",   alias: "萤草", type: "觉醒",  cost: "none", keyword: "", ability: "远程/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_39.webp" },
+    { id: "AYK035", name: "勇气之光",   alias: "萤草", type: "式神",  cost: "3", keyword: "苍叶", ability: "召唤/增幅/鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_40.webp" },
+    { id: "AYK036", name: "治愈之光",   alias: "萤草", type: "式神",  cost: "3", keyword: "苍叶", ability: "召唤/安魂/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_41.webp" },
+    { id: "AYK037", name: "安魂之光",   alias: "萤草", type: "式神",  cost: "6", keyword: "苍叶", ability: "召唤/鬼火/过牌/横置/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_42.webp" },
+    { id: "AYK038", name: "白狼",   alias: "白狼", type: "式神",  cost: "5", keyword: "兽妖", ability: "迅捷/远程/横置/暴击/散射", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_43.webp" },
+    { id: "AYK039", name: "觉醒·白狼",   alias: "白狼", type: "觉醒",  cost: "none", keyword: "", ability: "贯通/觉醒/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_259.webp" },
+    { id: "AYK039-OR", name: "觉醒·白狼(OR)",   alias: "白狼", type: "觉醒",  cost: "none", keyword: "", ability: "贯通/觉醒/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_44.webp?v=3.2.1.3" },
+    { id: "AYK040", name: "森林之姬",   alias: "白狼", type: "式神",  cost: "3", keyword: "兽妖", ability: "远程/召唤/苍叶/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_45.webp" },
+    { id: "AYK041", name: "箭羽凌风",   alias: "白狼", type: "式神",  cost: "4", keyword: "兽妖", ability: "远程/鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_46.webp" },
+    { id: "AYK042", name: "初意",   alias: "白狼", type: "式神",  cost: "5", keyword: "兽妖", ability: "迅捷/衰竭/召唤/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_47.webp" },
+    { id: "AYK043", name: "残心",   alias: "白狼", type: "式神",  cost: "6", keyword: "兽妖", ability: "远程/召唤/增幅/散射/暴击/安魂", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_48.webp" },
+    { id: "AYK043-UR", name: "残心(UR)",   alias: "白狼", type: "式神",  cost: "6", keyword: "兽妖", ability: "远程/召唤/增幅/散射/暴击/安魂", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_49.webp" },
+    { id: "AYK044", name: "妖狐",   alias: "妖狐", type: "式神",  cost: "3", keyword: "兽妖/疾风", ability: "耗火/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_50.webp" },
+    { id: "AYK044-SP", name: "妖狐(SP)",   alias: "妖狐", type: "式神",  cost: "3", keyword: "兽妖/疾风", ability: "耗火/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_51.webp" },
+    { id: "AYK045", name: "食梦貘",   alias: "食梦貘", type: "式神",  cost: "4", keyword: "兽妖", ability: "耗火/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_52.webp" },
+    { id: "AYK046", name: "童女",   alias: "童女", type: "式神",  cost: "1", keyword: "疾风", ability: "召唤/童男", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_53.webp" },
+    { id: "AYK047", name: "童男",   alias: "童男", type: "式神",  cost: "3", keyword: "疾风", ability: "耗火/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_54.webp" },
+    { id: "AYK048", name: "桃花妖",   alias: "桃花妖", type: "式神",  cost: "4", keyword: "苍叶", ability: "横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_55.webp" },
+    { id: "AYK048-UR", name: "桃花妖(UR)",   alias: "桃花妖", type: "式神",  cost: "4", keyword: "苍叶", ability: "横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_56.webp" },
+    { id: "AYK049", name: "山童",   alias: "山童", type: "式神",  cost: "3", keyword: "岿岩", ability: "贯通/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_57.webp" },
+    { id: "AYK050", name: "觉醒·山童", alias: "山童", type: "觉醒", cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_260.webp" },
+    { id: "AYK050-OR", name: "觉醒·山童(OR)",   alias: "山童", type: "觉醒",  cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_58.webp?v=3.2.1.3" },
+    { id: "AYK051", name: "鲁莽",   alias: "山童", type: "式神",  cost: "3", keyword: "岿岩", ability: "贯通/鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_59.webp" },
+    { id: "AYK052", name: "笨拙",   alias: "山童", type: "式神",  cost: "5", keyword: "岿岩", ability: "贯通/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_60.webp" },
+    { id: "AYK053", name: "崩山",   alias: "山童", type: "式神",  cost: "7", keyword: "岿岩", ability: "贯通/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_61.webp?v=3.2.1.0" },
+    { id: "AYK054", name: "独眼小僧",   alias: "独眼小僧", type: "式神",  cost: "2", keyword: "岿岩/付丧神", ability: "守护/激怒", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_62.webp" },
+    { id: "AYK055", name: "觉醒·独眼小僧",   alias: "独眼小僧", type: "觉醒",  cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_261.webp" },
+    { id: "AYK055-OR", name: "觉醒·独眼小僧(OR)",   alias: "独眼小僧", type: "觉醒",  cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_63.webp?v=3.2.1.3" },
+    { id: "AYK056", name: "心经",   alias: "独眼小僧", type: "式神",  cost: "4", keyword: "岿岩/付丧神", ability: "守护/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_64.webp" },
+    { id: "AYK057", name: "金刚经",   alias: "独眼小僧", type: "式神",  cost: "4", keyword: "岿岩/付丧神", ability: "召唤/屏障/激怒/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_65.webp" },
+    { id: "AYK058", name: "兵俑",   alias: "兵俑", type: "式神",  cost: "3", keyword: "岿岩/守护灵", ability: "守护/横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_66.webp" },
+    { id: "AYK059", name: "觉醒·兵俑",   alias: "兵俑", type: "觉醒",  cost: "none", keyword: "", ability: "屏障/增幅/耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_262.webp" },
+    { id: "AYK059-OR", name: "觉醒·兵俑(OR)",   alias: "兵俑", type: "觉醒",  cost: "none", keyword: "", ability: "屏障/增幅/耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_67.webp?v=3.2.1.3" },
+    { id: "AYK060", name: "森罗之阵",   alias: "兵俑", type: "式神",  cost: "4", keyword: "岿岩/守护灵", ability: "召唤/屏障/横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_68.webp" },
+    { id: "AYK060-OR", name: "森罗之阵(OR)",   alias: "兵俑", type: "式神",  cost: "4", keyword: "岿岩/守护灵", ability: "召唤/屏障/横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_69.webp" },
+    { id: "AYK061", name: "尘缚之阵",   alias: "兵俑", type: "式神",  cost: "6", keyword: "岿岩/守护灵", ability: "迅捷/守护/横置/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_70.webp?v=3.2.1.0" },
+    { id: "AYK062", name: "不动如山",   alias: "兵俑", type: "式神",  cost: "8", keyword: "岿岩/守护灵", ability: "召唤/屏障/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_71.webp?v=3.2.1.0" },
+    { id: "AYK063", name: "书翁",   alias: "书翁", type: "式神",  cost: "3", keyword: "疾风", ability: "召唤/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_72.webp" },
+    { id: "AYK064", name: "觉醒·书翁",   alias: "书翁", type: "觉醒",  cost: "none", keyword: "", ability: "觉醒/鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_263.webp" },
+    { id: "AYK064-OR", name: "觉醒·书翁(OR)",   alias: "书翁", type: "觉醒",  cost: "none", keyword: "", ability: "觉醒/鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_73.webp?v=3.2.1.3" },
+    { id: "AYK064-UR", name: "觉醒·书翁(UR)",   alias: "书翁", type: "觉醒",  cost: "none", keyword: "", ability: "觉醒/鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_74.webp" },
+    { id: "AYK065", name: "纪行",   alias: "书翁", type: "式神",  cost: "5", keyword: "疾风", ability: "召唤/过牌/自伤/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_75.webp" },
+    { id: "AYK066", name: "雪女",   alias: "雪女", type: "式神",  cost: "4", keyword: "冻雪", ability: "迅捷/横置/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_76.webp" },
+    { id: "AYK066-PC", name: "雪女(PC)",   alias: "雪女", type: "式神",  cost: "4", keyword: "冻雪", ability: "迅捷/横置/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_77.webp" },
+    { id: "AYK067", name: "冰风暴",   alias: "雪女", type: "式神",  cost: "5", keyword: "冻雪", ability: "鼓舞/安魂/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_78.webp" },
+    { id: "AYK068", name: "凤凰火",   alias: "凤凰火", type: "式神",  cost: "2", keyword: "业火", ability: "鼓舞/法术", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_79.webp" },
+    { id: "AYK068-UR", name: "凤凰火(UR)",   alias: "凤凰火", type: "式神",  cost: "2", keyword: "业火", ability: "鼓舞/法术", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_80.webp" },
+    { id: "AYK069", name: "出云",   alias: "凤凰火", type: "式神",  cost: "5", keyword: "业火", ability: "贯通/运势/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_81.webp" },
+    { id: "AYK070", name: "河童",   alias: "河童", type: "式神",  cost: "0", keyword: "宿水", ability: "横置/能量/耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_82.webp" },
+    { id: "AYK071", name: "觉醒·河童",   alias: "河童", type: "觉醒",  cost: "none", keyword: "", ability: "觉醒/能量/宿水", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_264.webp" },
+    { id: "AYK071-OR", name: "觉醒·河童(OR)",   alias: "河童", type: "觉醒",  cost: "none", keyword: "", ability: "觉醒/能量/宿水", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_83.webp?v=3.2.1.3" },
+    { id: "AYK072", name: "渔童之夏",   alias: "河童", type: "式神",  cost: "2", keyword: "宿水", ability: "迅捷/远程/能量", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_84.webp?v=3.2.1.0" },
+    { id: "AYK073", name: "鲤鱼精",   alias: "鲤鱼精", type: "式神",  cost: "2", keyword: "宿水", ability: "耗火/屏障/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_85.webp" },
+    { id: "AYK074", name: "觉醒·鲤鱼精", alias: "鲤鱼精", type: "觉醒", cost: "none", keyword: "", ability: "屏障/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_265.webp" },
+    { id: "AYK074-OR", name: "觉醒·鲤鱼精(OR)",   alias: "鲤鱼精", type: "觉醒",  cost: "none", keyword: "", ability: "屏障/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_86.webp?v=3.2.1.3" },
+    { id: "AYK075", name: "夏物流灯",   alias: "鲤鱼精", type: "式神",  cost: "3", keyword: "宿水", ability: "横置/屏障", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_87.webp" },
+    { id: "AYK076", name: "番茄",   alias: "番茄", type: "式神",  cost: "1", keyword: "兽妖/毒瘴/跳跳家族", ability: "增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_88.webp" },
+    { id: "AYK077", name: "跳跳妹妹",   alias: "跳跳妹妹", type: "式神",  cost: "2", keyword: "毒瘴/跳跳家族", ability: "耗火/番茄", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_89.webp" },
+    { id: "AYK078", name: "跳跳弟弟",   alias: "跳跳弟弟", type: "式神",  cost: "2", keyword: "毒瘴/跳跳家族", ability: "守护/激怒/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_90.webp" },
+    { id: "AYK079", name: "跳跳哥哥",   alias: "跳跳哥哥", type: "式神",  cost: "3", keyword: "毒瘴/跳跳家族", ability: "耗火/棺材", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_91.webp" },
+    { id: "AYK080", name: "觉醒·跳跳哥哥",   alias: "跳跳哥哥", type: "觉醒",  cost: "none", keyword: "", ability: "棺材/跳跳家族", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_266.webp" },
+    { id: "AYK080-OR", name: "觉醒·跳跳哥哥(OR)",   alias: "跳跳哥哥", type: "觉醒",  cost: "none", keyword: "", ability: "棺材/跳跳家族", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_93.webp?v=3.2.1.3" },
+    { id: "AYK081", name: "集煞阵",   alias: "跳跳哥哥", type: "式神",  cost: "5", keyword: "毒瘴/跳跳家族", ability: "鼓舞/棺材/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_94.webp" },
+    { id: "AYK082", name: "罡身阵",   alias: "跳跳哥哥", type: "式神",  cost: "7", keyword: "毒瘴/跳跳家族", ability: "安魂/棺材", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_95.webp" },
+    { id: "AYK083", name: "释煞阵",   alias: "跳跳哥哥", type: "式神",  cost: "8", keyword: "毒瘴/跳跳家族", ability: "鼓舞/棺材", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_96.webp?v=3.2.1.0" },
+    { id: "AYK084", name: "妖琴师",   alias: "妖琴师", type: "式神",  cost: "5", keyword: "幻音", ability: "召唤/横置/重置/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_97.webp" },
+    { id: "AYK084-PC", name: "妖琴师(PC)",   alias: "妖琴师", type: "式神",  cost: "5", keyword: "幻音", ability: "召唤/横置/重置/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_98.webp" },
+    { id: "AYK085", name: "觉醒·妖琴师",   alias: "妖琴师", type: "觉醒",  cost: "none", keyword: "", ability: "重置/耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_267.webp" },
+    { id: "AYK085-OR", name: "觉醒·妖琴师(OR)",   alias: "妖琴师", type: "觉醒",  cost: "none", keyword: "", ability: "重置/耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_99.webp?v=3.2.1.3" },
+    { id: "AYK085-UR", name: "觉醒·妖琴师(UR)",   alias: "妖琴师", type: "觉醒",  cost: "none", keyword: "", ability: "重置/耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_100.webp" },
+    { id: "AYK086", name: "惊弦",   alias: "妖琴师", type: "式神",  cost: "5", keyword: "幻音", ability: "召唤/横置/重置/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_101.webp" },
+    { id: "AYK087", name: "余音",   alias: "妖琴师", type: "式神",  cost: "5", keyword: "幻音", ability: "召唤/横置/重置/法术/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_102.webp" },
+    { id: "AYK088", name: "入阵",   alias: "妖琴师", type: "式神",  cost: "5", keyword: "幻音", ability: "召唤/横置/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_103.webp" },
+    { id: "AYK089", name: "鬼使黑",   alias: "鬼使黑", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "迅捷/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_104.webp" },
+    { id: "AYK089-SP", name: "鬼使黑(SP)",   alias: "鬼使黑", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "迅捷/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_105.webp" },
+    { id: "AYK090", name: "少时黑羽",   alias: "鬼使黑", type: "式神",  cost: "2", keyword: "冥使/冥界", ability: "召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_106.webp" },
+    { id: "AYK091", name: "鬼使白",   alias: "鬼使白", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "远程/召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_107.webp" },
+    { id: "AYK091-SP", name: "鬼使白(SP)",   alias: "鬼使白", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "远程/召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_108.webp" },
+    { id: "AYK092", name: "少时月白",   alias: "鬼使白", type: "式神",  cost: "2", keyword: "冥使/冥界", ability: "召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_109.webp" },
+    { id: "AYK093", name: "判官",   alias: "判官", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "衰竭/召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_110.webp" },
+    { id: "AYK094", name: "觉醒·判官",   alias: "判官", type: "觉醒",  cost: "none", keyword: "", ability: "耗火/冥使", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_268.webp" },
+    { id: "AYK094-OR", name: "觉醒·判官(OR)",   alias: "判官", type: "觉醒",  cost: "none", keyword: "", ability: "耗火/冥使", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_111.webp?v=3.2.1.3" },
+    { id: "AYK095", name: "无情",   alias: "判官", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "召唤/鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_112.webp" },
+    { id: "AYK096", name: "断罪",   alias: "判官", type: "式神",  cost: "5", keyword: "冥使/冥界", ability: "召唤/鼓舞/增幅/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_113.webp" },
+    { id: "AYK097", name: "掌死",   alias: "判官", type: "式神",  cost: "7", keyword: "冥使/冥界", ability: "迅捷/召唤/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_114.webp" },
+    { id: "AYK098", name: "孟婆",   alias: "孟婆", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "耗火/沉默", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_115.webp" },
+    { id: "AYK099", name: "明灯",   alias: "明灯", type: "式神",  cost: "0", keyword: "灵火", ability: "召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_116.webp?v=3.2.1.1" },
+    { id: "AYK100", name: "青行灯",   alias: "青行灯", type: "式神",  cost: "8", keyword: "灵火", ability: "召唤/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_117.webp" },
+    { id: "AYK100-UR", name: "青行灯(UR)",   alias: "青行灯", type: "式神", cost: "8", keyword: "灵火", ability: "召唤/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_118.webp" },
+    { id: "AYK100-PC", name: "青行灯(PC)",   alias: "青行灯", type: "式神",  cost: "8", keyword: "灵火", ability: "召唤/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_119.webp" },
+    { id: "AYK101", name: "大天狗",   alias: "大天狗", type: "式神",  cost: "5", keyword: "大妖/天狗", ability: "耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_120.webp" },
+    { id: "AYK101-SP", name: "大天狗(SP)",   alias: "大天狗", type: "式神",  cost: "5", keyword: "大妖/天狗", ability: "耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_121.webp" },
+    { id: "AYK101-UR", name: "大天狗(UR)",   alias: "大天狗", type: "式神",  cost: "5", keyword: "大妖/天狗", ability: "耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_122.webp" },
+    { id: "AYK102", name: "觉醒·大天狗",   alias: "大天狗", type: "觉醒",  cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_269.webp" },
+    { id: "AYK102-OR", name: "觉醒·大天狗(OR)",   alias: "大天狗", type: "觉醒",  cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_123.webp" },
+    { id: "AYK103", name: "少羽大天狗",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_124.webp" },
+    { id: "AYK103-SP", name: "少羽大天狗(SP)",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_125.webp" },
+    { id: "AYK103-UR", name: "少羽大天狗(UR)",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_126.webp" },
+    { id: "AYK104", name: "暴风之主",   alias: "大天狗", type: "式神",  cost: "6", keyword: "大妖/天狗", ability: "耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_127.webp" },
+    { id: "AYK105", name: "崇天高云",   alias: "大天狗", type: "式神",  cost: "7", keyword: "大妖/天狗", ability: "贯通/耗火/暴击/屏障", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_128.webp" },
+    { id: "AYK106", name: "鬼葫芦",   alias: "鬼葫芦", type: "式神",  cost: "1", keyword: "付丧神/大江山", ability: "安魂/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_129.webp" },
+    { id: "AYK107", name: "地狱之手",   alias: "地狱之手", type: "式神",  cost: "1", keyword: "怨灵/大江山", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_130.webp" },
+    { id: "AYK108", name: "酒吞童子",   alias: "酒吞童子", type: "式神",  cost: "7", keyword: "大妖/大江山", ability: "激怒/屏障/耗火/献祭/增幅/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_131.webp" },
+    { id: "AYK108-3D", name: "酒吞童子(3D)",   alias: "酒吞童子", type: "式神",  cost: "7", keyword: "大妖/大江山", ability: "激怒/屏障/耗火/献祭/增幅/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_252.webp" },
+    { id: "AYK108-UR", name: "酒吞童子(UR)",   alias: "酒吞童子", type: "式神",  cost: "7", keyword: "大妖/大江山", ability: "激怒/屏障/耗火/献祭/增幅/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_132.webp" },
+    { id: "AYK109", name: "觉醒·酒吞童子",   alias: "酒吞童子", type: "觉醒",  cost: "none", keyword: "", ability: "自伤/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_270.webp" },
+    { id: "AYK109-OR", name: "觉醒·酒吞童子(OR)",   alias: "酒吞童子", type: "觉醒",  cost: "none", keyword: "", ability: "自伤/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_133.webp?v=3.2.1.3" },
+    { id: "AYK110", name: "大江山鬼王",   alias: "酒吞童子", type: "式神",  cost: "5", keyword: "大妖/大江山", ability: "召唤/增幅/沉默", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_134.webp?v=3.2.1.0" },
+    { id: "AYK110-SP", name: "大江山鬼王(SP)",   alias: "酒吞童子", type: "式神",  cost: "5", keyword: "大妖/大江山", ability: "召唤/增幅/沉默", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_135.webp?v=3.2.1.0" },
+    { id: "AYK111", name: "神子",   alias: "酒吞童子", type: "式神",  cost: "8", keyword: "大妖/大江山", ability: "激怒/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_136.webp?v=3.2.1.0" },
+    { id: "AYK112", name: "醉酒纵歌",   alias: "酒吞童子", type: "式神",  cost: "8", keyword: "大妖/大江山", ability: "迅捷/激怒/增幅/散射/贯通/连击/重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_137.webp" },
+    { id: "AYK113", name: "茨木童子",   alias: "茨木童子", type: "式神",  cost: "7", keyword: "大妖/大江山", ability: "先攻/迅捷/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_138.webp?v=3.2.1.0" },
+    { id: "AYK113-UR", name: "茨木童子(UR)",   alias: "茨木童子", type: "式神",  cost: "7", keyword: "大妖/大江山", ability: "先攻/迅捷/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_139.webp?v=3.2.1.0" },
+    { id: "AYK113-EX", name: "茨木童子(EX)",   alias: "茨木童子", type: "式神",  cost: "7", keyword: "大妖/大江山", ability: "先攻/迅捷/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_140.webp?v=3.2.1.0" },
+    { id: "AYK114", name: "觉醒·茨木童子",   alias: "茨木童子", type: "觉醒",  cost: "none", keyword: "", ability: "远程/散射", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_271.webp" },
+    { id: "AYK114-OR", name: "觉醒·茨木童子(OR)",   alias: "茨木童子", type: "觉醒",  cost: "none", keyword: "", ability: "远程/散射", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_141.webp?v=3.2.1.3" },
+    { id: "AYK115", name: "地狱鬼手",   alias: "茨木童子", type: "式神",  cost: "6", keyword: "大妖/大江山", ability: "迅捷", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_142.webp?v=3.2.1.1" },
+    { id: "AYK116", name: "青竹白雪",   alias: "茨木童子", type: "式神",  cost: "8", keyword: "大妖/大江山", ability: "耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_143.webp" },
+    { id: "AYK117", name: "妖刀姬",   alias: "妖刀姬", type: "式神",  cost: "6", keyword: "付丧神", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_144.webp" },
+    { id: "AYK118", name: "觉醒·妖刀姬",   alias: "妖刀姬", type: "觉醒",  cost: "none", keyword: "", ability: "连击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_272.webp" },
+    { id: "AYK118-OR", name: "觉醒·妖刀姬(OR)",   alias: "妖刀姬", type: "觉醒",  cost: "none", keyword: "", ability: "连击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_145.webp?v=3.2.1.3" },
+    { id: "AYK119", name: "御神之刃",   alias: "妖刀姬", type: "式神",  cost: "7", keyword: "付丧神", ability: "迅捷/运势", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_146.webp?v=3.2.1.0" },
+    { id: "AYK120", name: "妖刀万华",   alias: "妖刀姬", type: "式神",  cost: "10", keyword: "付丧神", ability: "迅捷/召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_147.webp" },
+    { id: "AYK120-UR", name: "妖刀万华(UR)",   alias: "妖刀姬", type: "式神",  cost: "10", keyword: "付丧神", ability: "迅捷/召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_148.webp" },
+    { id: "AYK121", name: "言灵·星",   alias: "术式", type: "法术",  cost: "1", keyword: "阴阳术", ability: "瞬发/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_149.webp" },
+    { id: "AYK122", name: "符咒·灭",   alias: "术式", type: "法术",  cost: "1", keyword: "阴阳术", ability: "瞬发/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_150.webp" },
+    { id: "AYK123", name: "言灵·守",   alias: "术式", type: "法术",  cost: "1", keyword: "阴阳术", ability: "屏障/瞬发/弹回", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_151.webp" },
+    { id: "AYK123-OR", name: "言灵·守(OR)",   alias: "术式", type: "法术",  cost: "1", keyword: "阴阳术", ability: "屏障/瞬发/弹回", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_152.webp" },
+    { id: "AYK124", name: "多重箭",   alias: "秘术", type: "法术",  cost: "2", keyword: "阴阳术", ability: "远程/散射", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_153.webp" },
+    { id: "AYK125", name: "通灵·疾风",   alias: "通灵", type: "法术",  cost: "3", keyword: "阴阳术", ability: "重置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_154.webp" },
+    { id: "AYK126", name: "符咒·生",   alias: "术式", type: "法术",  cost: "3", keyword: "阴阳术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_155.webp" },
+    { id: "AYK127", name: "妖灵突破",   alias: "妖灵突破", type: "法术",  cost: "2", keyword: "阴阳术", ability: "觉醒", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_156.webp" },
+    { id: "AYK128", name: "珍惜之物",   alias: "珍惜之物", type: "法术",  cost: "2", keyword: "召唤术", ability: "付丧神/响应", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_157.webp" },
+    { id: "AYK129", name: "低吟",   alias: "低吟", type: "法术",  cost: "0", keyword: "召唤术", ability: "天邪鬼", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_158.webp" },
+    { id: "AYK130", name: "锵锵锵",   alias: "锵锵锵", type: "法术",  cost: "1", keyword: "召唤术", ability: "鼓舞/衰竭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_159.webp" },
+    { id: "AYK131", name: "生死无常",   alias: "生死无常", type: "法术",  cost: "1", keyword: "召唤术", ability: "过牌/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_160.webp" },
+    { id: "AYK132", name: "无常鬼使",   alias: "无常鬼使", type: "法术",  cost: "3", keyword: "召唤术", ability: "冥使", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_161.webp" },
+    { id: "AYK133", name: "死而复生",   alias: "死而复生", type: "法术",  cost: "4", keyword: "召唤术", ability: "跳跳家族", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_162.webp" },
+    { id: "AYK134", name: "桃华灼灼",   alias: "桃华灼灼", type: "法术",  cost: "5", keyword: "召唤术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_163.webp" },
+    { id: "AYK135", name: "醉里乾坤",   alias: "醉里乾坤", type: "法术",  cost: "1", keyword: "妖术", ability: "瞬发/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_164.webp" },
+    { id: "AYK135-OR", name: "醉里乾坤(OR)",   alias: "醉里乾坤", type: "法术",  cost: "1", keyword: "妖术", ability: "瞬发/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_165.webp" },
+    { id: "AYK135-PC", name: "醉里乾坤(PC)",   alias: "醉里乾坤", type: "法术",  cost: "1", keyword: "妖术", ability: "瞬发/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_166.webp" },
+    { id: "AYK136", name: "孟婆汤",   alias: "孟婆汤", type: "法术",  cost: "1", keyword: "妖术", ability: "瞬发/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_167.webp" },
+    { id: "AYK137", name: "谁还不听话",   alias: "谁还不听话", type: "法术",  cost: "1", keyword: "妖术", ability: "瞬发/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_168.webp" },
+    { id: "AYK138", name: "吹雪",   alias: "吹雪", type: "法术",  cost: "2", keyword: "妖术", ability: "瞬发/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_169.webp" },
+    { id: "AYK139", name: "杀念",   alias: "杀念", type: "法术",  cost: "2", keyword: "妖术", ability: "瞬发", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_170.webp" },
+    { id: "AYK140", name: "雀食",   alias: "雀食", type: "法术",  cost: "1", keyword: "妖术", ability: "瞬发", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_171.webp" },
+    { id: "AYK141", name: "送祝福",   alias: "送祝福", type: "法术",  cost: "0", keyword: "妖术", ability: "瞬发/运势", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_172.webp" },
+    { id: "AYK142", name: "汤盆冲撞",   alias: "汤盆冲撞", type: "法术",  cost: "2", keyword: "妖术", ability: "瞬发/沉默", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_173.webp" },
+    { id: "AYK143", name: "桃之馨息",   alias: "桃之馨息", type: "法术",  cost: "2", keyword: "妖术", ability: "瞬发/恢复/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_174.webp" },
+    { id: "AYK144", name: "会",   alias: "会", type: "法术",  cost: "4", keyword: "妖术", ability: "瞬发", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_175.webp" },
+    { id: "AYK145", name: "生花",   alias: "生花", type: "法术",  cost: "0", keyword: "妖术", ability: "响应/移除/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_176.webp" },
+    { id: "AYK146", name: "镇魂歌",   alias: "镇魂歌", type: "法术",  cost: "1", keyword: "妖术", ability: "响应/过牌/安魂", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_177.webp" },
+    { id: "AYK147", name: "魔音扰心",   alias: "魔音扰心", type: "法术",  cost: "2", keyword: "妖术", ability: "响应", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_178.webp" },
+    { id: "AYK148", name: "荒寂",   alias: "荒寂", type: "法术",  cost: "2", keyword: "妖术", ability: "响应/横置/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_179.webp" },
+    { id: "AYK149", name: "古尘之盾",   alias: "古尘之盾", type: "法术",  cost: "3", keyword: "妖术", ability: "岿岩/响应/屏障", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_180.webp" },
+    { id: "AYK150", name: "腐坏直拳",   alias: "腐坏直拳", type: "法术",  cost: "3", keyword: "妖术", ability: "觉醒/响应", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_181.webp" },
+    { id: "AYK151", name: "见切",   alias: "见切", type: "法术",  cost: "1", keyword: "妖术", ability: "付丧神/响应", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_182.webp" },
+    { id: "AYK152", name: "福祸相生",   alias: "福祸相生", type: "法术",  cost: "0", keyword: "妖术", ability: "鬼火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_183.webp" },
+    { id: "AYK153", name: "狂啸",   alias: "狂啸", type: "法术", cost: "1", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_184.webp" },
+    { id: "AYK154", name: "福运昌隆",   alias: "福运昌隆", type: "法术",  cost: "1", keyword: "妖术", ability: "运势/鬼火",img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_185.webp" },
+    { id: "AYK155", name: "心斩",   alias: "心斩", type: "法术",  cost: "1", keyword: "妖术", ability: "守护灵", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_186.webp" },
+    { id: "AYK156", name: "尘刀",   alias: "尘刀", type: "法术",  cost: "1", keyword: "妖术", ability: "屏障", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_187.webp" },
+    { id: "AYK157", name: "吸取",   alias: "吸取", type: "法术",  cost: "1", keyword: "妖术", ability: "恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_188.webp" },
+    { id: "AYK158", name: "怒吼",   alias: "怒吼", type: "法术",  cost: "1", keyword: "妖术", ability: "增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_189.webp?v=3.2.1.0" },
+    { id: "AYK159", name: "毒气喷泉",   alias: "毒气喷泉", type: "法术",  cost: "1", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_190.webp" },
+    { id: "AYK160", name: "风神一扇",   alias: "风神一扇", type: "法术",  cost: "2", keyword: "妖术", ability: "弹回", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_191.webp" },
+    { id: "AYK160-UR", name: "风神一扇(UR)",   alias: "风神一扇", type: "法术",  cost: "2", keyword: "妖术", ability: "弹回", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_192.webp" },
+    { id: "AYK161", name: "灵气侵染",   alias: "灵气侵染", type: "法术",  cost: "1", keyword: "妖术", ability: "付丧神", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_193.webp?v=3.2.2.0" },
+    { id: "AYK162", name: "我打打打",   alias: "我打打打", type: "法术",  cost: "2", keyword: "妖术", ability: "天邪鬼/迅捷", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_194.webp" },
+    { id: "AYK163", name: "挑衅",   alias: "挑衅", type: "法术",  cost: "2", keyword: "妖术", ability: "增幅/守护/天邪鬼", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_195.webp?v=3.2.2.0" },
+    { id: "AYK164", name: "棒球炸弹",   alias: "棒球炸弹", type: "法术",  cost: "2", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_196.webp" },
+    { id: "AYK165", name: "聚气",   alias: "聚气", type: "法术",  cost: "2", keyword: "妖术", ability: "兽妖", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_197.webp" },
+    { id: "AYK166", name: "迁怒",   alias: "迁怒", type: "法术",  cost: "2", keyword: "妖术", ability: "酒吞童子", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_198.webp" },
+    { id: "AYK166-UR", name: "迁怒(UR)",   alias: "迁怒", type: "法术",  cost: "2", keyword: "妖术", ability: "酒吞童子", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_199.webp" },
+    { id: "AYK167", name: "引路火苗",   alias: "引路火苗", type: "法术",  cost: "2", keyword: "妖术", ability: "付丧神", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_200.webp" },
+    { id: "AYK168", name: "凤火",   alias: "凤火", type: "法术",  cost: "2", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_201.webp" },
+    { id: "AYK169", name: "红焰",   alias: "红焰", type: "法术",  cost: "2", keyword: "妖术", ability: "过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_202.webp" },
+    { id: "AYK170", name: "崩雪",   alias: "崩雪", type: "法术",  cost: "3", keyword: "妖术", ability: "眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_203.webp" },
+    { id: "AYK171", name: "夜火辉耀",   alias: "夜火辉耀", type: "法术",  cost: "3", keyword: "妖术", ability: "移除/弹回/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_204.webp?v=3.2.1.3" },
+    { id: "AYK172", name: "天降之物",   alias: "天降之物", type: "法术",  cost: "4", keyword: "妖术", ability: "沉默", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_205.webp" },
+    { id: "AYK173", name: "寒冬之心",   alias: "寒冬之心", type: "法术",  cost: "3", keyword: "妖术", ability: "眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_206.webp" },
+    { id: "AYK174", name: "惩戒",   alias: "惩戒", type: "法术",  cost: "3", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_207.webp" },
+    { id: "AYK175", name: "碎岩",   alias: "碎岩", type: "法术",  cost: "3", keyword: "妖术", ability: "岿岩", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_208.webp" },
+    { id: "AYK176", name: "兔子舞",   alias: "兔子舞", type: "法术",  cost: "3", keyword: "妖术", ability: "过牌/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_209.webp?v=3.2.1.0" },
+    { id: "AYK177", name: "羽刃暴风",   alias: "羽刃暴风", type: "法术",  cost: "4", keyword: "妖术", ability: "大天狗", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_210.webp" },
+    { id: "AYK178", name: "死之宣告",   alias: "死之宣告", type: "法术",  cost: "4", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_211.webp" },
+    { id: "AYK179", name: "疯魔琴心",   alias: "疯魔琴心", type: "法术",  cost: "3", keyword: "妖术", ability: "眩晕/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_212.webp?v=3.2.2.0" },
+    { id: "AYK180", name: "怪力",   alias: "怪力", type: "法术",  cost: "4", keyword: "妖术", ability: "贯通", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_213.webp" },
+    { id: "AYK181", name: "流霰",   alias: "流霰", type: "法术",  cost: "5", keyword: "妖术", ability: "眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_214.webp" },
+    { id: "AYK182", name: "吸魂灯",   alias: "吸魂灯", type: "法术",  cost: "5", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_215.webp" },
+    { id: "AYK183", name: "何渡鬼道",   alias: "何渡鬼道", type: "法术",  cost: "5", keyword: "妖术", ability: "大江山", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_216.webp" },
+    { id: "AYK184", name: "百鬼夜行",   alias: "百鬼夜行", type: "法术",  cost: "7", keyword: "召唤术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_217.webp" },
+    { id: "AYK185", name: "百闻一得",   alias: "百闻一得", type: "法术",  cost: "X", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_218.webp?v=3.2.1.2" },
+    { id: "AYK186", name: "白藏主·御灵",   alias: "白藏主·御灵", type: "附灵",  cost: "2", keyword: "御灵", ability: "横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_219.webp" },
+    { id: "AYK186-UR", name: "白藏主·御灵(UR)",   alias: "白藏主·御灵", type: "附灵",  cost: "2", keyword: "御灵", ability: "横置/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_220.webp" },
+    { id: "AYK187", name: "神龙",   alias: "神龙", type: "附灵",  cost: "3", keyword: "御灵", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_221.webp" },
+    { id: "AYK187-UR", name: "神龙(UR)",   alias: "神龙", type: "附灵",  cost: "3", keyword: "御灵", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_222.webp" },
+    { id: "AYK188", name: "蚌精",   alias: "蚌精", type: "附灵",  cost: "1", keyword: "御魂", ability: "横置/屏障", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_223.webp" },
+    { id: "AYK189", name: "恶楼",   alias: "恶楼", type: "附灵",  cost: "1", keyword: "御魂", ability: "移除/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_224.webp" },
+    { id: "AYK190", name: "青吉鬼",   alias: "青吉鬼", type: "附灵",  cost: "1", keyword: "御魂", ability: "增幅/鬼火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_225.webp" },
+    { id: "AYK191", name: "破势",   alias: "破势", type: "附灵",  cost: "1", keyword: "御魂", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_226.webp" },
+    { id: "AYK192", name: "针女",   alias: "针女", type: "附灵",  cost: "2", keyword: "御魂", ability: "运势/暴击", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_227.webp" },
+    { id: "AYK193", name: "雪幽魂",   alias: "雪幽魂", type: "附灵",  cost: "2", keyword: "御魂", ability: "横置/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_228.webp" },
+    { id: "AYK193-SP", name: "雪幽魂(SP)",   alias: "雪幽魂", type: "附灵",  cost: "2", keyword: "御魂", ability: "横置/眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_229.webp" },
+    { id: "AYK194", name: "地藏像",   alias: "地藏像", type: "附灵",  cost: "3", keyword: "御魂", ability: "横置/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_230.webp" },
+    { id: "AYK195", name: "招财猫·御魂",   alias: "招财猫·御魂", type: "附灵",  cost: "2", keyword: "御魂", ability: "运势/鬼火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_231.webp" },
+    { id: "AYK196", name: "妖伞道场",   alias: "妖伞道场", type: "结界",  cost: "3", keyword: "秘境", ability: "横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_232.webp" },
+    { id: "AYK197", name: "斗鱼之地",   alias: "斗鱼之地", type: "结界",  cost: "4", keyword: "秘境", ability: "横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_233.webp?v=3.2.1.0" },
+    { id: "AYK198", name: "金鱼梦境",   alias: "金鱼梦境", type: "结界",  cost: "3", keyword: "秘境", ability: "横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_234.webp" },
+    { id: "AYK199", name: "碧落太鼓",   alias: "碧落太鼓", type: "结界",  cost: "3", keyword: "秘境", ability: "横置/鬼火/弹回", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_235.webp?v=3.2.2.0" },
+    { id: "AYK200", name: "鬼灵符咒",   alias: "鬼灵符咒", type: "结界",  cost: "4", keyword: "秘境", ability: "横置/鬼火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_236.webp" },
+    { id: "AYK201", name: "庭院",   alias: "庭院", type: "结界",  cost: "3", keyword: "地域", ability: "恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_237.webp" },
+    { id: "AYK202", name: "阴阳寮",   alias: "阴阳寮", type: "结界", cost: "3", keyword: "地域", ability: "阴阳术", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_238.webp" },
+    { id: "AYK203", name: "家宅",   alias: "家宅", type: "结界",  cost: "4", keyword: "地域", ability: "横置/弹回/鬼火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_239.webp" },
+    { id: "AYK204", name: "平安京·京都",   alias: "平安京·京都", type: "结界",  cost: "4", keyword: "地域", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_240.webp" },
+    { id: "AYK204-UR", name: "平安京·京都(UR)",   alias: "平安京·京都", type: "结界",  cost: "4", keyword: "地域", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_241.webp" },
+    { id: "AYK205", name: "阴界之门",   alias: "阴界之门", type: "结界",  cost: "3", keyword: "地域", ability: "横置/能量/运势/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_242.webp?v=3.2.1.0" },
+    { id: "AYK206", name: "大江山",   alias: "大江山", type: "结界",  cost: "4", keyword: "地域", ability: "大江山", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_243.webp" },
+    { id: "AYK207", name: "町中",   alias: "町中", type: "结界",  cost: "5", keyword: "地域", ability: "横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_244.webp" },
+    { id: "AYK208", name: "道馆",   alias: "道馆", type: "结界",  cost: "5", keyword: "地域", ability: "横置/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_245.webp" },
+    { id: "AYK209", name: "楼船·蜃气楼",   alias: "楼船·蜃气楼", type: "结界",  cost: "6", keyword: "地域", ability: "横置/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_246.webp" },
+    { id: "AYK209-SP", name: "楼船·蜃气楼(SP)",   alias: "楼船·蜃气楼", type: "结界",  cost: "6", keyword: "地域", ability: "横置/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_247.webp" },
+    { id: "AYK210", name: "冥府",   alias: "冥府", type: "结界",  cost: "7", keyword: "地域", ability: "移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_248.webp?v=3.2.2.0" },
+    { id: "AYK210-OR", name: "冥府(OR)",   alias: "冥府", type: "结界",  cost: "7", keyword: "地域", ability: "移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_249.webp?v=3.2.2.0" },
+//========================================================
+//第二弹：剑羽驱邪
+//========================================================
+    {"id":"BPP001","name":"提灯小僧","alias":"提灯小僧","type":"式神","cost":"0","keyword":"灵火","ability":"召唤/鬼火/弹回","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_1.webp?v=3.2.2.0"},
+    {"id":"BPP002","name":"盗墓小鬼","alias":"盗墓小鬼","type":"式神","cost":"1","keyword":"恶鬼/冥界","ability":"耗火/自伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_2.webp"},
+    {"id":"BPP003","name":"寄生魂","alias":"寄生魂","type":"式神","cost":"2","keyword":"怨灵","ability":"潜行","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_3.webp"},
+    {"id":"BPP004","name":"地缚灵","alias":"地缚灵","type":"式神","cost":"1","keyword":"怨灵","ability":"安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_4.webp"},
+    {"id":"BPP005","name":"浮游灵","alias":"浮游灵","type":"式神","cost":"2","keyword":"怨灵","ability":"安魂/虚弱","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_5.webp"},
+    {"id":"BPP006","name":"狐灵","alias":"狐灵","type":"式神","cost":"3","keyword":"兽妖/怨灵","ability":"潜行","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_6.webp"},
+    {"id":"BPP007","name":"须臾之神","alias":"涂壁","type":"式神","cost":"3","keyword":"岿岩","ability":"耗火/屏障","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_7.webp"},
+    {"id":"BPP007-UR","name":"须臾之神(UR)","alias":"涂壁","type":"式神","cost":"3","keyword":"岿岩","ability":"耗火/屏障","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_211.webp"},
+    {"id":"BPP008","name":"饿鬼","alias":"饿鬼","type":"式神","cost":"2","keyword":"恶鬼","ability":"耗火/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_8.webp"},
+    {"id":"BPP009","name":"觉醒·饿鬼","alias":"饿鬼","type":"觉醒","cost":"none","keyword":"","ability":"觉醒","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_9.webp"},
+    {"id":"BPP010","name":"大快朵颐","alias":"饿鬼","type":"式神","cost":"1","keyword":"恶鬼","ability":"增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_10.webp"},
+    {"id":"BPP010-OR","name":"大快朵颐(OR)","alias":"饿鬼","type":"式神","cost":"1","keyword":"恶鬼","ability":"增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_212.webp?v=3.2.1.0"},
+    {"id":"BPP011","name":"酒饱饭足","alias":"饿鬼","type":"式神","cost":"3","keyword":"恶鬼","ability":"不动/移除/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_11.webp?v=3.2.1.0"},
+    {"id":"BPP012","name":"吞天","alias":"饿鬼","type":"式神","cost":"9","keyword":"恶鬼","ability":"召唤/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_12.webp"},
+    {"id":"BPP013","name":"丑时之女","alias":"丑时之女","type":"式神","cost":"2","keyword":"怨灵/业火","ability":"耗火/鼓舞","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_13.webp"},
+    {"id":"BPP013-PC","name":"丑时之女(PC)","alias":"丑时之女","type":"式神","cost":"2","keyword":"怨灵/业火","ability":"耗火/鼓舞","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_213.webp"},
+    {"id":"BPP014","name":"食发鬼","alias":"食发鬼","type":"式神","cost":"2","keyword":"恶鬼/毒瘴","ability":"运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_14.webp?v=3.2.2.0"},
+    {"id":"BPP015","name":"青蛙瓷器","alias":"青蛙瓷器","type":"式神","cost":"2","keyword":"宿水","ability":"安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_15.webp"},
+    {"id":"BPP015-PC","name":"青蛙瓷器(PC)","alias":"青蛙瓷器","type":"式神","cost":"2","keyword":"宿水","ability":"安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_214.webp"},
+    {"id":"BPP016","name":"觉醒·青蛙瓷器","alias":"青蛙瓷器","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/安魂/运势/宿水","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_16.webp?v=3.2.2.0"},
+    {"id":"BPP017","name":"国士无双","alias":"青蛙瓷器","type":"式神","cost":"2","keyword":"宿水","ability":"安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_17.webp?v=3.2.1.0"},
+    {"id":"BPP018","name":"岭上开花","alias":"青蛙瓷器","type":"式神","cost":"2","keyword":"宿水","ability":"安魂/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_18.webp"},
+    {"id":"BPP019","name":"门前清","alias":"青蛙瓷器","type":"式神","cost":"2","keyword":"宿水","ability":"安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_19.webp?v=3.2.1.0"},
+    {"id":"BPP020","name":"雨女","alias":"雨女","type":"式神","cost":"2","keyword":"宿水","ability":"耗火/净化","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_20.webp"},
+    {"id":"BPP021","name":"觉醒·雨女","alias":"雨女","type":"觉醒","cost":"none","keyword":"","ability":"觉醒","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_21.webp"},
+    {"id":"BPP022","name":"梨花怨","alias":"雨女","type":"式神","cost":"3","keyword":"宿水","ability":"耗火/虚弱/净化","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_22.webp"},
+    {"id":"BPP023","name":"雨未歇","alias":"雨女","type":"式神","cost":"5","keyword":"宿水","ability":"耗火/净化/过量恢复/鬼火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_23.webp?v=3.2.1.0"},
+    {"id":"BPP024","name":"椒图","alias":"椒图","type":"式神","cost":"3","keyword":"宿水","ability":"鼓舞/记录伤害","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_24.webp"},
+    {"id":"BPP025","name":"觉醒·椒图","alias":"椒图","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/耗火/记录伤害","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_25.webp"},
+    {"id":"BPP026","name":"涌流","alias":"椒图","type":"式神","cost":"2","keyword":"宿水","ability":"过牌/记录伤害","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_26.webp"},
+    {"id":"BPP027","name":"春樱日和","alias":"椒图","type":"式神","cost":"4","keyword":"宿水","ability":"鼓舞/记录伤害","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_27.webp?v=3.2.1.0"},
+    {"id":"BPP028","name":"沧海珠泪","alias":"椒图","type":"式神","cost":"6","keyword":"宿水","ability":"记录伤害","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_28.webp?v=3.2.1.0"},
+    {"id":"BPP029","name":"海坊主","alias":"海坊主","type":"式神","cost":"5","keyword":"宿水","ability":"恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_29.webp"},
+    {"id":"BPP030","name":"觉醒·海坊主","alias":"海坊主","type":"觉醒","cost":"none","keyword":"","ability":"觉醒","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_30.webp?v=3.2.1.2"},
+    {"id":"BPP031","name":"灵能","alias":"海坊主","type":"式神","cost":"4","keyword":"宿水","ability":"吸血/耗火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_31.webp?v=3.2.1.2"},
+    {"id":"BPP032","name":"蹈海","alias":"海坊主","type":"式神","cost":"7","keyword":"宿水","ability":"恢复/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_32.webp"},
+    {"id":"BPP033","name":"铁鼠","alias":"铁鼠","type":"式神","cost":"2","keyword":"兽妖","ability":"召唤/运势/过牌/横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_33.webp"},
+    {"id":"BPP034","name":"狸猫","alias":"狸猫","type":"式神","cost":"3","keyword":"兽妖","ability":"运势/守护/眩晕/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_34.webp"},
+    {"id":"BPP035","name":"管狐","alias":"管狐","type":"式神","cost":"2","keyword":"兽妖/奔雷","ability":"远程/沉默","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_35.webp"},
+    {"id":"BPP035-3D","name":"管狐(3D)","alias":"管狐","type":"式神","cost":"2","keyword":"兽妖/奔雷","ability":"远程/沉默","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_215.webp"},
+    {"id":"BPP036","name":"觉醒·管狐","alias":"管狐","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/净化","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_36.webp"},
+    {"id":"BPP037","name":"破竹之势","alias":"管狐","type":"式神","cost":"4","keyword":"兽妖/奔雷","ability":"迅捷/眩晕","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_37.webp"},
+    {"id":"BPP038","name":"爆破之势","alias":"管狐","type":"式神","cost":"6","keyword":"兽妖/奔雷","ability":"复活/虚弱","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_38.webp"},
+    {"id":"BPP039","name":"鸦天狗","alias":"鸦天狗","type":"式神","cost":"2","keyword":"疾风/天狗","ability":"迅捷/运势/协战","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_39.webp?v=3.2.1.0"},
+    {"id":"BPP040","name":"觉醒·鸦天狗","alias":"鸦天狗","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/净化","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_40.webp"},
+    {"id":"BPP041","name":"群鸦乱舞","alias":"鸦天狗","type":"式神","cost":"4","keyword":"疾风/天狗","ability":"迅捷/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_41.webp"},
+    {"id":"BPP041-UR","name":"群鸦乱舞(UR)","alias":"鸦天狗","type":"式神","cost":"4","keyword":"疾风/天狗","ability":"迅捷/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_216.webp?v=3.2.1.3"},
+    {"id":"BPP042","name":"正义必胜","alias":"鸦天狗","type":"式神","cost":"9","keyword":"疾风/天狗","ability":"迅捷/连击/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_42.webp"},
+    {"id":"BPP043","name":"首无","alias":"首无","type":"式神","cost":"1","keyword":"怨灵/疾风","ability":"召唤/弹回","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_43.webp"},
+    {"id":"BPP044","name":"觉醒·首无","alias":"首无","type":"觉醒","cost":"none","keyword":"","ability":"耗火/再临","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_44.webp"},
+    {"id":"BPP045","name":"飞颅谑戏","alias":"首无","type":"式神","cost":"2","keyword":"怨灵/疾风","ability":"迅捷","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_45.webp"},
+    {"id":"BPP046","name":"提首行骸","alias":"首无","type":"式神","cost":"3","keyword":"怨灵/疾风","ability":"召唤/安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_46.webp?v=3.2.1.1"},
+    {"id":"BPP047","name":"武士之灵","alias":"武士之灵","type":"式神","cost":"1","keyword":"怨灵/业火","ability":"增幅/安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_47.webp?v=3.2.1.1"},
+    {"id":"BPP047-UR","name":"武士之灵(UR)","alias":"武士之灵","type":"式神","cost":"1","keyword":"怨灵/业火","ability":"增幅/安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_217.webp?v=3.2.1.1"},
+    {"id":"BPP048","name":"觉醒·武士之灵","alias":"武士之灵","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/移除/怨灵","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_48.webp?v=3.2.1.1"},
+    {"id":"BPP049","name":"不甘之怒","alias":"武士之灵","type":"式神","cost":"1","keyword":"怨灵/业火","ability":"移除","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_49.webp"},
+    {"id":"BPP050","name":"荣耀终刻","alias":"武士之灵","type":"式神","cost":"3","keyword":"怨灵/业火","ability":"自伤/重置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_50.webp"},
+    {"id":"BPP051","name":"骸","alias":"骸","type":"式神","cost":"1","keyword":"怨灵/业火","ability":"潜行/安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_51.webp"},
+    {"id":"BPP052","name":"骨女","alias":"骨女","type":"式神","cost":"4","keyword":"怨灵/业火","ability":"迅捷/召唤/能量","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_52.webp"},
+    {"id":"BPP053","name":"觉","alias":"觉","type":"式神","cost":"3","keyword":"奔雷","ability":"横置/眩晕","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_53.webp?v=3.2.1.0"},
+    {"id":"BPP053-SP","name":"觉(SP)","alias":"觉","type":"式神","cost":"3","keyword":"奔雷","ability":"横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_218.webp?v=3.2.1.0"},
+    {"id":"BPP053-UR","name":"觉(UR)","alias":"觉","type":"式神","cost":"3","keyword":"奔雷","ability":"横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_219.webp?v=3.2.1.0"},
+    {"id":"BPP054","name":"觉醒·觉","alias":"觉","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/弹回","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_54.webp"},
+    {"id":"BPP055","name":"灵视","alias":"觉","type":"式神","cost":"3","keyword":"奔雷","ability":"耗火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_55.webp?v=3.2.1.0"},
+    {"id":"BPP056","name":"心灵迷宫","alias":"觉","type":"式神","cost":"8","keyword":"奔雷","ability":"鼓舞/能量/安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_56.webp"},
+    {"id":"BPP057","name":"古笼火","alias":"古笼火","type":"式神","cost":"2","keyword":"灵火","ability":"复活/激怒/运势/重置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_57.webp?v=3.2.2.0"},
+    {"id":"BPP058","name":"觉醒·古笼火","alias":"古笼火","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_58.webp"},
+    {"id":"BPP059","name":"飘摇鬼火","alias":"古笼火","type":"式神","cost":"4","keyword":"灵火","ability":"激怒/安魂/运势/鬼火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_59.webp"},
+    {"id":"BPP060","name":"火风车","alias":"古笼火","type":"式神","cost":"X","keyword":"灵火","ability":"运势/鬼火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_60.webp"},
+    {"id":"BPP061","name":"姑获鸟","alias":"姑获鸟","type":"式神","cost":"3","keyword":"疾风/守护灵","ability":"远程/运势/协战","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_61.webp"},
+    {"id":"BPP062","name":"觉醒·姑获鸟","alias":"姑获鸟","type":"觉醒","cost":"none","keyword":"","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_62.webp"},
+    {"id":"BPP062-UR","name":"觉醒·姑获鸟(UR)","alias":"姑获鸟","type":"觉醒","cost":"none","keyword":"","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_220.webp"},
+    {"id":"BPP063","name":"影翼","alias":"姑获鸟","type":"式神","cost":"2","keyword":"疾风/守护灵","ability":"远程/协战/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_63.webp"},
+    {"id":"BPP064","name":"慈乌稚子","alias":"姑获鸟","type":"式神","cost":"4","keyword":"疾风/守护灵","ability":"贯通/协战/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_64.webp"},
+    {"id":"BPP065","name":"金銮鹤羽","alias":"姑获鸟","type":"式神","cost":"7","keyword":"疾风/守护灵","ability":"远程/协战","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_65.webp"},
+    {"id":"BPP065-UR","name":"金銮鹤羽(UR)","alias":"姑获鸟","type":"式神","cost":"7","keyword":"疾风/守护灵","ability":"远程/协战","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_221.webp"},
+    {"id":"BPP065-EX","name":"金銮鹤羽(EX)","alias":"姑获鸟","type":"式神","cost":"7","keyword":"疾风/守护灵","ability":"远程/协战","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_222.webp"},
+    {"id":"BPP066","name":"蝴蝶精","alias":"蝴蝶精","type":"式神","cost":"3","keyword":"虫/疾风","ability":"召唤/净化/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_66.webp"},
+    {"id":"BPP067","name":"觉醒·蝴蝶精","alias":"蝴蝶精","type":"觉醒","cost":"none","keyword":"","ability":"耗火/法术","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_67.webp"},
+    {"id":"BPP068","name":"金缕歌","alias":"蝴蝶精","type":"式神","cost":"4","keyword":"虫/疾风","ability":"召唤/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_68.webp"},
+    {"id":"BPP069","name":"看春回","alias":"蝴蝶精","type":"式神","cost":"6","keyword":"虫/疾风","ability":"召唤/横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_69.webp"},
+    {"id":"BPP070","name":"巫蛊师","alias":"巫蛊师","type":"式神","cost":"3","keyword":"虫/毒瘴","ability":"远程/迅捷/毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_70.webp"},
+    {"id":"BPP070-UR","name":"巫蛊师(UR)","alias":"巫蛊师","type":"式神","cost":"3","keyword":"虫/毒瘴","ability":"远程/迅捷/毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_223.webp"},
+    {"id":"BPP071","name":"觉醒·巫蛊师","alias":"巫蛊师","type":"觉醒","cost":"none","keyword":"","ability":"鼓舞/毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_71.webp"},
+    {"id":"BPP072","name":"食魂蛊","alias":"巫蛊师","type":"式神","cost":"4","keyword":"虫/毒瘴","ability":"召唤/毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_72.webp"},
+    {"id":"BPP073","name":"无尽蛊","alias":"巫蛊师","type":"式神","cost":"5","keyword":"虫/毒瘴","ability":"安魂/毒伤/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_73.webp"},
+    {"id":"BPP074","name":"清姬","alias":"清姬","type":"式神","cost":"4","keyword":"虫/毒瘴","ability":"迅捷/毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_74.webp?v=3.2.1.0"},
+    {"id":"BPP075","name":"觉醒·清姬","alias":"清姬","type":"觉醒","cost":"none","keyword":"","ability":"鼓舞/毒伤/虚弱","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_75.webp"},
+    {"id":"BPP076","name":"氤氲蛇姬","alias":"清姬","type":"式神","cost":"6","keyword":"虫/毒瘴","ability":"毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_76.webp?v=3.2.1.0"},
+    {"id":"BPP077","name":"络新妇","alias":"络新妇","type":"式神","cost":"4","keyword":"虫/毒瘴","ability":"毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_77.webp"},
+    {"id":"BPP078","name":"御蛛鬼姬","alias":"络新妇","type":"式神","cost":"5","keyword":"虫/毒瘴","ability":"耗火/横置/毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_78.webp"},
+    {"id":"BPP079","name":"觉醒·跳跳弟弟","alias":"跳跳弟弟","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/恢复/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_79.webp"},
+    {"id":"BPP080","name":"瘴疠体质","alias":"跳跳弟弟","type":"式神","cost":"4","keyword":"毒瘴/跳跳家族","ability":"守护/激怒/毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_80.webp?v=3.2.1.0"},
+    {"id":"BPP081","name":"肿胀体质","alias":"跳跳弟弟","type":"式神","cost":"6","keyword":"毒瘴/跳跳家族","ability":"守护/召唤/增幅/毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_81.webp"},
+    {"id":"BPP082","name":"数珠","alias":"数珠","type":"式神","cost":"1","keyword":"付丧神","ability":"不动/能量/增幅/屏障/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_82.webp?v=3.2.1.0"},
+    {"id":"BPP083a","name":"觉醒·数珠【戒】","alias":"数珠【戒】","type":"觉醒","cost":"none","keyword":"","ability":"追猎/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_83.webp"},
+    {"id":"BPP083b","name":"觉醒·数珠【定】","alias":"数珠【定】","type":"觉醒","cost":"none","keyword":"","ability":"增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_224.webp"},
+    {"id":"BPP083c","name":"觉醒·数珠【慧】","alias":"数珠【慧】","type":"觉醒","cost":"none","keyword":"","ability":"能量","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_225.webp"},
+    {"id":"BPP084","name":"不二法门","alias":"数珠","type":"式神","cost":"3","keyword":"付丧神","ability":"运势/能量/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_84.webp"},
+    {"id":"BPP085","name":"萌意贺春","alias":"数珠","type":"式神","cost":"5","keyword":"付丧神","ability":"能量/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_85.webp"},
+    {"id":"BPP086","name":"樱花妖","alias":"樱花妖","type":"式神","cost":"4","keyword":"苍叶","ability":"鼓舞/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_86.webp"},
+    {"id":"BPP087","name":"觉醒·樱花妖","alias":"樱花妖","type":"觉醒","cost":"none","keyword":"","ability":"远程/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_87.webp"},
+    {"id":"BPP088","name":"弥生之舞","alias":"樱花妖","type":"式神","cost":"5","keyword":"苍叶","ability":"鼓舞/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_88.webp"},
+    {"id":"BPP089","name":"觉醒·桃花妖","alias":"桃花妖","type":"觉醒","cost":"none","keyword":"","ability":"增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_89.webp"},
+    {"id":"BPP090","name":"丰实之姿","alias":"桃花妖","type":"式神","cost":"5","keyword":"苍叶","ability":"召唤/过量恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_90.webp?v=3.2.1.2"},
+    {"id":"BPP091","name":"鬼女红叶","alias":"鬼女红叶","type":"式神","cost":"4","keyword":"恶鬼/大江山","ability":"远程/迅捷/鼓舞/安魂","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_91.webp"},
+    {"id":"BPP092","name":"觉醒·鬼女红叶","alias":"鬼女红叶","type":"觉醒","cost":"none","keyword":"","ability":"大江山","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_92.webp"},
+    {"id":"BPP093","name":"血枫之姬","alias":"鬼女红叶","type":"式神","cost":"3","keyword":"恶鬼/大江山","ability":"远程/重置/大江山","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_93.webp"},
+    {"id":"BPP094","name":"跹舞之姿","alias":"鬼女红叶","type":"式神","cost":"4","keyword":"恶鬼/大江山","ability":"远程/横置/献祭/酒吞童子","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_94.webp"},
+    {"id":"BPP095","name":"觉醒·孟婆","alias":"孟婆","type":"觉醒","cost":"none","keyword":"","ability":"鼓舞/沉默/移除","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_95.webp"},
+    {"id":"BPP096","name":"忆昔当年","alias":"孟婆","type":"式神","cost":"4","keyword":"冥使/冥界","ability":"召唤/沉默","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_96.webp"},
+    {"id":"BPP097","name":"牙牙我们走","alias":"孟婆","type":"式神","cost":"6","keyword":"冥使/冥界","ability":"先攻/安魂/沉默","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_97.webp"},
+    {"id":"BPP098","name":"忘忧的旋律","alias":"孟婆","type":"式神","cost":"8","keyword":"冥使/冥界","ability":"耗火/沉默/鼓舞","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_98.webp?v=3.2.1.0"},
+    {"id":"BPP099","name":"觉醒·童男/童女","alias":"童男/童女","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/屏障/能量/自伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_99.webp"},
+    {"id":"BPP100","name":"樱竹迎春","alias":"童女","type":"式神","cost":"3","keyword":"疾风","ability":"耗火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_100.webp"},
+    {"id":"BPP100-PC","name":"樱竹迎春(PC)","alias":"童女","type":"式神","cost":"3","keyword":"疾风","ability":"耗火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_226.webp"},
+    {"id":"BPP101","name":"稚童贺瑞","alias":"童男","type":"式神","cost":"5","keyword":"疾风","ability":"召唤/再临","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_101.webp"},
+    {"id":"BPP101-PC","name":"稚童贺瑞(PC)","alias":"童男","type":"式神","cost":"5","keyword":"疾风","ability":"召唤/再临","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_227.webp"},
+    {"id":"BPP102","name":"萩间童羽","alias":"童女","type":"式神","cost":"4","keyword":"疾风","ability":"自伤/虚弱/激怒/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_102.webp"},
+    {"id":"BPP103","name":"稚阳蒲饮","alias":"童男","type":"式神","cost":"6","keyword":"疾风","ability":"守护/耗火/再临","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_103.webp"},
+    {"id":"BPP104","name":"明心","alias":"书翁","type":"式神","cost":"6","keyword":"疾风","ability":"召唤/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_104.webp"},
+    {"id":"BPP105","name":"闻世","alias":"书翁","type":"式神","cost":"2","keyword":"疾风","ability":"增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_105.webp"},
+    {"id":"BPP106","name":"业原火·贪","alias":"业原火","type":"式神","cost":"4","keyword":"业火/首领","ability":"召唤/附灵","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_106.webp"},
+    {"id":"BPP107","name":"业原火·嗔","alias":"业原火","type":"式神","cost":"4","keyword":"业火/首领","ability":"召唤/附灵/鼓舞","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_107.webp"},
+    {"id":"BPP108","name":"业原火·痴","alias":"业原火","type":"式神","cost":"4","keyword":"业火/首领","ability":"召唤/附灵/鼓舞/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_108.webp"},
+    {"id":"BPP109","name":"水麒麟","alias":"水麒麟","type":"式神","cost":"4","keyword":"宿水/首领","ability":"鼓舞/恢复/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_109.webp"},
+    {"id":"BPP110","name":"风麒麟","alias":"风麒麟","type":"式神","cost":"4","keyword":"疾风/首领","ability":"鼓舞/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_110.webp"},
+    {"id":"BPP111","name":"火麒麟","alias":"火麒麟","type":"式神","cost":"4","keyword":"业火/首领","ability":"鼓舞","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_111.webp"},
+    {"id":"BPP112","name":"雷麒麟","alias":"雷麒麟","type":"式神","cost":"4","keyword":"奔雷/首领","ability":"鼓舞/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_112.webp"},
+    {"id":"BPP113","name":"小鹿男","alias":"小鹿男","type":"式神","cost":"3","keyword":"兽妖","ability":"屏障/增幅/横置/弹回","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_113.webp?v=3.2.1.0"},
+    {"id":"BPP113-UR","name":"小鹿男(UR)","alias":"小鹿男","type":"式神","cost":"4","keyword":"兽妖","ability":"屏障/增幅/横置/弹回","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_228.webp?v=3.2.1.1"},
+    {"id":"BPP114","name":"觉醒·小鹿男","alias":"小鹿男","type":"觉醒","cost":"none","keyword":"","ability":"运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_114.webp"},
+    {"id":"BPP115","name":"自强之愿","alias":"小鹿男","type":"式神","cost":"3","keyword":"兽妖","ability":"增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_115.webp"},
+    {"id":"BPP116","name":"祝福之愿","alias":"小鹿男","type":"式神","cost":"5","keyword":"兽妖","ability":"增幅/耗火/横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_116.webp"},
+    {"id":"BPP117","name":"荒川之主","alias":"荒川之主","type":"式神","cost":"7","keyword":"大妖/宿水","ability":"潜行/运势/暴击","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_117.webp"},
+    {"id":"BPP117-SP","name":"荒川之主(SP)","alias":"荒川之主","type":"式神","cost":"7","keyword":"大妖/宿水","ability":"潜行/运势/暴击","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_229.webp"},
+    {"id":"BPP118","name":"觉醒·荒川之主","alias":"荒川之主","type":"觉醒","cost":"none","keyword":"","ability":"觉醒/潜行","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_118.webp"},
+    {"id":"BPP119","name":"怒涛沧海","alias":"荒川之主","type":"式神","cost":"3","keyword":"大妖/宿水","ability":"召唤/潜行","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_119.webp"},
+    {"id":"BPP120","name":"溯水归乡","alias":"荒川之主","type":"式神","cost":"5","keyword":"大妖/宿水","ability":"远程/连击/追猎","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_120.webp?v=3.2.1.0"},
+    {"id":"BPP120-UR","name":"溯水归乡(UR)","alias":"荒川之主","type":"式神","cost":"5","keyword":"大妖/宿水","ability":"远程/连击/追猎","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_230.webp?v=3.2.1.0"},
+{"id":"BPP121","name":"秘术·豹袭","alias":"秘术","type":"法术","cost":"1","keyword":"阴阳术","ability":"瞬发","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_121.webp"},
+{"id":"BPP122","name":"破魔矢","alias":"秘术","type":"法术","cost":"2","keyword":"阴阳术","ability":"瞬发","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_122.webp"},
+{"id":"BPP123","name":"召唤·炼狱","alias":"通灵","type":"法术","cost":"2","keyword":"阴阳术","ability":"瞬发","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_123.webp"},
+{"id":"BPP124","name":"通灵·冥蝶","alias":"通灵","type":"法术","cost":"1","keyword":"阴阳术","ability":"恢复/响应","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_124.webp"},
+{"id":"BPP125","name":"召唤·续命","alias":"通灵","type":"法术","cost":"2","keyword":"阴阳术","ability":"响应/复活","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_125.webp"},
+{"id":"BPP126","name":"破碎的符咒","alias":"符箓","type":"法术","cost":"1","keyword":"阴阳术","ability":"鬼火钱币","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_126.webp"},
+{"id":"BPP127","name":"神秘的符咒","alias":"符箓","type":"法术","cost":"1","keyword":"阴阳术","ability":"过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_127.webp?v=3.2.1.2"},
+{"id":"BPP128","name":"基础术式","alias":"术式","type":"法术","cost":"2","keyword":"阴阳术","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_128.webp"},
+{"id":"BPP129","name":"星之咒","alias":"占卜之印","type":"法术","cost":"2","keyword":"阴阳术","ability":"沉默/附灵","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_129.webp"},
+{"id":"BPP130","name":"归魂入窍","alias":"归魂入窍","type":"法术","cost":"4","keyword":"召唤术","ability":"瞬发","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_130.webp"},
+{"id":"BPP131","name":"狂气","alias":"狂气","type":"法术","cost":"5","keyword":"召唤术","ability":"大江山","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_131.webp"},
+{"id":"BPP131-OR","name":"狂气(OR)","alias":"狂气","type":"法术","cost":"5","keyword":"召唤术","ability":"大江山","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_231.webp?v=3.2.1.0"},
+{"id":"BPP132","name":"樱吹雪","alias":"樱吹雪","type":"法术","cost":"6","keyword":"召唤术","ability":"运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_132.webp?v=3.2.2.0"},
+{"id":"BPP133","name":"灵运","alias":"灵运","type":"法术","cost":"8","keyword":"召唤术","ability":"运势/灵火/屏障/沉默","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_133.webp"},
+{"id":"BPP134","name":"相思泪","alias":"相思泪","type":"法术","cost":"1","keyword":"妖术","ability":"瞬发/净化","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_134.webp"},
+{"id":"BPP135","name":"羁绊的价值","alias":"羁绊的价值","type":"法术","cost":"1","keyword":"妖术","ability":"瞬发/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_135.webp"},
+{"id":"BPP136","name":"凤鸣","alias":"凤鸣","type":"法术","cost":"1","keyword":"妖术","ability":"瞬发/弹回","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_136.webp?v=3.2.1.2"},
+{"id":"BPP137","name":"棺封","alias":"棺封","type":"法术","cost":"2","keyword":"妖术","ability":"瞬发","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_137.webp?v=3.2.2.0"},
+{"id":"BPP138","name":"勾诀","alias":"勾诀","type":"法术","cost":"2","keyword":"妖术","ability":"瞬发","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_138.webp"},
+{"id":"BPP139","name":"偷袭","alias":"偷袭","type":"法术","cost":"0","keyword":"妖术","ability":"响应/疾风","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_139.webp"},
+{"id":"BPP140","name":"闪烁","alias":"闪烁","type":"法术","cost":"1","keyword":"妖术","ability":"响应","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_140.webp"},
+{"id":"BPP141","name":"羽护","alias":"羽护","type":"法术","cost":"1","keyword":"妖术","ability":"疾风/响应","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_141.webp"},
+{"id":"BPP142","name":"惊梦","alias":"惊梦","type":"法术","cost":"3","keyword":"妖术","ability":"响应","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_142.webp"},
+{"id":"BPP143","name":"出千","alias":"出千","type":"法术","cost":"0","keyword":"妖术","ability":"过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_143.webp"},
+{"id":"BPP144","name":"神出鬼没","alias":"神出鬼没","type":"法术","cost":"2","keyword":"妖术","ability":"运势/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_144.webp?v=3.2.1.0"},
+{"id":"BPP145","name":"望君还","alias":"望君还","type":"法术","cost":"0","keyword":"妖术","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_145.webp?v=3.2.1.0"},
+{"id":"BPP146","name":"施蛊","alias":"施蛊","type":"法术","cost":"1","keyword":"妖术","ability":"毒伤/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_146.webp?v=3.2.2.0"},
+{"id":"BPP147","name":"追风","alias":"追风","type":"法术","cost":"1","keyword":"妖术","ability":"疾风","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_147.webp"},
+{"id":"BPP148","name":"花信风","alias":"花信风","type":"法术","cost":"1","keyword":"妖术","ability":"苍叶","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_148.webp?v=3.2.2.0"},
+{"id":"BPP149","name":"投石","alias":"投石","type":"法术","cost":"1","keyword":"妖术","ability":"移除/岿岩","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_149.webp"},
+{"id":"BPP150","name":"青灯夜谈","alias":"青灯夜谈","type":"法术","cost":"1","keyword":"妖术","ability":"灵火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_150.webp?v=3.2.2.0"},
+{"id":"BPP151","name":"鬼火球","alias":"鬼火球","type":"法术","cost":"1","keyword":"妖术","ability":"贯通","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_151.webp"},
+{"id":"BPP152","name":"蛇行击","alias":"蛇行击","type":"法术","cost":"1","keyword":"妖术","ability":"毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_152.webp"},
+{"id":"BPP153","name":"骰子炸弹","alias":"骰子炸弹","type":"法术","cost":"2","keyword":"妖术","ability":"运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_153.webp?v=3.2.1.0"},
+{"id":"BPP154","name":"萤火点点","alias":"萤火点点","type":"法术","cost":"1","keyword":"妖术","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_154.webp"},
+{"id":"BPP155","name":"劝酒","alias":"劝酒","type":"法术","cost":"1","keyword":"妖术","ability":"运势/眩晕","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_155.webp?v=3.2.2.0"},
+{"id":"BPP156","name":"坐禅","alias":"坐禅","type":"法术","cost":"1","keyword":"妖术","ability":"能量","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_156.webp"},
+{"id":"BPP157","name":"墨笔夺魂","alias":"墨笔夺魂","type":"法术","cost":"1","keyword":"妖术","ability":"增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_157.webp"},
+{"id":"BPP158","name":"桃之夭夭","alias":"桃之夭夭","type":"法术","cost":"1","keyword":"妖术","ability":"恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_158.webp"},
+{"id":"BPP159","name":"切腹","alias":"切腹","type":"法术","cost":"2","keyword":"妖术","ability":"怨灵","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_159.webp?v=3.2.1.3"},
+{"id":"BPP160","name":"读心","alias":"读心","type":"法术","cost":"1","keyword":"妖术","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_160.webp"},
+{"id":"BPP161","name":"饥不择食","alias":"饥不择食","type":"法术","cost":"1","keyword":"妖术","ability":"结界/恶鬼/迅捷","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_161.webp"},
+{"id":"BPP162","name":"开卷","alias":"开卷","type":"法术","cost":"2","keyword":"妖术","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_162.webp"},
+{"id":"BPP163","name":"豪拳","alias":"豪拳","type":"法术","cost":"2","keyword":"妖术","ability":"大江山","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_163.webp"},
+{"id":"BPP163-SP","name":"豪拳(SP)","alias":"豪拳","type":"法术","cost":"2","keyword":"妖术","ability":"大江山","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_232.webp"},
+{"id":"BPP164","name":"潜影","alias":"潜影","type":"法术","cost":"2","keyword":"妖术","ability":"潜行","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_164.webp"},
+{"id":"BPP165","name":"增殖","alias":"增殖","type":"法术","cost":"2","keyword":"妖术","ability":"毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_165.webp"},
+{"id":"BPP166","name":"伞剑","alias":"伞剑","type":"法术","cost":"2","keyword":"妖术","ability":"移除","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_166.webp"},
+{"id":"BPP167","name":"燕返","alias":"燕返","type":"法术","cost":"2","keyword":"妖术","ability":"再临/疾风","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_167.webp"},
+{"id":"BPP168","name":"咒锥","alias":"咒锥","type":"法术","cost":"3","keyword":"妖术","ability":"贯通","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_168.webp"},
+{"id":"BPP169","name":"鸦羽疾走","alias":"鸦羽疾走","type":"法术","cost":"3","keyword":"妖术","ability":"再临","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_169.webp"},
+{"id":"BPP170","name":"冲撞","alias":"冲撞","type":"法术","cost":"3","keyword":"妖术","ability":"岿岩/增幅/迅捷","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_170.webp"},
+{"id":"BPP171","name":"福来运转","alias":"福来运转","type":"法术","cost":"3","keyword":"妖术","ability":"运势/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_171.webp"},
+{"id":"BPP172","name":"汇聚","alias":"汇聚","type":"法术","cost":"3","keyword":"妖术","ability":"毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_172.webp"},
+{"id":"BPP173","name":"天之泪","alias":"天之泪","type":"法术","cost":"3","keyword":"妖术","ability":"净化/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_173.webp"},
+{"id":"BPP174","name":"清流","alias":"清流","type":"法术","cost":"3","keyword":"妖术","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_174.webp"},
+{"id":"BPP175","name":"水花弹","alias":"水花弹","type":"法术","cost":"3","keyword":"妖术","ability":"记录伤害","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_175.webp"},
+{"id":"BPP176","name":"森之佑","alias":"森之佑","type":"法术","cost":"3","keyword":"妖术","ability":"兽妖/增幅","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_176.webp?v=3.2.1.0"},
+{"id":"BPP177","name":"无羁风弹","alias":"无羁风弹","type":"法术","cost":"3","keyword":"妖术","ability":"运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_177.webp"},
+{"id":"BPP178","name":"转运","alias":"转运","type":"法术","cost":"4","keyword":"妖术","ability":"过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_178.webp"},
+{"id":"BPP179","name":"返魄回体","alias":"返魄回体","type":"法术","cost":"4","keyword":"妖术","ability":"移除","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_179.webp"},
+{"id":"BPP180","name":"巨浪","alias":"巨浪","type":"法术","cost":"4","keyword":"妖术","ability":"恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_180.webp?v=3.2.1.2"},
+{"id":"BPP181","name":"绽放","alias":"绽放","type":"法术","cost":"4","keyword":"妖术","ability":"恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_181.webp"},
+{"id":"BPP182","name":"魔蛊毒爆","alias":"魔蛊毒爆","type":"法术","cost":"5","keyword":"妖术","ability":"毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_182.webp"},
+{"id":"BPP183","name":"怨灵斩","alias":"怨灵斩","type":"法术","cost":"5","keyword":"妖术","ability":"怨灵/追猎","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_183.webp"},
+{"id":"BPP184","name":"水龙卷","alias":"水龙卷","type":"法术","cost":"7","keyword":"妖术","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_184.webp"},
+{"id":"BPP185","name":"立直","alias":"立直","type":"法术","cost":"10","keyword":"妖术","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_185.webp"},
+{"id":"BPP186","name":"孔雀","alias":"孔雀","type":"附灵","cost":"2","keyword":"御灵","ability":"净化","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_186.webp"},
+{"id":"BPP186-UR","name":"孔雀(UR)","alias":"孔雀","type":"附灵","cost":"2","keyword":"御灵","ability":"净化","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_233.webp"},
+{"id":"BPP187","name":"黑豹","alias":"黑豹","type":"附灵","cost":"2","keyword":"御灵","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_187.webp"},
+{"id":"BPP187-UR","name":"黑豹(UR)","alias":"黑豹","type":"附灵","cost":"2","keyword":"御灵","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_234.webp"},
+{"id":"BPP188","name":"暗·神龙","alias":"神龙","type":"附灵","cost":"3","keyword":"御灵","ability":"耗火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_188.webp"},
+{"id":"BPP189","name":"狂骨","alias":"狂骨","type":"附灵","cost":"1","keyword":"御魂","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_189.webp"},
+{"id":"BPP190","name":"涅槃之火","alias":"涅槃之火","type":"附灵","cost":"2","keyword":"御魂","ability":"恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_190.webp?v=3.2.1.0"},
+{"id":"BPP191","name":"镜姬","alias":"镜姬","type":"附灵","cost":"3","keyword":"御魂","ability":"运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_191.webp"},
+{"id":"BPP192","name":"心眼","alias":"心眼","type":"附灵","cost":"1","keyword":"御魂","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_192.webp?v=3.2.1.0"},
+{"id":"BPP193","name":"返魂香","alias":"返魂香","type":"附灵","cost":"3","keyword":"御魂","ability":"运势/眩晕","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_193.webp"},
+{"id":"BPP194","name":"轮入道","alias":"轮入道","type":"附灵","cost":"4","keyword":"御魂","ability":"运势/重置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_194.webp"},
+{"id":"BPP195","name":"幽谷响","alias":"幽谷响","type":"附灵","cost":"2","keyword":"御魂","ability":"运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_195.webp"},
+{"id":"BPP195-UR","name":"幽谷响(UR)","alias":"幽谷响","type":"附灵","cost":"2","keyword":"御魂","ability":"运势","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_235.webp"},
+{"id":"BPP196","name":"百闻馆","alias":"百闻馆","type":"结界","cost":"3","keyword":"秘境","ability":"耗火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_196.webp"},
+{"id":"BPP197","name":"黄泉岸","alias":"黄泉岸","type":"结界","cost":"2","keyword":"地域","ability":"移除/过牌","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_197.webp"},
+{"id":"BPP198","name":"溪流欢歌","alias":"溪流欢歌","type":"结界","cost":"4","keyword":"秘境","ability":"宿水/屏障/恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_198.webp"},
+{"id":"BPP199","name":"狭间","alias":"狭间","type":"结界","cost":"5","keyword":"秘境","ability":"横置/能量/移除","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_199.webp"},
+{"id":"BPP200","name":"狂乱之间","alias":"狂乱之间","type":"结界","cost":"5","keyword":"秘境","ability":"觉醒/横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_200.webp?v=3.2.1.0"},
+{"id":"BPP201","name":"现世裂隙","alias":"现世裂隙","type":"结界","cost":"3","keyword":"秘境","ability":"横置/首领","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_201.webp?v=3.2.2.0"},
+{"id":"BPP202","name":"猛毒深渊","alias":"猛毒深渊","type":"结界","cost":"4","keyword":"秘境","ability":"毒伤","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_202.webp"},
+{"id":"BPP203","name":"断桥","alias":"断桥","type":"结界","cost":"4","keyword":"地域","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_203.webp?v=3.2.2.0"},
+{"id":"BPP204","name":"祈愿鸟居","alias":"祈愿鸟居","type":"结界","cost":"4","keyword":"地域","ability":"横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_204.webp?v=3.2.2.0"},
+{"id":"BPP205","name":"恶鬼炼狱","alias":"恶鬼炼狱","type":"结界","cost":"4","keyword":"幻境","ability":"恶鬼/横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_205.webp"},
+{"id":"BPP206","name":"饮啖醉饱","alias":"饮啖醉饱","type":"结界","cost":"3","keyword":"幻境","ability":"眩晕/净化","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_206.webp?v=3.2.1.0"},
+{"id":"BPP207","name":"永眠之梦","alias":"永眠之梦","type":"结界","cost":"4","keyword":"幻境","ability":"横置/眩晕","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_207.webp?v=3.2.1.0"},
+{"id":"BPP208","name":"润物无声","alias":"润物无声","type":"结界","cost":"3","keyword":"幻境","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_208.webp?v=3.2.1.0"},
+{"id":"BPP209","name":"引驾行","alias":"引驾行","type":"结界","cost":"4","keyword":"幻境","ability":"虫/追猎","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_209.webp?v=3.2.2.0"},
+{"id":"BPP210","name":"灯火长明","alias":"灯火长明","type":"结界","cost":"5","keyword":"幻境","ability":"能量/横置/鬼火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_210.webp"},
+    ];
+
+    const B64="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const B_MAP={};[...B64].map((c,i)=>B_MAP[c]=i);
+    const PREFIX={AYK:1,BPP:2,GOT:3};
+    const PREFIX_REV={1:"AYK",2:"BPP",3:"GOT"};
+    const RARITY={SP:1,"-SP":1,OR:2,"-OR":2,UR:3,"-UR":3,PC:4,"-PC":4,EX:5,"-EX":5,"3D":6,"-3D":6};
+    const RARITY_REV={1:"SP",2:"OR",3:"UR",4:"PC",5:"EX",6:"3D",0:""};
+    const CHAR_MAP={0:"",1:"a",2:"b",3:"c"};
+    const CHAR_REV={"":0,a:1,b:2,c:3};
+    const CODE_HEAD="*OT/";
+    const ROWS_PER_PAGE = 5;
+    let currentPage = 1;
+    let filteredCards = [];
+    let currentPageSize = 15;
+    
+    const DEFAULT_PREVIEW_IMG = "https://steamusercontent-a.akamaihd.net/ugc/17093582484054773031/E6608BC51B78683BDB6B593B86DEF83528E59434/";
+    const CARD_BACK_IMG = "https://steamusercontent-a.akamaihd.net/ugc/17093582484054773031/E6608BC51B78683BDB6B593B86DEF83528E59434/";
+    
+    let deck = {};
+    let drawLeft = 20;
+    let drawCount = {};
+    let hasDrawn = false;
+    let isDrawing = false;
+    let cardsGrouped = null;
+    let currentSelectedPack = null;
+
+    // 新增：本地卡组存储配置
+    const STORAGE_KEY = "YYSTCG_DECKS";
+    const MAX_DECKS = 15;
+    let currentEditingDeckId = null; // 当前编辑的卡组ID
+
+    const previewBox = document.getElementById('cardPreview');
+    if(previewBox) previewBox.style.backgroundImage = `url(${DEFAULT_PREVIEW_IMG})`;
+
+    const RARITY_WEIGHT = { N: 100, UR: 10, SP: 30, OR: 20, PC: 10, EX: 1, '3D': 1 };
+    const RARE_TYPES = ['UR', 'SP', 'OR', 'PC', 'EX', '3D'];
+
+    let cardPrefixGroups = {};
+    function initPrefixGroups() {
+        cardPrefixGroups = {};
+        for (let c of ALL_CARDS) {
+            const prefix = getCardPrefix(c.id);
+            if (!cardPrefixGroups[prefix]) cardPrefixGroups[prefix] = [];
+            cardPrefixGroups[prefix].push(c);
+        }
+    }
+
+function toggleDrawBtn(show) {
+    const drawBtn = document.querySelector('.draw-inline-btn');
+    if (drawBtn) {
+        drawBtn.style.display = show ? 'inline-block' : 'none';
+    }
+}
+
+
+    function randomPrefixGroup() {
+        const validPrefixes = Object.keys(cardPrefixGroups).filter(p => p.startsWith(currentSelectedPack));
+        if (validPrefixes.length === 0) return [];
+        const randomPrefix = validPrefixes[Math.floor(Math.random() * validPrefixes.length)];
+        return cardPrefixGroups[randomPrefix];
+    }
+
+// 权重随机通用方法
+function randomByWeight(items, weightFn) {
+  const total = items.reduce((sum, item) => sum + weightFn(item), 0);
+  let rand = Math.random() * total;
+  for (const item of items) {
+    rand -= weightFn(item);
+    if (rand <= 0) return item;
+  }
+  return items[0];
+}
+
+// 核心：所有牌名概率均等 → 同牌名按稀有度权重抽卡
+function randomCardWeighted() {
+  // 第一步：均等随机选择 一个牌名(前缀)
+  const group = randomPrefixGroup();
+  // 第二步：该牌名下，按稀有度权重抽取具体卡牌
+  return randomByWeight(group, card => RARITY_WEIGHT[getCardRarity(card)]);
+}
+
+// 【最终正确版】抽稀有卡：全局按权重随机，不筛选前缀
+function randomRareCardWeighted() {
+  // 1. 直接获取：当前卡包的所有稀有卡（全局池）
+  const allRareCards = ALL_CARDS.filter(card => {
+    return card.id.startsWith(currentSelectedPack) && RARE_TYPES.includes(getCardRarity(card));
+  });
+
+  // 2. 直接按稀有度权重抽取（完全按你定义的RARITY_WEIGHT）
+  return randomByWeight(allRareCards, card => RARITY_WEIGHT[getCardRarity(card)]);
+}
+
+    function encodeCard(cardId){
+        let pre=PREFIX[cardId.substr(0,3)]||0;
+        let num=cardId.substr(3,3);
+        let ch=cardId[6]||0;
+        ch=ch=="-"?0:(CHAR_REV[ch]||0);
+        let rar=RARITY[cardId.substr(7)]||0;
+        return `${pre}${num}${ch}${rar}`;
+    }
+    
+    function decodeCard(cardCode){
+        let pre = PREFIX_REV[cardCode[0]];
+        let num = cardCode.substring(1, 4);
+        let ch = CHAR_MAP[cardCode[4]];
+        let rar = RARITY_REV[cardCode[5]];
+        if(!pre) return null;
+        let id = pre + num;
+        if(ch) id += ch;
+        if(rar) id += "-" + rar;
+        if(ALL_CARDS.find(c => c.id === id)) return id;
+        let fallback = ALL_CARDS.find(c => c.id.startsWith(pre + num));
+        return fallback ? fallback.id : null;
+    }
+
+    function b64Encode(str){
+        let res="";
+        for(let i=0;i<str.length;i+=7){
+            let n=parseInt(str.slice(i,i+7).padEnd(7,0));
+            res+=B64[(n>>18)&63]+B64[(n>>12)&63]+B64[(n>>6)&63]+B64[n&63];
+        }
+        return res;
+    }
+
+    function b64Decode(b64str){
+        let res = "";
+        for(let i=0; i<b64str.length; i+=4){
+            let seg = b64str.substring(i, i+4);
+            let n = 0;
+            for(let j=0; j<seg.length; j++){
+                if(B_MAP[seg[j]] !== undefined) n = (n << 6) | B_MAP[seg[j]];
+            }
+            res += n.toString().padStart(7, '0');
+        }
+        return res;
+    }
+
+    function getCardPrefix(id) { return id.substring(0, 6); }
+    function getCardRarity(card) {
+        let m = card.id.match(/-(\w+)$/);
+        if (!m) return 'N';
+        let suf = m[1];
+        if (['UR','SP','OR','PC','EX','3D'].includes(suf)) return suf;
+        return 'N';
+    }
+    function getCardExt(card){
+        let exp = "妖灵觉醒";
+        if(card.id.startsWith("BPP")) exp = "剑羽驱邪";
+        if(card.id.startsWith("GOT")) exp = "呱太逢魔";
+        let rarity = "N/R";
+        const match = card.id.match(/-(\w+)$/);
+        if(match) rarity = match[1];
+        return { exp, rarity };
+    }
+    function getCostCategory(cardCost){
+        if(!cardCost || cardCost === "none" || cardCost === "无") return "无";
+        if(cardCost === "X" || cardCost === "x") return "X";
+        const num = parseInt(cardCost);
+        if(isNaN(num)) return "无";
+        if(num >= 10) return "10+";
+        return String(num);
+    }
+
+    function initRarityGroups() {
+        let groups = { N: [] };
+        for (let c of ALL_CARDS) {
+            let r = getCardRarity(c);
+            if (!groups[r]) groups[r] = [];
+            groups[r].push(c);
+        }
+        cardsGrouped = groups;
+    }
+
+function calculatePageSize() {
+  const screenWidth = window.innerWidth;
+  let cardMinWidth = 100, gapWidth = 4;
+  if (screenWidth <= 380) { 
+    cardMinWidth = 55; gapWidth = 3; 
+  } else if (screenWidth <= 768) { 
+    cardMinWidth = 60; gapWidth = 4; 
+  }
+
+  const listEl = document.getElementById("cardLibrary");
+  if (!listEl || listEl.offsetWidth === 0) return;
+
+  const listWidth = listEl.clientWidth;
+  let cols = Math.floor(listWidth / (cardMinWidth + gapWidth));
+
+  // ✅ 核心：电脑端最小5列 | 移动端最小4列
+  if (screenWidth > 768) {
+    cols = Math.max(5, cols); 
+  } else {
+    cols = Math.max(4, cols); 
+  }
+
+  currentPageSize = cols * ROWS_PER_PAGE;
+}
+
+
+
+    // -------------------------- 新增：本地卡组核心函数 --------------------------
+    // 获取本地所有卡组
+    function getLocalDecks() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    }
+    // 保存卡组到本地
+    function saveLocalDecks(decks) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(decks));
+    }
+    // 生成唯一卡组ID
+    function generateDeckId() {
+        return 'deck_' + Date.now() + Math.random().toString(36).substr(2, 5);
+    }
+    // 渲染卡组列表
+    function renderDeckList() {
+        const decks = getLocalDecks();
+        const grid = document.getElementById('deckGrid');
+        grid.innerHTML = '';
+        decks.forEach(deck => {
+            const total = Object.values(deck.cards).reduce((a,b)=>a+b,0);
+            const cardEl = document.createElement('div');
+            cardEl.className = 'deck-card';
+            cardEl.innerHTML = `
+                <div class="deck-card-name">${deck.name}</div>
+                <div class="deck-card-count">卡牌数量：${total}/60</div>
+                <div class="deck-card-actions">
+                    <button onclick="viewDeck('${deck.id}')">查看</button>
+                    <button onclick="renameDeck('${deck.id}')">重命名</button>
+                    <button class="danger" onclick="deleteDeck('${deck.id}')">删除</button>
+                </div>
+            `;
+            grid.appendChild(cardEl);
+        });
+    }
+// 切换页面：显示卡组列表
+function showDeckListPage() {
+    document.getElementById('deckListPage').style.display = 'block';
+    document.getElementById('mainApp').style.display = 'none';
+    // 卡组页面隐藏抽卡按钮
+    toggleDrawBtn(false);
+    renderDeckList();
+}
+
+// 你的原版 showMainApp，只加双层等待，其余完全不动
+function showMainApp() {
+    closeDeckDetail();
+    document.getElementById('deckListPage').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+
+    toggleDrawBtn(true);
+    drawLeft = 20;
+    drawCount = {};
+    hasDrawn = false;
+    resetCardPreview();
+
+    // ✅ 核心：等浏览器【真正渲染完DOM】，再执行renderCards
+    // 此时 cardLibrary 已显示 → 有宽度 → calculatePageSize 正常计算
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            renderCards(); // render自带calculatePageSize，自动算对currentPageSize
+        });
+    });
+}
+
+// 新增：重置组卡器所有界面（搜索、筛选、页码、卡组代码）
+function resetDeckEditorUI() {
+    // 1. 清空搜索框
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) searchInput.value = "";
+    
+    // 2. 重置所有筛选下拉框为「全部」
+    document.getElementById("costFilter").value = "全部";
+    document.getElementById("typeFilter").value = "全部";
+    document.getElementById("expFilter").value = "全部";
+    document.getElementById("rarityFilter").value = "全部";
+    
+    // 3. 重置页码为第一页
+    currentPage = 1;
+    
+    // 4. 清空卡组代码显示框
+    const resultBox = document.getElementById("result-box");
+    if (resultBox) resultBox.textContent = "";
+    
+    // 5. 重置卡牌预览图
+    resetCardPreview();
+}
+
+// 补充：重置卡牌预览图（补全缺失函数）
+function resetCardPreview() {
+    const previewBox = document.getElementById('cardPreview');
+    if(previewBox) previewBox.style.backgroundImage = `url(${DEFAULT_PREVIEW_IMG})`;
+}
+
+function createNewDeck() {
+    const decks = getLocalDecks();
+    if (decks.length >= MAX_DECKS) {
+        alert(`最多只能保存${MAX_DECKS}套卡组！`);
+        return;
+    }
+    // 1. 清空当前卡组
+    deck = {};
+    hasDrawn = false;
+    drawCount = {};
+    currentEditingDeckId = null;
+
+    // 2. ✅ 核心修复：重置所有搜索/筛选/代码
+    resetDeckEditorUI();
+    
+    // 3. 切换到组卡器页面
+    showMainApp();
+    // 4. 渲染空卡组
+    renderDeck();
+}
+
+    // 查看卡组详情
+    function viewDeck(deckId) {
+        const decks = getLocalDecks();
+        const target = decks.find(d => d.id === deckId);
+        if (!target) return;
+        currentEditingDeckId = deckId;
+        // 渲染卡组详情
+        document.getElementById('deckDetailTitle').textContent = target.name;
+        const container = document.getElementById('deckDetailCards');
+        container.innerHTML = '';
+        Object.entries(target.cards).forEach(([id, num]) => {
+            const card = ALL_CARDS.find(c => c.id === id);
+            const name = card ? card.name : id;
+            const el = document.createElement('div');
+            el.style.padding = '4px 8px';
+            el.style.borderBottom = '1px solid #eee';
+            el.textContent = `${name} ×${num}`;
+            container.appendChild(el);
+        });
+        document.getElementById('deckDetailModal').classList.add('show');
+    }
+    // 关闭卡组详情
+    function closeDeckDetail() {
+        document.getElementById('deckDetailModal').classList.remove('show');
+    }
+
+// 修改卡组（加载到组卡器）
+function editCurrentDeck() {
+    const decks = getLocalDecks();
+    const target = decks.find(d => d.id === currentEditingDeckId);
+    if (!target) return;
+    
+    // 1. ✅ 核心修复：重置所有搜索/筛选/代码
+    resetDeckEditorUI();
+    
+    // 2. 加载卡组数据（必生效）
+    deck = {...target.cards};
+    hasDrawn = target.isOpen;
+    currentEditingDeckId = target.id;
+
+    // 3. 切换页面 + 重置抽卡次数
+    showMainApp();
+    
+    // 4. ✅ 强制渲染卡组和卡牌（确保卡牌加载到列表）
+    renderDeck();
+    renderCards();
+    
+    closeDeckDetail();
+}
+
+    // 复制当前卡组短码
+    function copyCurrentDeckCode() {
+        const decks = getLocalDecks();
+        const target = decks.find(d => d.id === currentEditingDeckId);
+        if (!target) return;
+        // 生成短码
+        let codeStr = "";
+        const sortedDeck = Object.entries(target.cards).sort((a, b) => a[0].localeCompare(b[0]));
+        sortedDeck.forEach(([id, num])=>{
+            let cardCode = encodeCard(id);
+            codeStr += cardCode + (num % 10).toString();
+        });
+        const finalCode = CODE_HEAD + b64Encode(codeStr);
+        copyToClipboard(finalCode, "短码");
+        alert('卡组短码已复制！');
+    }
+    // 重命名卡组（自由构筑前缀锁定）
+    function renameDeck(deckId) {
+        const decks = getLocalDecks();
+        const target = decks.find(d => d.id === deckId);
+        if (!target) return;
+        // 未抽牌 → 锁定【自由构筑】前缀
+        const prefix = target.isOpen ? '' : '【自由构筑】';
+        const oldName = target.name.replace(prefix, '');
+        const newName = prompt('请输入卡组名称：', oldName);
+        if (!newName) return;
+        target.name = prefix + newName;
+        saveLocalDecks(decks);
+        renderDeckList();
+    }
+    // 删除卡组
+    function deleteDeck(deckId) {
+        if (!confirm('确定删除该卡组？')) return;
+        let decks = getLocalDecks();
+        decks = decks.filter(d => d.id !== deckId);
+        saveLocalDecks(decks);
+        renderDeckList();
+    }
+    // 保存当前卡组到本地
+    function saveCurrentDeck() {
+        const total = Object.values(deck).reduce((a,b)=>a+b,0);
+        if (total === 0) {
+            alert('卡组不能为空！');
+            return;
+        }
+        const decks = getLocalDecks();
+        // 编辑模式：更新卡组
+        if (currentEditingDeckId) {
+            const index = decks.findIndex(d => d.id === currentEditingDeckId);
+            if (index !== -1) {
+                decks[index].cards = {...deck};
+                decks[index].isOpen = hasDrawn;
+                saveLocalDecks(decks);
+                alert('卡组更新成功！');
+                backToDeckList();
+                return;
+            }
+        }
+        // 新建模式：新增卡组
+        if (decks.length >= MAX_DECKS) {
+            alert(`最多只能保存${MAX_DECKS}套卡组！`);
+            return;
+        }
+        const newDeck = {
+            id: generateDeckId(),
+            name: hasDrawn ? '新卡组' : '【自由构筑】新卡组',
+            isOpen: hasDrawn,
+            cards: {...deck}
+        };
+        decks.push(newDeck);
+        saveLocalDecks(decks);
+        alert('卡组保存成功！');
+        backToDeckList();
+    }
+    // 返回卡组列表
+function backToDeckList() {
+    // 退出组卡器时也重置，下次进入更干净
+    resetDeckEditorUI();
+    showDeckListPage();
+}
+
+
+    function renderCards() {
+        calculatePageSize();
+        const kw = document.getElementById("searchInput")?.value.trim().toLowerCase() || "";
+        const type = document.getElementById("typeFilter")?.value || "全部";
+        const exp = document.getElementById("expFilter")?.value || "全部";
+        const rarity = document.getElementById("rarityFilter")?.value || "全部";
+        const cost = document.getElementById("costFilter")?.value || "全部";
+
+        filteredCards = ALL_CARDS.filter(c => {
+            const suffixNum = hasDrawn ? (drawCount[c.id] || 0) : 4;
+            if (suffixNum === 0) return false;
+
+            const matchType = type === "全部" || c.type === type;
+            const matchKw = !kw || 
+                c.id.toLowerCase().includes(kw) || 
+                c.name.toLowerCase().includes(kw) || 
+                (c.alias && c.alias.toLowerCase().includes(kw)) || 
+                (c.keyword && c.keyword.toLowerCase().includes(kw)) || 
+                (c.ability && c.ability.toLowerCase().includes(kw));
+           
+            const { exp:cExp, rarity:cRar } = getCardExt(c);
+            const matchExp = exp === "全部" || cExp === exp;
+            const matchRar = rarity === "全部" || cRar === rarity;
+            const cCostCat = getCostCategory(c.cost);
+            const matchCost = cost === "全部" || cCostCat === cost;
+            return matchType && matchKw && matchExp && matchRar && matchCost;
+        });
+
+        const totalPage = Math.ceil(filteredCards.length / currentPageSize);
+        if (currentPage > totalPage) currentPage = Math.max(1, totalPage);
+        const start = (currentPage - 1) * currentPageSize;
+        const pageCards = filteredCards.slice(start, start + currentPageSize);
+
+        const lib = document.getElementById("cardLibrary");
+        if(!lib) return;
+        lib.innerHTML = "";
+        
+        pageCards.forEach(card => {
+            const el = document.createElement("div");
+            el.className = "card-item " + card.type;
+            const count = deck[card.id] || 0;
+            el.innerHTML = `
+                <div style="position:absolute;top:4px;left:4px;width:26px;height:26px;background:rgba(0,0,0,0.6);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">
+                    ${count}/${hasDrawn ? (drawCount[card.id] || 0) : 4}
+                </div>
+                <img src="${card.img}" alt="${card.name}" loading="lazy">
+                <div class="card-name">${card.name}</div>
+            `;
+
+            if (window.innerWidth <= 768) {
+                el.onclick = () => {
+                    openPreviewModal(card, pageCards.indexOf(card), pageCards);
+                };
+            } else {
+                el.onmouseenter = () => { if(previewBox) previewBox.style.backgroundImage = `url(${card.img})`; };
+                el.onmouseleave = () => { if(previewBox) previewBox.style.backgroundImage = `url(${DEFAULT_PREVIEW_IMG})`; };
+                el.onclick = () => { addCard(card.id); };
+                el.oncontextmenu = (e) => { e.preventDefault(); if (deck[card.id]) removeCard(card.id); };
+            }
+            lib.appendChild(el);
+        });
+        renderPagination(totalPage);
+    }
+
+    function renderPagination(totalPage) {
+        const pagination = document.getElementById("pagination");
+        if(!pagination) return;
+        pagination.innerHTML = "";
+
+        const firstBtn = document.createElement("button");
+        firstBtn.textContent = "首页";
+        firstBtn.disabled = currentPage <= 1;
+        firstBtn.onclick = () => { currentPage = 1; renderCards(); };
+        pagination.appendChild(firstBtn);
+
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "上一页";
+        prevBtn.disabled = currentPage <= 1;
+        prevBtn.onclick = () => { currentPage--; renderCards(); };
+        pagination.appendChild(prevBtn);
+
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPage, currentPage + 2);
+        for (let i = startPage; i <= endPage; i++) {
+            const btn = document.createElement("button");
+            btn.textContent = i;
+            if (i === currentPage) btn.classList.add("active");
+            btn.onclick = () => { currentPage = i; renderCards(); };
+            pagination.appendChild(btn);
+        }
+
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "下一页";
+        nextBtn.disabled = currentPage >= totalPage;
+        nextBtn.onclick = () => { currentPage++; renderCards(); };
+        pagination.appendChild(nextBtn);
+
+        const lastBtn = document.createElement("button");
+        lastBtn.textContent = "末页";
+        lastBtn.disabled = currentPage >= totalPage;
+        lastBtn.onclick = () => { currentPage = totalPage; renderCards(); };
+        pagination.appendChild(lastBtn);
+
+        if (totalPage > 5) {
+            const jumpContainer = document.createElement("div");
+            jumpContainer.style.display = "flex";
+            jumpContainer.style.alignItems = "center";
+            jumpContainer.style.gap = "5px";
+            jumpContainer.style.marginLeft = "10px";
+
+            const jumpInput = document.createElement("input");
+            jumpInput.type = "number";
+            jumpInput.min = 1;
+            jumpInput.max = totalPage;
+            jumpInput.value = currentPage;
+            jumpInput.placeholder = "跳";
+            jumpInput.style.width = "50px";
+            jumpInput.style.padding = "6px 8px";
+            jumpInput.style.border = "1px solid #ddd";
+            jumpInput.style.borderRadius = "4px";
+            jumpInput.style.textAlign = "center";
+
+            const jumpBtn = document.createElement("button");
+            jumpBtn.textContent = "Go";
+            jumpBtn.onclick = () => {
+                let target = parseInt(jumpInput.value);
+                if (target && target >= 1 && target <= totalPage) {
+                    currentPage = target;
+                    renderCards();
+                } else {
+                    alert(`请输入 1 到 ${totalPage} 之间的页码`);
+                }
+            };
+
+            jumpInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') jumpBtn.click();
+            });
+
+            jumpContainer.appendChild(jumpInput);
+            jumpContainer.appendChild(jumpBtn);
+            pagination.appendChild(jumpContainer);
+        }
+    }
+
+function addCard(id) {
+    const totalNow = Object.values(deck).reduce((a,b)=>a+b,0);
+    if(totalNow >=60){
+        alert("卡组已满60张！");
+        return;
+    }
+    const prefix = getCardPrefix(id);
+    const current = deck[id] || 0;
+    const samePrefixTotal = Object.entries(deck).reduce((sum, [cid, num]) => sum + (getCardPrefix(cid) === prefix ? num : 0), 0);
+    if (samePrefixTotal >= 4) { 
+        alert("同编号卡牌最多携带4张！");
+        return; 
+    }
+    if (hasDrawn) {
+        const maxDraw = drawCount[id] || 0; 
+        if (current >= maxDraw) { 
+            alert("无法超过抽到的卡牌数量！");
+            return; 
+        }
+    }
+    deck[id] = current + 1;
+    renderDeck();
+    renderCards();
+    
+    if(typeof updatePreviewUI === 'function') updatePreviewUI();
+}
+
+    function removeCard(id){
+        if(deck[id]>1) deck[id]--;
+        else delete deck[id];
+        renderDeck();
+        renderCards();
+        
+        if(typeof updatePreviewUI === 'function') updatePreviewUI();
+    }
+
+function renderDeck() {
+    const list = document.getElementById("deckList");
+    const total = document.getElementById("totalCount");
+    if(!list || !total) return;
+    list.innerHTML = "";
+    let sum=0;
+// 按类型排序：式神 > 觉醒 > 法术 > 附灵 > 结界，同类型按编号升序
+const typeOrder = { '式神': 1, '觉醒': 2, '法术': 3, '附灵': 4, '结界': 5 };
+const sortedEntries = Object.entries(deck).sort((a, b) => {
+  const cardA = ALL_CARDS.find(c => c.id === a[0]);
+  const cardB = ALL_CARDS.find(c => c.id === b[0]);
+  const typeA = cardA?.type || '';
+  const typeB = cardB?.type || '';
+  const ta = typeOrder[typeA] ?? 99;
+  const tb = typeOrder[typeB] ?? 99;
+  if (ta !== tb) return ta - tb;
+  return a[0].localeCompare(b[0]);
+});    
+    const typeColors = {
+        "式神":"#c92a2a","觉醒":"#212529","法术":"#2f9e44","附灵":"#fd7e14","结界":"#9b30af"
+    };
+
+    sortedEntries.forEach(([id,num])=>{
+        sum+=num;
+        const card=ALL_CARDS.find(c=>c.id===id);
+        const name=card?card.name:id;
+        const type=card?.type || '';
+        const item=document.createElement("div");
+        item.className="deck-item "+type;
+
+        if(card && card.img){
+            const grad = `linear-gradient(to right, transparent 0%, ${typeColors[type]||'#333'} 35%, ${typeColors[type]||'#333'} 100%)`;
+            item.style.backgroundImage = `${grad}, url(${card.img})`;
+        }
+
+        item.innerHTML=`
+            <span class="deck-item-name">${name}</span>
+            <span class="deck-item-num">×${num}</span>
+            <span class="deck-item-del" onclick="removeCard('${id}')">移除</span>
+        `;
+        list.appendChild(item);
+    });
+    total.textContent=sum;
+    renderCostCurve();
+}
+
+    function clearDeck(){
+        if(!confirm("确定清空？"))return;
+        deck={};
+        renderDeck();
+        renderCards();
+        const rb = document.getElementById("result-box");
+        if(rb) rb.textContent="";
+        if(previewBox) previewBox.style.backgroundImage = `url(${DEFAULT_PREVIEW_IMG})`;
+    }
+
+    function generateDeckCode(){
+        let codeStr = "";
+        const sortedDeck = Object.entries(deck).sort((a, b) => a[0].localeCompare(b[0]));
+        sortedDeck.forEach(([id, num])=>{
+            let cardCode = encodeCard(id);
+            codeStr += cardCode + (num % 10).toString();
+        });
+        const finalCode = CODE_HEAD + b64Encode(codeStr);
+        const rb = document.getElementById("result-box");
+        if(rb) rb.textContent = finalCode;
+        
+        copyToClipboard(finalCode, "短码");
+    }
+
+    function generateShortDeckCode(){
+        const arr = [];
+        const sortedDeck = Object.entries(deck).sort((a, b) => a[0].localeCompare(b[0]));
+        sortedDeck.forEach(([id, num]) => { for(let i = 0; i < num; i++) arr.push(id); });
+        const finalCode = arr.join(" ");
+        const rb = document.getElementById("result-box");
+        if(rb) rb.textContent = finalCode;
+        
+        copyToClipboard(finalCode, "长码");
+    }
+
+    function copyToClipboard(text, typeName){
+        navigator.clipboard.writeText(text).then(()=>{
+            const rb = document.getElementById("result-box");
+            if(rb) rb.textContent += "\n\n[已自动复制到剪贴板]";
+        }).catch(()=>{
+            const rb = document.getElementById("result-box");
+            if(rb) rb.textContent += "\n\n[自动复制失败，请手动复制]";
+        });
+    }
+
+function pasteDeckCode() {
+    const pasteModal = document.getElementById('pasteModal');
+    const pasteInput = document.getElementById('pasteInput');
+    if (pasteModal && pasteInput) {
+        pasteInput.value = '';
+        pasteModal.classList.add('show');
+        setTimeout(() => {
+            pasteInput.focus();
+            if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                const range = document.createRange();
+                range.selectNodeContents(pasteInput);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }, 100);
+    }
+}
+
+function closePasteModal() {
+    const pasteModal = document.getElementById('pasteModal');
+    if (pasteModal) pasteModal.classList.remove('show');
+}
+
+// 确认粘贴代码（修复：抽卡后仅允许使用抽到的卡牌）
+function confirmPasteCode() {
+    const pasteInput = document.getElementById('pasteInput');
+    const rawInput = pasteInput?.value.trim() || '';
+    closePasteModal();
+    
+    if (!rawInput) return;
+    
+    let tempDeck = {};
+    let tempPrefixCount = {};
+    let totalCards = 0;
+    let invalidCards = []; // 记录未抽到/超限的卡牌
+
+    try {
+        if (rawInput.startsWith(CODE_HEAD)) {
+            let b64data = rawInput.substring(CODE_HEAD.length);
+            let decodedStr = b64Decode(b64data);
+            
+            for (let i = 0; i < decodedStr.length; i += 7) {
+                if (totalCards >= 60) break;
+                
+                let segment = decodedStr.substring(i, i + 7);
+                let cardCode = segment.substring(0, 6);
+                let count = parseInt(segment[6]) || 1;
+                
+                let cardId = decodeCard(cardCode);
+                if (!cardId) continue;
+
+                // 🔥 修复核心：抽卡后校验卡牌是否拥有
+                if (hasDrawn) {
+                    const ownCount = drawCount[cardId] || 0;
+                    if (ownCount === 0) {
+                        invalidCards.push(cardId);
+                        continue;
+                    }
+                    count = Math.min(count, ownCount);
+                }
+                
+                let prefix = getCardPrefix(cardId);
+                let currentPrefixCount = tempPrefixCount[prefix] || 0;
+                
+                for (let j = 0; j < count; j++) {
+                    if (totalCards >= 60 || currentPrefixCount >= 4) break;
+                    tempDeck[cardId] = (tempDeck[cardId] || 0)+1;
+                    currentPrefixCount++;
+                    tempPrefixCount[prefix] = currentPrefixCount;
+                    totalCards++;
+                }
+            }
+        } else {
+            let ids = rawInput.split(/\s+/);
+            for(let id of ids){
+                if(totalCards >= 60) break;
+                if(!id) continue;
+                
+                let exists = ALL_CARDS.find(c => c.id === id);
+                if(!exists) continue;
+
+                // 🔥 修复核心：抽卡后校验卡牌是否拥有
+                if (hasDrawn) {
+                    const ownCount = drawCount[id] || 0;
+                    if (ownCount === 0) {
+                        invalidCards.push(id);
+                        continue;
+                    }
+                    // 已存在则检查数量
+                    if(tempDeck[id] && tempDeck[id] >= ownCount) continue;
+                }
+                
+                let prefix = getCardPrefix(id);
+                if((tempPrefixCount[prefix] || 0) >= 4) continue;
+                
+                tempDeck[id] = (tempDeck[id] || 0)+1;
+                tempPrefixCount[prefix] = (tempPrefixCount[prefix] || 0)+1;
+                totalCards++;
+            }
+        }
+
+        // 应用合法卡组
+        deck = tempDeck;
+        renderDeck();
+        renderCards();
+        
+        const rb = document.getElementById("result-box");
+        let msg = `导入成功！共 ${totalCards} 张卡牌。`;
+        if(invalidCards.length > 0){
+            msg += `\n⚠️ 已过滤 ${invalidCards.length} 张未抽到的卡牌`;
+        }
+        rb.textContent = msg;
+        
+    } catch(e){
+        const rb = document.getElementById("result-box");
+        rb.textContent = "代码解析失败，请检查格式是否正确。";
+    }
+}
+
+    function openDrawModal() {
+        if (drawLeft <= 0) { alert("抽卡次数已用完！"); return; }
+        currentSelectedPack = null;
+        document.getElementById("packSelectArea").style.display = "block";
+        document.getElementById("drawArea").style.display = "none";
+        document.getElementById("btnConfirmPack").disabled = true;
+        document.getElementById("btnConfirmPack").style.opacity = "0.5";
+        document.querySelectorAll(".pack-item").forEach(el => el.classList.remove("selected"));
+
+        const dl = document.getElementById("drawLeft");
+        const dl2 = document.getElementById("drawLeft2");
+        if(dl) dl.textContent = drawLeft;
+        if(dl2) dl2.textContent = drawLeft;
+
+        const dm = document.getElementById("drawModal");
+        if(dm) dm.classList.add("show");
+    }
+    function closeDrawModal() {
+        const dm = document.getElementById("drawModal");
+        if(dm) dm.classList.remove("show");
+    }
+    function selectPack(packPrefix) {
+        currentSelectedPack = packPrefix;
+        document.querySelectorAll(".pack-item").forEach(el => el.classList.remove("selected"));
+        document.getElementById(`pack-${packPrefix}`).classList.add("selected");
+        const btn = document.getElementById("btnConfirmPack");
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    }
+
+    function confirmPackSelection() {
+        if (!currentSelectedPack) return;
+        document.getElementById("packSelectArea").style.display = "none";
+        document.getElementById("drawArea").style.display = "block";
+        const packName = currentSelectedPack === 'AYK' ? '妖灵觉醒' : '剑羽驱邪';
+        document.getElementById("currentPackName").textContent = `当前卡包：${packName}`;
+    }
+function disableDrawButtons() {
+    const b1 = document.getElementById("btnDraw1");
+    const b2 = document.getElementById("btnDraw5");
+    // 精准获取【抽卡区域】的关闭按钮（只禁用这个）
+    const closeBtn = document.querySelector("#drawArea .draw-close");
+    if(b1) { b1.disabled = true; b1.style.opacity = "0.6"; }
+    if(b2) { b2.disabled = true; b2.style.opacity = "0.6"; }
+    if(closeBtn) { closeBtn.disabled = true; closeBtn.style.opacity = "0.6"; }
+}
+
+function enableDrawButtons() {
+    const b1 = document.getElementById("btnDraw1");
+    const b2 = document.getElementById("btnDraw5");
+    const closeBtn = document.querySelector("#drawArea .draw-close");
+    if(b1) { b1.disabled = false; b1.style.opacity = "1"; }
+    if(b2) { b2.disabled = false; b2.style.opacity = "1"; }
+    if(closeBtn) { closeBtn.disabled = false; closeBtn.style.opacity = "1"; }
+}
+    
+function drawCards(callback) {
+  if (drawLeft <= 0) { disableDrawButtons(); if(callback) callback(); return; }
+  if (!hasDrawn) { hasDrawn = true; deck = {}; renderDeck(); renderCards(); }
+  const hand = [];
+
+  // 1张稀有卡（遵守规则）
+  const rareCard = randomRareCardWeighted();
+  hand.push(rareCard.id);
+  drawCount[rareCard.id] = (drawCount[rareCard.id] || 0) + 1;
+
+  // 9张普通卡（遵守规则）
+  for (let i = 0; i < 9; i++) {
+    const card = randomCardWeighted();
+    hand.push(card.id);
+    drawCount[card.id] = (drawCount[card.id] || 0) + 1;
+  }
+
+  renderDrawHand(hand, callback);
+  drawLeft--;
+  drawLeft = Math.max(drawLeft, 0);
+  document.getElementById("drawLeft").textContent = drawLeft;
+  document.getElementById("drawLeft2").textContent = drawLeft;
+  renderCards();
+}
+
+    function renderDrawHand(ids, onComplete) {
+        const grid = document.getElementById("drawGrid");
+        if(!grid) return;
+        grid.innerHTML = "";
+        ids.forEach(id => {
+            const card = ALL_CARDS.find(c => c.id === id);
+            if(!card) return;
+            const el = document.createElement("div");
+            el.className = "draw-card";
+            const rarity = getCardRarity(card);
+            if (rarity === 'SP') el.classList.add('light-sp');
+            else if (rarity === 'OR') el.classList.add('light-or');
+            else if (rarity === 'PC' || rarity === 'UR') el.classList.add('light-purple');
+            else if (rarity === '3D' || rarity === 'EX') el.classList.add('light-gold');
+
+            el.innerHTML = `
+                <div class="draw-card-inner">
+                    <div class="draw-front"><img src="${card.img}" alt="" loading="lazy"></div>
+                    <div class="draw-back"><img src="${CARD_BACK_IMG}" alt=""></div>
+                </div>
+            `;
+            grid.appendChild(el);
+        });
+        const cards = document.querySelectorAll(".draw-card");
+        cards.forEach((c, i) => {
+            setTimeout(() => {
+                c.classList.add("flip");
+                if (i === cards.length - 1 && onComplete) setTimeout(onComplete, 300);
+            }, i * 150);
+        });
+    }
+
+function drawOnePack() {
+  if (drawLeft < 1) { alert("抽卡次数已用完！"); return; }
+  if (!currentSelectedPack) { alert("请先选择卡包！"); return; }
+  if (!hasDrawn) { hasDrawn = true; deck = {}; renderDeck(); renderCards(); }
+  disableDrawButtons();
+  drawCards(() => enableDrawButtons()); // 无需改动
+}
+function drawFivePacks() {
+  if (drawLeft <= 0) { alert("抽卡次数已用完！"); return; }
+  if (drawLeft < 5) { alert("剩余抽卡次数不足5包！"); return; }
+  if (!hasDrawn) { hasDrawn = true; deck = {}; renderDeck(); renderCards(); }
+  disableDrawButtons();
+  let packCount = 0;
+  function drawNext() {
+    if (packCount >= 5) { enableDrawButtons(); return; }
+    packCount++;
+    drawCards(drawNext); // 无需改动
+  }
+  drawNext();
+}
+
+    let currentPreviewIndex = 0;
+    let currentPreviewCards = [];
+    let startX = 0;
+    let isSwiping = false;
+
+    window.openPreviewModal = function(card, index, allCards) {
+        currentPreviewIndex = index;
+        currentPreviewCards = allCards;
+        updatePreviewUI();
+        document.getElementById('cardPreviewModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    window.closePreviewModal = function() {
+        document.getElementById('cardPreviewModal').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    window.updatePreviewUI = function() {
+        const card = currentPreviewCards[currentPreviewIndex];
+        if (!card) return;
+
+        document.getElementById('previewImage').src = card.img;
+        document.getElementById('previewCardName').textContent = card.name;
+        
+        const currentCount = deck[card.id] || 0;
+        const maxCount = hasDrawn ? (drawCount[card.id] || 0) : 4;
+        document.getElementById('previewCardCount').textContent = `已携带: ${currentCount}/${maxCount}`;
+
+        const addBtn = document.getElementById('btnAddCard');
+        const removeBtn = document.getElementById('btnRemoveCard');
+        addBtn.disabled = currentCount >= maxCount;
+        removeBtn.disabled = currentCount <= 0;
+    }
+
+    window.addCurrentCard = function() {
+        const card = currentPreviewCards[currentPreviewIndex];
+        if (card) addCard(card.id);
+    }
+
+    window.removeCurrentCard = function() {
+        const card = currentPreviewCards[currentPreviewIndex];
+        if (card && deck[card.id]) removeCard(card.id);
+    }
+
+    document.getElementById('cardPreviewModal').addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isSwiping = true;
+    });
+
+    document.getElementById('cardPreviewModal').addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+        isSwiping = false;
+        const endX = e.changedTouches[0].clientX;
+        const diffX = endX - startX;
+        if (Math.abs(diffX) > 50) {
+            if (diffX > 0 && currentPreviewIndex > 0) currentPreviewIndex--;
+            else if (diffX < 0 && currentPreviewIndex < currentPreviewCards.length - 1) currentPreviewIndex++;
+            updatePreviewUI();
+        }
+    });
+
+    // 卡组折叠/展开
+    window.toggleDeck = function() {
+        const header = document.querySelector('.deck-header');
+        const content = document.getElementById('deckContent');
+        const arrow = document.getElementById('deckArrow');
+        
+        header.classList.toggle('collapsed');
+        content.classList.toggle('collapsed');
+    }
+
+    // 卡包拖拽
+    const slider = document.querySelector('.pack-grid');
+    if(slider) {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+        slider.addEventListener('mousedown', (e) => {
+          isDown = true;
+          startX = e.pageX - slider.offsetLeft;
+          scrollLeft = slider.scrollLeft;
+        });
+        slider.addEventListener('mouseleave', () => { isDown = false; });
+        slider.addEventListener('mouseup', () => { isDown = false; });
+        slider.addEventListener('mousemove', (e) => {
+          if(!isDown) return;
+          e.preventDefault();
+          const x = e.pageX - slider.offsetLeft;
+          const walk = (x - startX) * 1.5;
+          slider.scrollLeft = scrollLeft - walk;
+        });
+    }
+
+    // 初始化
+    initPrefixGroups(); 
+    initRarityGroups();
+    renderCards();
+    renderDeck();
+    // 新增：默认显示卡组列表
+    showDeckListPage();
+
+    let lastWindowWidth = window.innerWidth;
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            // 只有当宽度真正改变时才重新渲染（忽略地址栏隐藏导致的高度变化）
+            if (window.innerWidth !== lastWindowWidth) {
+                lastWindowWidth = window.innerWidth;
+                currentPage = 1;
+                renderCards();
+            }
+        }, 100);
+    });
+
+// ====================== 自动监听页面显示，强制刷新卡牌 ======================
+// 监听组卡器页面显示状态，自动触发renderCards（零侵入原有代码）
+const mainApp = document.getElementById('mainApp');
+const deckListPage = document.getElementById('deckListPage');
+
+// 创建DOM监听器
+const observer = new MutationObserver((mutations) => {
+  // 检测到组卡器页面 从隐藏 → 显示
+  if (mainApp.style.display === 'block') {
+    // 等待DOM渲染完成，再执行渲染（解决宽度计算问题）
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        renderCards();
+      });
+    });
+  }
+});
+
+// 开始监听页面的样式变化
+observer.observe(mainApp, {
+  attributes: true,        // 监听属性变化
+  attributeFilter: ['style'] // 只监听style变化
+});
+// ==========================================================================
+
+// ====================== 安全版 Toast 函数 ======================
+function toast(msg, type = 'normal') {
+    // 1. 创建容器
+    let box = document.querySelector('.toast-box');
+    if (!box) {
+        box = document.createElement('div');
+        box.className = 'toast-box';
+        document.body.appendChild(box);
+    }
+
+    // 2. 创建消息条
+    const t = document.createElement('div');
+    t.className = 'toast-item ' + type;
+    t.textContent = msg;
+    box.appendChild(t);
+
+    // 3. 动画显示
+    setTimeout(() => t.classList.add('show'), 10);
+
+    // 4. 3秒后移除
+    setTimeout(() => {
+        t.classList.remove('show');
+        setTimeout(() => t.remove(), 300);
+    }, 3000);
+}
+
+// ====================== 劫持原生 alert（这是关键！不用你去替换了） ======================
+window._alert = window.alert; // 保存原有的 alert
+window.alert = function(msg) {
+    console.log('拦截到 alert:', msg);
+    
+    // 智能判断消息类型
+    if (msg.includes('成功') || msg.includes('已复制')) {
+        toast(msg, 'ok');
+    } else if (msg.includes('确定') || msg.includes('清空') || msg.includes('删除')) {
+        // 涉及确认的，还是弹原生框，防止出错
+        return window._alert(msg);
+    } else {
+        // 其他警告一律用 Toast
+        toast(msg, 'warn');
+    }
+};
+
+// ====================== 【绝对高度版】费用柱状图渲染逻辑 ======================
+function renderCostCurve() {
+    const container = document.getElementById('costCurveBox');
+    if (!container) return;
+
+    // 1. 初始化数据 (0费 到 10费)
+    const data = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0};
+
+    // 2. 统计当前卡组
+    Object.entries(deck).forEach(([cardId, count]) => {
+        const card = ALL_CARDS.find(c => c.id === cardId);
+        if (!card) return;
+
+        let cost = 0;
+        if (card.cost && !isNaN(parseInt(card.cost))) {
+            cost = parseInt(card.cost);
+        }
+        if (cost > 10) cost = 10;
+        if (cost < 0) cost = 0;
+
+        data[cost] += count;
+    });
+
+    // 【新增】定义颜色映射
+    const colorMap = [
+        "#339af0", "#22b8cf", "#20c997", "#40c057", "#82c91e", 
+        "#fab005", "#fd7e14", "#f76707", "#e03131", "#c92a2a", "#862e2e"
+    ];
+
+    container.innerHTML = '';
+    for (let i = 0; i <= 10; i++) {
+        const cardCount = data[i];
+        
+        // ==========================================
+        // 【核心修改】绝对高度计算
+        // 设定：1张牌 = 12px 高度 (你可以修改这个数字来调整整体缩放)
+        // ==========================================
+        const baseUnit = 4; 
+        let heightPx = cardCount * baseUnit;
+
+        // 最小高度：即使0张，也留2px的底座，防止飘起来
+        if (heightPx === 0) heightPx = 1;
+
+        const div = document.createElement('div');
+        div.className = 'cost-bar-item';
+        div.dataset.cost = i;
+        
+        const labelText = i === 10 ? "10+" : i;
+        const currentColor = colorMap[i];
+
+        // 【修改】这里的 style 从 % 改为 px
+        div.innerHTML = `
+            <div class="cost-bar-inner" style="height: ${heightPx}px; background: linear-gradient(to top, ${currentColor}, ${currentColor}dd);">
+                ${cardCount > 3 ? `<span style="font-size:10px;color:#fff;text-align:center;display:block;line-height:1;padding-top:2px;font-weight:bold;">${cardCount}</span>` : ''}
+            </div>
+            <div class="cost-bar-text">${labelText}</div>
+        `;
+
+        // 点击事件逻辑保持不变
+        div.onclick = function() {
+            const isActive = this.classList.contains('active');
+            document.querySelectorAll('.cost-bar-item').forEach(el => el.classList.remove('active'));
+
+            if (!isActive) {
+                this.classList.add('active');
+                document.getElementById('costFilter').value = (i === 10) ? "10+" : String(i);
+            } else {
+                document.getElementById('costFilter').value = "全部";
+            }
+            renderCards();
+        };
+
+        container.appendChild(div);
+    }
+}
+
+// 【重要】监听费用下拉框的变化，如果手动选了"全部"，取消柱子高亮
+// 找到原有的 costFilter 元素，加个监听
+document.addEventListener('DOMContentLoaded', function() {
+    const costSel = document.getElementById('costFilter');
+    if (costSel) {
+        costSel.addEventListener('change', function() {
+            if (this.value === '全部') {
+                document.querySelectorAll('.cost-bar-item').forEach(el => el.classList.remove('active'));
+            }
+        });
+    }
+});
+    </script>
+</body>
+</html>

@@ -49,9 +49,14 @@ type RoomPlayerEntry = {
   reconnectToken: string;
   disconnectedAt?: number;
 };
+type SpectatorEntry = {
+  ws: WebSocket | null;
+  name: string;
+};
 type Room = {
   id: RoomId;
   players: Map<PlayerId, RoomPlayerEntry>;
+  spectators: Map<PlayerId, SpectatorEntry>;
   matchState?: MatchState;
 };
 
@@ -65,7 +70,8 @@ export class RoomManager {
     const reconnectToken = nanoid(12);
     const room: Room = {
       id: roomId,
-      players: new Map([[playerId, { ws, state: createPlayer(playerId, name), reconnectToken }]])
+      players: new Map([[playerId, { ws, state: createPlayer(playerId, name), reconnectToken }]]),
+      spectators: new Map()
     };
     this.rooms.set(roomId, room);
     return { roomId, playerId, reconnectToken };
@@ -91,6 +97,30 @@ export class RoomManager {
       reconnectToken,
       players: [...room.players.values()].map((entry) => entry.state)
     };
+  }
+
+  /** 以观战者身份加入房间 */
+  joinAsSpectator(roomId: RoomId, ws: WebSocket, playerId: PlayerId, name: string): MatchState | null {
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      throw new Error("room not found");
+    }
+    room.spectators.set(playerId, { ws, name });
+    return room.matchState ?? null;
+  }
+
+  /** 向观战者广播完整对局状态（不脱敏） */
+  broadcastToSpectators(roomId: RoomId, event: ServerEvent): void {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    for (const [, entry] of room.spectators.entries()) {
+      if (!entry.ws || entry.ws.readyState !== WebSocket.OPEN) continue;
+      try {
+        entry.ws.send(JSON.stringify(event));
+      } catch (error) {
+        console.error(`[RoomManager] Failed to send to spectator ${entry.name}:`, error);
+      }
+    }
   }
 
   /** 更新玩家的牌库（玩家导入卡组时调用） */
@@ -452,6 +482,19 @@ export class RoomManager {
         console.error(`[RoomManager] Failed to send to ${playerId}:`, error);
       }
     }
+    // 向观战者广播完整状态（不脱敏）
+    if (event.type === "match_started" || event.type === "match_state") {
+      this.broadcastToSpectators(roomId, { ...event, payload: event.payload });
+    } else {
+      this.broadcastToSpectators(roomId, event);
+    }
+  }
+
+  /** 移除观战者 */
+  removeSpectator(roomId: RoomId, playerId: PlayerId): void {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    room.spectators.delete(playerId);
   }
 
   /** 处理玩家断线：不直接删除，标记为断线状态，启动超时清理 */

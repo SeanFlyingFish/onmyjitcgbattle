@@ -490,6 +490,14 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     type: z.literal("leave_room"),
     payload: z.object({ roomId: z.string().min(1) })
   }),
+  // 观战：房间已满时以观战者身份加入，可看到双方全部信息
+  z.object({
+    type: z.literal("spectate_room"),
+    payload: z.object({
+      roomId: z.string().min(1),
+      name: z.string().min(1)
+    })
+  }),
   // 重开对局
   z.object({
     type: z.literal("rematch"),
