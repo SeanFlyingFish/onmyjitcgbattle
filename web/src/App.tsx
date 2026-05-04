@@ -48,6 +48,13 @@ type ShikigamiZoneCard = {
   awakenCards?: Card[];
 };
 
+type BarrierZoneCard = {
+  card: Card;
+  exhausted: boolean;
+  energyMarkers: number;
+  customMarkers?: Record<string, number>;
+};
+
 type PlayerState = {
   id: string;
   name: string;
@@ -61,8 +68,7 @@ type PlayerState = {
   removedZone: Card[];
   spellZone: SpellZoneCard[];
   shikigamiZone: Array<ShikigamiZoneCard | null>;
-  barrier: Card | null;
-  barrierExhausted?: boolean;
+  barrier: BarrierZoneCard | null;
   spellCardsPlayedThisTurn: number;
   deckSearchBuffer: Card[];
   deckPeekBuffer: Card[];
@@ -1142,7 +1148,7 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
     for (const c of (selfView?.extendZone ?? []).flat()) {
       if (c.card?.id === cardId) return c.card;
     }
-    if (selfView?.barrier?.id === cardId) return selfView.barrier;
+    if (selfView?.barrier?.card?.id === cardId) return selfView.barrier.card;
     return null;
   }
 
@@ -1296,15 +1302,15 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                     >
                       🎮 开始对局 {builderDeck ? `（${builderDeck.length}张）` : "（默认牌组）"}
                     </button>
-                    {roomId && !gameOver && !matchState && (
+                    {roomId && (
                       <button onClick={leaveRoom}>🚪 退出房间</button>
                     )}
-                    {gameOver && (
+                    {roomId && (
                       <button
                         className="btn-start"
                         onClick={() => send({ type: "rematch", payload: { roomId } })}
                       >
-                        🔄 重开对局 {builderDeck ? `（${builderDeck.length}张）` : "（默认牌组）"}
+                        🔄 重新对局 {builderDeck ? `（${builderDeck.length}张）` : "（默认牌组）"}
                       </button>
                     )}
                   </div>
@@ -1605,9 +1611,9 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                   >
                     {enemyView?.barrier && (
                       <div
-                        className={`card card--mini ${enemyView.barrierExhausted ? 'is-exhausted' : ''}`}
-                        style={{ backgroundImage: `url(${enemyView.barrier.img || CARD_IMAGE_URL})` }}
-                        onMouseEnter={() => { setHoveredBoardCardId(enemyView!.barrier!.id); setHoveredBoardCardData(enemyView!.barrier!); }}
+                        className={`card card--mini ${enemyView.barrier.exhausted ? 'is-exhausted' : ''}`}
+                        style={{ backgroundImage: `url(${enemyView.barrier.card.img || CARD_IMAGE_URL})` }}
+                        onMouseEnter={() => { setHoveredBoardCardId(enemyView!.barrier!.card.id); setHoveredBoardCardData(enemyView!.barrier!.card); }}
                         onMouseLeave={() => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); }}
                       />
                     )}
@@ -1652,12 +1658,12 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                   >
                         {selfView?.barrier && (
                           <div
-                            className={`card card--mini ${selfView.barrierExhausted ? 'is-exhausted' : ''}`}
-                            style={{ backgroundImage: `url(${selfView.barrier.img || CARD_IMAGE_URL})` }}
+                            className={`card card--mini ${selfView.barrier.exhausted ? 'is-exhausted' : ''}`}
+                            style={{ backgroundImage: `url(${selfView.barrier.card.img || CARD_IMAGE_URL})` }}
                             draggable={allowBoardDrag}
-                            onDragStart={(e) => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); setDragPayload(e, selfView!.barrier!.id, "barrier", "barrier"); }}
-                            onClick={() => toggleSpellExhaust(selfView!.barrier!.id)}
-                            onMouseEnter={() => { setHoveredBoardCardId(selfView!.barrier!.id); setHoveredBoardCardData(selfView!.barrier!); }}
+                            onDragStart={(e) => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); setDragPayload(e, selfView!.barrier!.card.id, "barrier", "barrier"); }}
+                            onClick={() => toggleSpellExhaust(selfView!.barrier!.card.id)}
+                            onMouseEnter={() => { setHoveredBoardCardId(selfView!.barrier!.card.id); setHoveredBoardCardData(selfView!.barrier!.card); }}
                             onMouseLeave={() => { setHoveredBoardCardId(null); setHoveredBoardCardData(null); }}
                           />
                         )}
@@ -2493,8 +2499,8 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
         </div>
       )}
 
-      {/* ========== 游戏结束遮罩 ========== */}
-      {matchState?.winnerId && !gameOverDismissed ? (
+      {/* ========== 游戏结束遮罩（暂时禁用） ========== */}
+      {false && matchState?.winnerId && !gameOverDismissed ? (
         <div className="game-over-overlay" role="alertdialog" aria-live="assertive" aria-label="对局结束" onClick={() => setGameOverDismissed(true)}>
           <div className="game-over-card" onClick={(e) => e.stopPropagation()}>
             <h3 className="game-over-title">对局结束</h3>
