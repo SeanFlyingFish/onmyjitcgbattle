@@ -537,7 +537,7 @@ export class RoomManager {
   /** 扫描并清理超时（1分钟）断线的玩家；双方均断线则删除整个房间 */
   cleanupTimedOutRooms(): void {
     const now = Date.now();
-    const TIMEOUT = 60_000; // 1 分钟
+    const TIMEOUT = 600_000; // 1 分钟
     for (const [roomId, room] of this.rooms.entries()) {
       let allDisconnected = true;
       for (const [playerId, entry] of room.players.entries()) {
