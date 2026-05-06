@@ -337,13 +337,14 @@ export class RoomManager {
     tokenName: string,
     tokenAttack: number,
     tokenHealth: number,
-    tokenImg: string
+    tokenImg: string,
+    tokenAbility: string 
   ): MatchState {
     const room = this.getRoomOrThrow(roomId);
     if (!room.matchState) {
       throw new Error("match not started");
     }
-    return placeTokenToShowcase(room.matchState, playerId, tokenId, tokenName, tokenAttack, tokenHealth, tokenImg);
+    return placeTokenToShowcase(room.matchState, playerId, tokenId, tokenName, tokenAttack, tokenHealth, tokenImg, tokenAbility);
   }
 
   removeTokenCard(
