@@ -2256,7 +2256,7 @@ body {
   z-index: 99999;
   display: flex;
   gap: 16px;
-  max-width: 480px;
+  max-width: 700px;
   padding: 12px 16px;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border: 2px solid #4a90d9;
@@ -2274,7 +2274,7 @@ body {
   left: auto;
   right: auto;
   transform: translateY(-50%);
-  max-width: 480px;
+  max-width: 700px;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border: 2px solid #4a90d9;
   border-radius: 12px;
@@ -2285,12 +2285,12 @@ body {
   animation: fadeIn 0.2s ease;
 }
 .card-preview--dynamic.left-side {
-  left: calc(50% + 160px);
+  left: calc(50% + 200px);
   right: auto;
 }
 .card-preview--dynamic.right-side {
   left: auto;
-  right: calc(50% + 160px);
+  right: calc(50% + 200px);
 }
 
 @keyframes fadeIn {
@@ -2298,14 +2298,14 @@ body {
   to   { opacity: 1; transform: translateY(-50%) translateX(0); }
 }
 .card-preview-art {
-  width: 140px;
+  width: 280px;
   height: auto;
-  border-radius: 6px;
+  border-radius: 8px;
   object-fit: contain;
 }
 /* 大尺寸卡图（预览时） */
 .card-preview-art--large {
-  width: 180px;
+  width: 360px;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
   border: 2px solid #4a90d9;

@@ -905,7 +905,8 @@ export function placeTokenToShowcase(
   tokenName: string,
   tokenAttack: number,
   tokenHealth: number,
-  tokenImg: string
+  tokenImg: string,
+  tokenAbility?: string
 ): MatchState {
   if (state.winnerId || state.phase !== "playing") {
     return state;
@@ -921,7 +922,9 @@ export function placeTokenToShowcase(
     cost: 0,
     attack: tokenAttack,
     health: tokenHealth,
-    img: tokenImg
+    img: tokenImg,
+    tokenId: tokenId,
+    ...(tokenAbility ? { ability: tokenAbility } : {})
   };
   state.showcaseZone.push(tokenCard);
   return state;

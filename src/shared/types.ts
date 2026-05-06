@@ -18,6 +18,8 @@ export type Card = {
   img?: string;
   /** 别名：觉醒牌 alias 对应其所属式神名称（用于附着校验） */
   alias?: string;
+  /** 原始 TOKEN ID（仅 token 类型卡牌，用于前端从 CARD_DATABASE 回查 ability） */
+  tokenId?: string;
 };
 
 /**
@@ -388,7 +390,8 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
       tokenName: z.string().min(1),
       tokenAttack: z.number(),
       tokenHealth: z.number(),
-      tokenImg: z.string()
+      tokenImg: z.string(),
+      tokenAbility: z.string().optional()
     })
   }),
   // 移除展示区的召唤物卡牌（直接删除）
@@ -475,6 +478,8 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
   // 注册/登录
   z.object({ type: z.literal("register"), payload: z.object({ name: z.string().min(1), password: z.string().min(1) }) }),
   z.object({ type: z.literal("login"), payload: z.object({ name: z.string().min(1), password: z.string().min(1) }) }),
+  // sessionToken 静默重登（从组卡器返回等场景）
+  z.object({ type: z.literal("session_login"), payload: z.object({ sessionToken: z.string().min(1) }) }),
   // 管理员
   z.object({ type: z.literal("admin_auth"), payload: z.object({ password: z.string().min(1) }) }),
   z.object({ type: z.literal("admin_list_accounts"), payload: z.object({}) }),
@@ -521,7 +526,7 @@ export type ServerEvent =
   | { type: "error"; payload: { message: string } }
   | { type: "chat"; payload: { playerId: PlayerId; playerName: string; message: string } }
   | { type: "register_success"; payload: { playerId: PlayerId; name: string } }
-  | { type: "login_success"; payload: { playerId: PlayerId; name: string } }
+  | { type: "login_success"; payload: { playerId: PlayerId; name: string; sessionToken?: string } }
   | { type: "auth_error"; payload: { message: string } }
   | { type: "admin_auth_success"; payload: {} }
   | { type: "admin_accounts_list"; payload: { accounts: { playerId: PlayerId; name: string }[] } }

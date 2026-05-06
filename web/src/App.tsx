@@ -102,7 +102,7 @@ type ServerEvent =
   | { type: "error"; payload: { message: string } }
   | { type: "chat"; payload: { playerId: string; playerName: string; message: string } }
   | { type: "register_success"; payload: { playerId: string; name: string } }
-  | { type: "login_success"; payload: { playerId: string; name: string } }
+  | { type: "login_success"; payload: { playerId: string; name: string; sessionToken?: string } }
   | { type: "auth_error"; payload: { message: string } };
 
 const CARD_IMAGE_URL = "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_1.webp";
@@ -631,6 +631,10 @@ function App() {
     setName(msg.payload.name);
     setPlayerId(msg.payload.playerId);
     localStorage.setItem("onmyoji_tcg_username", msg.payload.name);
+    // 保存 sessionToken 用于跨页面/刷新自动重登
+    if (msg.payload.sessionToken) {
+      localStorage.setItem("onmyoji_tcg_session_token", msg.payload.sessionToken);
+    }
     setAuthError("");
     appendLog(`🔑 登录成功：${msg.payload.name}`);
 
@@ -943,17 +947,27 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
     setMatchState(null);
     localStorage.removeItem("onmyoji_tcg_username");
     localStorage.removeItem("onmyoji_tcg_reconnect");
+    localStorage.removeItem("onmyoji_tcg_session_token");
     setLoginPassword("");
     setRegisterPassword("");
     appendLog("🔓 已登出");
   }
 
-  /** 页面加载时检查 localStorage，仅做提示（重连数据在登录成功后按当前账号名重新读取） */
+  /** 页面加载时：尝试 sessionToken 静默重登；检查重连提示 */
   useEffect(() => {
     try {
-      // 仅检查上一次登录账号是否有未结束的对局，仅用于显示提示
+      // 优先尝试 sessionToken 自动重登（从组卡器返回等场景）
+      const sessionToken = localStorage.getItem("onmyoji_tcg_session_token");
+      if (sessionToken) {
+        connect((ws) => {
+          ws.send(JSON.stringify({ type: "session_login", payload: { sessionToken } }));
+          appendLog("🔄 正在自动恢复登录...");
+        });
+      }
+
+      // 检查上一次登录账号是否有未结束的对局，仅用于显示提示
       const username = localStorage.getItem("onmyoji_tcg_username") || "";
-      if (username) {
+      if (username && !sessionToken) {
         const reconnectKey = `onmyoji_tcg_reconnect_${username}`;
         const saved = localStorage.getItem(reconnectKey);
         if (saved) {
@@ -2421,16 +2435,19 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
               <div className="card-preview-name">{hoveredCard.name}</div>
               <div className="card-preview-stats">
                 <span className="preview-stat">费用 {hoveredCard.cost}</span>
-                {hoveredCard.type === 'shikigami' && (
+                {(hoveredCard.type === 'shikigami' || hoveredCard.type === 'token') && (
                   <>
-                    <span className="preview-stat">攻击 {hoveredCard.attack}</span>
-                    <span className="preview-stat">生命 {hoveredCard.health}</span>
+                    <span className="preview-stat">攻击 {hoveredCard.attack ?? 0}</span>
+                    <span className="preview-stat">生命 {hoveredCard.health ?? 0}</span>
                   </>
                 )}
               </div>
-              {hoveredCard.ability && (
-                <div className="card-preview-ability">{hoveredCard.ability}</div>
-              )}
+              {(() => {
+                const displayAbility = hoveredCard.ability
+                  || (hoveredCard.type === 'token' && hoveredCard.tokenId && CARD_DATABASE[hoveredCard.tokenId]?.ability)
+                  || '';
+                return displayAbility ? <div className="card-preview-ability">{displayAbility}</div> : null;
+              })()}
             </div>
           </div>
         );
@@ -2444,28 +2461,30 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
             <div className="card-preview-name">{hoveredBoardCardData.name}</div>
             <div className="card-preview-stats">
               <span className="preview-stat">费用 {hoveredBoardCardData.cost}</span>
-              {hoveredBoardCardData.type === 'shikigami' && (() => {
-                // 如果有觉醒加成，展示基础值 + 觉醒加成
+              {(hoveredBoardCardData.type === 'shikigami' || hoveredBoardCardData.type === 'token') && (() => {
                 const slot = hoveredShikigamiSlot;
                 const awakenBonusAtk = slot?.awakenCards?.reduce((s, c) => s + (c.attack ?? 0), 0) ?? 0;
                 const awakenBonusHp = slot?.awakenCards?.reduce((s, c) => s + (c.health ?? 0), 0) ?? 0;
                 return (
                   <>
                     <span className="preview-stat">
-                      攻击 {hoveredBoardCardData.attack}
+                      攻击 {hoveredBoardCardData.attack ?? 0}
                       {awakenBonusAtk > 0 && <span className="preview-stat-awaken-bonus">(+{awakenBonusAtk})</span>}
                     </span>
                     <span className="preview-stat">
-                      生命 {hoveredBoardCardData.health}
+                      生命 {hoveredBoardCardData.health ?? 0}
                       {awakenBonusHp > 0 && <span className="preview-stat-awaken-bonus">(+{awakenBonusHp})</span>}
                     </span>
                   </>
                 );
               })()}
             </div>
-            {hoveredBoardCardData.ability && (
-              <div className="card-preview-ability">{hoveredBoardCardData.ability}</div>
-            )}
+            {(() => {
+              const displayAbility = hoveredBoardCardData.ability
+                || (hoveredBoardCardData.type === 'token' && hoveredBoardCardData.tokenId && CARD_DATABASE[hoveredBoardCardData.tokenId]?.ability)
+                || '';
+              return displayAbility ? <div className="card-preview-ability">{displayAbility}</div> : null;
+            })()}
             {/* 觉醒牌信息（虚线分隔） */}
             {hoveredShikigamiSlot?.awakenCards && hoveredShikigamiSlot.awakenCards.length > 0 && (
               <div className="card-preview-awaken-section">
@@ -2569,7 +2588,10 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
             <div className="deck-modal-scroll">
               <div className="deck-modal-grid">
                 {deckModalFiltered.map(({ card, index }) => (
-                  <div key={`${card.id}-${index}`} className="deck-modal-cell">
+                  <div key={`${card.id}-${index}`} className="deck-modal-cell"
+                    onMouseEnter={() => { setHoveredBoardCardData(card); setHoveredShikigamiSlot(null); }}
+                    onMouseLeave={() => setHoveredBoardCardData(null)}
+                  >
                     <span className="deck-modal-idx">{index + 1}</span>
                     <img className="deck-modal-thumb" src={card.img || CARD_IMAGE_URL} alt={card.name} />
                     <span className="deck-modal-name">{card.name}</span>
@@ -2611,7 +2633,10 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
             <div className="deck-modal-scroll">
               <div className="deck-modal-grid">
                 {deckModalFiltered.map(({ card, index }) => (
-                  <div key={`peek-${card.id}-${index}`} className="deck-modal-cell">
+                  <div key={`peek-${card.id}-${index}`} className="deck-modal-cell"
+                    onMouseEnter={() => { setHoveredBoardCardData(card); setHoveredShikigamiSlot(null); }}
+                    onMouseLeave={() => setHoveredBoardCardData(null)}
+                  >
                     <span className="deck-modal-idx">{index + 1}</span>
                     <img className="deck-modal-thumb" src={card.img || CARD_IMAGE_URL} alt={card.name} />
                     <span className="deck-modal-name">{card.name}</span>
@@ -2705,6 +2730,8 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                               return [...prev, card.id];
                             });
                           }}
+                          onMouseEnter={() => { setHoveredBoardCardData(card); setHoveredShikigamiSlot(null); }}
+                          onMouseLeave={() => setHoveredBoardCardData(null)}
                           style={{ cursor: "pointer" }}
                         >
                           <span className="deck-modal-idx">{isSelected ? selIdx + 1 : index + 1}</span>
@@ -2948,6 +2975,8 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                                 : prev // 只允许选1张
                           );
                         }}
+                        onMouseEnter={() => { setHoveredBoardCardData(card); setHoveredShikigamiSlot(null); }}
+                        onMouseLeave={() => setHoveredBoardCardData(null)}
                         style={{ cursor: "pointer" }}
                       >
                         <img className="deck-modal-thumb" src={card.img || CARD_IMAGE_URL} alt={card.name} />
@@ -2980,7 +3009,8 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                           tokenName: tokenCard.name,
                           tokenAttack: tokenCard.attack ?? 0,
                           tokenHealth: tokenCard.health ?? 2,
-                          tokenImg: tokenCard.img ?? ""
+                          tokenImg: tokenCard.img ?? "",
+                          tokenAbility: tokenCard.ability ?? ""
                         }
                       });
                       appendLog(`📋 将【${tokenCard.name}】置于展示区`);
@@ -3046,6 +3076,8 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                               return next;
                             });
                           }}
+                          onMouseEnter={() => { setHoveredBoardCardData(c); setHoveredShikigamiSlot(null); }}
+                          onMouseLeave={() => setHoveredBoardCardData(null)}
                           draggable={isSelf && !graveyardSelectedIds.has(c.id)}
                           onDragStart={(e) => {
                             if (isSelf && !graveyardSelectedIds.has(c.id)) {
@@ -3088,6 +3120,8 @@ const [customTokenNameInput, setCustomTokenNameInput] = useState("");
                       <div
                         key={c.id}
                         className="graveyard-modal-card"
+                        onMouseEnter={() => { setHoveredBoardCardData(c); setHoveredShikigamiSlot(null); }}
+                        onMouseLeave={() => setHoveredBoardCardData(null)}
                         draggable={isSelf}
                         onDragStart={(e) => {
                           if (isSelf) {

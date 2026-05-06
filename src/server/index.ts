@@ -46,10 +46,23 @@ wss.on("connection", (ws) => {
       if (parsed.type === "login") {
         const result = authManager.login(parsed.payload.name, parsed.payload.password);
         if (result) {
+          const session = authManager.createSession(result.playerId, result.name);
           sessions.set(ws, { playerId: result.playerId, name: result.name });
-          send(ws, { type: "login_success", payload: result });
+          send(ws, { type: "login_success", payload: { playerId: result.playerId, name: result.name, sessionToken: session.sessionToken } });
         } else {
           send(ws, { type: "auth_error", payload: { message: "用户名或密码错误" } });
+        }
+        return;
+      }
+
+      // sessionToken 静默重登
+      if (parsed.type === "session_login") {
+        const result = authManager.validateSession(parsed.payload.sessionToken);
+        if (result) {
+          sessions.set(ws, { playerId: result.playerId, name: result.name });
+          send(ws, { type: "login_success", payload: { playerId: result.playerId, name: result.name } });
+        } else {
+          send(ws, { type: "auth_error", payload: { message: "会话已过期，请重新登录" } });
         }
         return;
       }
@@ -409,7 +422,8 @@ wss.on("connection", (ws) => {
           parsed.payload.tokenName,
           parsed.payload.tokenAttack,
           parsed.payload.tokenHealth,
-          parsed.payload.tokenImg
+          parsed.payload.tokenImg,
+          parsed.payload.tokenAbility
         );
         roomManager.broadcastRoom(parsed.payload.roomId, { type: "match_state", payload: state });
         return;

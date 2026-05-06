@@ -804,7 +804,7 @@ export function deckPeek(state, actorId, count) {
     return state;
 }
 /** 将召唤物（TOKEN）卡牌从召唤物库置于展示区 */
-export function placeTokenToShowcase(state, actorId, tokenId, tokenName, tokenAttack, tokenHealth, tokenImg) {
+export function placeTokenToShowcase(state, actorId, tokenId, tokenName, tokenAttack, tokenHealth, tokenImg, tokenAbility) {
     if (state.winnerId || state.phase !== "playing") {
         return state;
     }
@@ -819,7 +819,9 @@ export function placeTokenToShowcase(state, actorId, tokenId, tokenName, tokenAt
         cost: 0,
         attack: tokenAttack,
         health: tokenHealth,
-        img: tokenImg
+        img: tokenImg,
+        tokenId: tokenId,
+        ...(tokenAbility ? { ability: tokenAbility } : {})
     };
     state.showcaseZone.push(tokenCard);
     return state;

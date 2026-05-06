@@ -214,7 +214,8 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
             tokenName: z.string().min(1),
             tokenAttack: z.number(),
             tokenHealth: z.number(),
-            tokenImg: z.string()
+            tokenImg: z.string(),
+            tokenAbility: z.string().optional()
         })
     }),
     // 移除展示区的召唤物卡牌（直接删除）
@@ -301,6 +302,8 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     // 注册/登录
     z.object({ type: z.literal("register"), payload: z.object({ name: z.string().min(1), password: z.string().min(1) }) }),
     z.object({ type: z.literal("login"), payload: z.object({ name: z.string().min(1), password: z.string().min(1) }) }),
+    // sessionToken 静默重登（从组卡器返回等场景）
+    z.object({ type: z.literal("session_login"), payload: z.object({ sessionToken: z.string().min(1) }) }),
     // 管理员
     z.object({ type: z.literal("admin_auth"), payload: z.object({ password: z.string().min(1) }) }),
     z.object({ type: z.literal("admin_list_accounts"), payload: z.object({}) }),
@@ -315,6 +318,14 @@ export const ClientEventSchema = z.discriminatedUnion("type", [
     z.object({
         type: z.literal("leave_room"),
         payload: z.object({ roomId: z.string().min(1) })
+    }),
+    // 观战：房间已满时以观战者身份加入，可看到双方全部信息
+    z.object({
+        type: z.literal("spectate_room"),
+        payload: z.object({
+            roomId: z.string().min(1),
+            name: z.string().min(1)
+        })
     }),
     // 重开对局
     z.object({

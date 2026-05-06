@@ -25,6 +25,8 @@ export class AuthManager {
   private filePath: string;
   private adminPassword: string;
   private adminWsSet: Set<WebSocket> = new Set();
+  private sessions: Map<string, { playerId: string; name: string; expiresAt: number }> = new Map();
+  private readonly SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30天
 
   constructor(filePath?: string) {
     this.filePath = filePath ?? process.env.ACCOUNTS_FILE_PATH ?? "/data/accounts.json";
@@ -55,6 +57,30 @@ export class AuthManager {
       return { playerId: account.playerId, name: account.name };
     }
     return null;
+  }
+
+  /** 创建一个持久化会话 token（30天有效），用于跨页面/刷新自动重登 */
+  createSession(playerId: string, name: string): { sessionToken: string; playerId: string; name: string } {
+    const sessionToken = randomBytes(32).toString("hex");
+    const expiresAt = Date.now() + this.SESSION_DURATION_MS;
+    this.sessions.set(sessionToken, { playerId, name, expiresAt });
+    return { sessionToken, playerId, name };
+  }
+
+  /** 验证 sessionToken，返回账号信息或 null */
+  validateSession(sessionToken: string): { playerId: string; name: string } | null {
+    const session = this.sessions.get(sessionToken);
+    if (!session) return null;
+    if (Date.now() > session.expiresAt) {
+      this.sessions.delete(sessionToken);
+      return null;
+    }
+    return { playerId: session.playerId, name: session.name };
+  }
+
+  /** 销毁 sessionToken（登出时调用） */
+  destroySession(sessionToken: string): void {
+    this.sessions.delete(sessionToken);
   }
 
   adminAuth(password: string): boolean {
