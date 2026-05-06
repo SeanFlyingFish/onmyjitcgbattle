@@ -338,7 +338,7 @@ export class RoomManager {
     tokenAttack: number,
     tokenHealth: number,
     tokenImg: string,
-    tokenAbility: string 
+    tokenAbility?: string 
   ): MatchState {
     const room = this.getRoomOrThrow(roomId);
     if (!room.matchState) {
