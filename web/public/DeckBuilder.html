@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -374,12 +374,26 @@ button.danger{background: linear-gradient(135deg, #c92a2a, #a02525);}
 .draw-card.light-gold { animation: breath-gold 1.8s infinite ease-in-out; }
 
 @media (max-width: 768px) {
-    html,body{ padding:0;margin:0;height:auto;overflow:auto; background: #f5f0e8; }
+    /* 全局基础重置，杜绝横向滚动根因 */
+    html,body{ 
+        padding:0;
+        margin:0;
+        height:auto;
+        overflow-x: hidden !important; /* 强制禁止页面横向滚动 */
+        background: #f5f0e8; 
+    }
+    * {
+        box-sizing: border-box;
+        max-width: 100%;
+    }
     h1{display: none;}
 
     /* 搜索栏移动端适配 */
     .search-bar{
-        position:sticky;top:0;left:0;right:0;
+        position:sticky;
+        top:0;
+        left:0;
+        right:0;
         background: linear-gradient(135deg, #f8f4f0, #f0e6d6);
         padding:8px 10px;
         margin:0;
@@ -425,20 +439,31 @@ button.danger{background: linear-gradient(135deg, #c92a2a, #a02525);}
     }
 
     /* 主容器 */
-    .container{ flex-direction:column;gap:15px;margin:0;padding:0; }
-    .card-library{ width:100%;padding:12px;margin:0; background: transparent; box-shadow: none; }
+    .container{ 
+        flex-direction:column;
+        gap:15px;
+        margin:0;
+        padding:0; 
+    }
+    .card-library{ 
+        width:100%;
+        padding:12px;
+        margin:0; 
+        background: transparent; 
+        box-shadow: none; 
+    }
     #cardPreview{ display: none !important; }
 
-  .library-title {
-    gap: 6px;
-  }
-  .title-btns {
-    gap: 4px;
-  }
-  .library-title .back-btn {
-    padding: 4px 8px;
-    font-size: 12px;
-  }
+    .library-title {
+        gap: 6px;
+    }
+    .title-btns {
+        gap: 4px;
+    }
+    .library-title .back-btn {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
 
     /* 卡组区域折叠 */
     .deck-header {
@@ -529,50 +554,106 @@ button.danger{background: linear-gradient(135deg, #c92a2a, #a02525);}
         font-size: 10px !important;
     }
 
-    /* ====================== 卡组列表页（我的卡组）移动端适配 ====================== */
+    /* 2. 卡组列表页面容器 */
     .deck-list-page {
-        padding: 10px;
-        width: 100%;
-        max-width: 100%;
+        padding: 12px 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
-    .deck-list-header {
-        flex-direction: column;
-        gap: 10px;
-        align-items: stretch;
-        margin-bottom: 15px;
-    }
-    .deck-list-header h2 {
-        font-size: 18px;
-        color: #5a3921;
-        text-align: center;
-    }
-    .btn-new-deck {
-        width: 100%;
-        padding: 10px;
-        font-size: 15px;
-    }
+
+    /* 3. 核心：双列网格，强制平分宽度 */
     .deck-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        width: 100% !important;
     }
+
+    /* 4. 单张卡组卡片：垂直排列，约束所有内容 */
     .deck-card {
-        padding: 12px;
-        box-shadow: 0 1px 4px rgba(139, 69, 19, 0.1);
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        padding: 12px 8px !important;
+        background: #fffbf5 !important;
+        border: 1px solid #e6d5c3 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 6px rgba(139, 69, 19, 0.12) !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+    }
+
+    /* 5. 卡片头部：卡图+信息 垂直居中 */
+    .deck-card-header {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+        margin: 0 0 12px 0 !important;
+    }
+
+    /* 6. 封面卡图：固定尺寸，取消错位 */
+    .deck-cover {
+        transform: none !important;
+        width: 75px !important;
+        height: 105px !important;
+        border-radius: 6px !important;
+        overflow: hidden !important;
+        flex-shrink: 0 !important;
+    }
+    .deck-cover img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
+
+    /* 7. 套牌信息区：居中，文字不溢出 */
+    .deck-card-info {
+        padding: 0 !important;
+        text-align: center !important;
+        width: 100% !important;
+        margin: 0 !important;
     }
     .deck-card-name {
-        font-size: 16px;
+        font-size: 14px !important;
+        font-weight: bold !important;
+        color: #5a3921 !important;
+        margin: 0 0 4px 0 !important;
+        word-break: break-word !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        line-height: 1.3 !important;
     }
     .deck-card-count {
-        font-size: 13px;
-        margin-bottom: 8px;
+        color: #7a5230 !important;
+        font-size: 12px !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
     }
+
+    /* 8. 按钮区：强制同一排，等宽，不溢出 */
     .deck-card-actions {
-        gap: 6px;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+        margin-top: auto !important;
     }
     .deck-card-actions button {
-        padding: 6px;
-        font-size: 12px;
-        min-width: 50px;
+        flex: 1 !important;
+        min-width: 0 !important;
+        padding: 7px 2px !important;
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+        border-radius: 4px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 
     /* 卡组详情弹窗移动端 */
@@ -591,6 +672,46 @@ button.danger{background: linear-gradient(135deg, #c92a2a, #a02525);}
         padding: 8px 12px;
         font-size: 14px;
     }
+
+    /* 费用柱状图移动端 */
+    .cost-curve-box {
+        max-height: 220px;
+        min-height: 50px;
+        padding: 6px 4px 2px;
+    }
+    .cost-bar-text {
+        font-size: 10px;
+    }
+    .cost-bar-inner {
+        max-width: 12px;
+    }
+
+/* 封面选择弹窗 移动端 彻底修复版 */
+.cover-select-grid {
+    display: grid !important;
+    /* 直接固定6等分列，放弃无效的auto-fill，百分百生效 */
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 6px !important;
+    width: 100% !important;
+}
+.cover-select-item {
+    /* 强制标准卡牌比例 63 : 88 */
+    aspect-ratio: 63 / 88 !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+}
+.cover-select-item img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    /* 统一标准比例，和63/88一致 */
+    aspect-ratio: 63 / 88 !important;
+    display: block !important;
+}
+.cover-select-box {
+    width: 94% !important;
+    padding: 15px 10px !important;
+}
 }
 
 .pack-grid {
@@ -775,19 +896,163 @@ button.btn-gold:hover {
     box-sizing: border-box;
 }
 
-@media (max-width: 768px) {
-    .cost-curve-box {
-        max-height: 220px;
-        min-height: 50px;
-        padding: 6px 4px 2px;
-    }
-    .cost-bar-text {
-        font-size: 10px;
-    }
-    .cost-bar-inner {
-        max-width: 12px;
-    }
+/* 卡组卡片 - 主容器 */
+.deck-card {
+    background: #fffbf5;
+    border: 1px solid #e6d5c3;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(139, 69, 19, 0.15);
+    cursor: pointer;
+    transition: 0.2s;
+    overflow: visible;
+    position: relative;
+    margin-bottom: 15px;
 }
+.deck-card:hover {
+    transform: scale(1.02);
+    border-color: #d4a574;
+}
+
+/* 上半部分：封面卡 + 信息 */
+.deck-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: -15px;
+}
+
+/* 封面卡容器 - 关键：让它上移，露出1/3 */
+.deck-cover {
+    flex-shrink: 0;
+    width: 100px;
+    height: 140px;
+    border-radius: 8px;
+    overflow: visible;
+    background: transparent;
+    cursor: pointer;
+    border: none;
+    transform: translateY(-25%);
+    transition: 0.2s;
+}
+.deck-cover:hover {
+    border-color: #d4a574;
+    transform: translateY(-25%) scale(1.05);
+}
+.deck-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 右侧信息区域 */
+.deck-card-info {
+    flex: 1;
+    padding-top: 10px;
+}
+/* 修正字号，和原图匹配 */
+.deck-card-name {
+    font-size: 18px; /* 从24px调小 */
+    font-weight: bold;
+    color: #5a3921;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+.deck-card-count {
+    color: #7a5230;
+    font-size: 16px; /* 从22px调小 */
+    margin-bottom: 0;
+}
+
+/* 下半部分：三个按钮在一行，拉满 */
+.deck-card-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+.deck-card-actions button {
+    flex: 1;
+    padding: 12px 8px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+.deck-card-actions button:nth-child(1),
+.deck-card-actions button:nth-child(2) {
+    background: linear-gradient(135deg, #9b30af, #7a248a);
+    color: white;
+}
+.deck-card-actions button:nth-child(3) {
+    background: linear-gradient(135deg, #c92a2a, #a02525);
+    color: white;
+}
+
+/* 封面选择弹窗 */
+.cover-select-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.cover-select-modal.show {
+    display: flex;
+}
+.cover-select-box {
+    background: #fffbf5;
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-y: auto;
+}
+.cover-select-title {
+    font-size: 20px;
+    color: #5a3921;
+    margin-bottom: 15px;
+    text-align: center;
+}
+.cover-select-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+}
+/* 封面选择弹窗卡牌 - 严格 63:88 标准比例 */
+.cover-select-item {
+    border: 2px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.2s;
+    /* 强制卡牌比例 = 63:88 */
+    aspect-ratio: 63 / 88;
+}
+.cover-select-item:hover {
+    border-color: #d4a574;
+    transform: scale(1.03);
+}
+.cover-select-item.selected {
+    border-color: #9b30af;
+    box-shadow: 0 0 10px rgba(155, 48, 175, 0.6);
+}
+.cover-select-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.cover-select-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
     </style>
 </head>
 <body>
@@ -1076,7 +1341,7 @@ button.btn-gold:hover {
     { id: "AYK094-OR", name: "觉醒·判官(OR)",   alias: "判官", type: "觉醒",  cost: "none", keyword: "", ability: "耗火/冥使", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_111.webp?v=3.2.1.3" },
     { id: "AYK095", name: "无情",   alias: "判官", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "召唤/鼓舞", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_112.webp" },
     { id: "AYK096", name: "断罪",   alias: "判官", type: "式神",  cost: "5", keyword: "冥使/冥界", ability: "召唤/鼓舞/增幅/过牌", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_113.webp" },
-    { id: "AYK097", name: "掌死",   alias: "判官", type: "式神",  cost: "6", keyword: "冥使/冥界", ability: "迅捷/召唤/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_114.webp?v=3.2.2.3" },
+    { id: "AYK097", name: "掌死",   alias: "判官", type: "式神",  cost: "6", keyword: "冥使/冥界", ability: "迅捷/召唤/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_114.webp?v=3.2.2.2" },
     { id: "AYK098", name: "孟婆",   alias: "孟婆", type: "式神",  cost: "4", keyword: "冥使/冥界", ability: "耗火/沉默", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_115.webp" },
     { id: "AYK099", name: "明灯",   alias: "明灯", type: "式神",  cost: "0", keyword: "灵火", ability: "召唤", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_116.webp?v=3.2.1.1" },
     { id: "AYK100", name: "青行灯",   alias: "青行灯", type: "式神",  cost: "8", keyword: "灵火", ability: "召唤/横置", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_117.webp" },
@@ -1087,9 +1352,9 @@ button.btn-gold:hover {
     { id: "AYK101-UR", name: "大天狗(UR)",   alias: "大天狗", type: "式神",  cost: "5", keyword: "大妖/天狗", ability: "耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_122.webp" },
     { id: "AYK102", name: "觉醒·大天狗",   alias: "大天狗", type: "觉醒",  cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_269.webp" },
     { id: "AYK102-OR", name: "觉醒·大天狗(OR)",   alias: "大天狗", type: "觉醒",  cost: "none", keyword: "", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_123.webp" },
-    { id: "AYK103", name: "少羽大天狗",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_124.webp?v=3.2.2.3" },
-    { id: "AYK103-SP", name: "少羽大天狗(SP)",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_125.webp?v=3.2.2.3" },
-    { id: "AYK103-UR", name: "少羽大天狗(UR)",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_126.webp?v=3.2.2.3" },
+    { id: "AYK103", name: "少羽大天狗",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_124.webp?v=3.2.2.2" },
+    { id: "AYK103-SP", name: "少羽大天狗(SP)",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_125.webp?v=3.2.2.2" },
+    { id: "AYK103-UR", name: "少羽大天狗(UR)",   alias: "大天狗", type: "式神",  cost: "3", keyword: "大妖/天狗", ability: "耗火/散射/横置/献祭", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_126.webp?v=3.2.2.2" },
     { id: "AYK104", name: "暴风之主",   alias: "大天狗", type: "式神",  cost: "6", keyword: "大妖/天狗", ability: "耗火", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_127.webp" },
     { id: "AYK105", name: "崇天高云",   alias: "大天狗", type: "式神",  cost: "7", keyword: "大妖/天狗", ability: "贯通/耗火/暴击/屏障", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_128.webp" },
     { id: "AYK106", name: "鬼葫芦",   alias: "鬼葫芦", type: "式神",  cost: "1", keyword: "付丧神/大江山", ability: "安魂/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_129.webp" },
@@ -1146,7 +1411,7 @@ button.btn-gold:hover {
     { id: "AYK145", name: "生花",   alias: "生花", type: "法术",  cost: "0", keyword: "妖术", ability: "响应/移除/恢复", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_176.webp" },
     { id: "AYK146", name: "镇魂歌",   alias: "镇魂歌", type: "法术",  cost: "1", keyword: "妖术", ability: "响应/过牌/安魂", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_177.webp" },
     { id: "AYK147", name: "魔音扰心",   alias: "魔音扰心", type: "法术",  cost: "2", keyword: "妖术", ability: "响应", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_178.webp" },
-    { id: "AYK148", name: "荒寂",   alias: "荒寂", type: "法术",  cost: "2", keyword: "妖术", ability: "响应/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_179.webp?v=3.2.2.3" },
+    { id: "AYK148", name: "荒寂",   alias: "荒寂", type: "法术",  cost: "2", keyword: "妖术", ability: "响应/移除", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_179.webp?v=3.2.2.2" },
     { id: "AYK149", name: "古尘之盾",   alias: "古尘之盾", type: "法术",  cost: "3", keyword: "妖术", ability: "岿岩/响应/屏障", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_180.webp" },
     { id: "AYK150", name: "腐坏直拳",   alias: "腐坏直拳", type: "法术",  cost: "3", keyword: "妖术", ability: "觉醒/响应", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_181.webp" },
     { id: "AYK151", name: "见切",   alias: "见切", type: "法术",  cost: "1", keyword: "妖术", ability: "付丧神/响应", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_182.webp?v=3.2.2.1" },
@@ -1179,7 +1444,7 @@ button.btn-gold:hover {
     { id: "AYK176", name: "兔子舞",   alias: "兔子舞", type: "法术",  cost: "3", keyword: "妖术", ability: "过牌/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_209.webp?v=3.2.1.0" },
     { id: "AYK177", name: "羽刃暴风",   alias: "羽刃暴风", type: "法术",  cost: "4", keyword: "妖术", ability: "大天狗", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_210.webp?v=3.2.2.1" },
     { id: "AYK178", name: "死之宣告",   alias: "死之宣告", type: "法术",  cost: "4", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_211.webp" },
-    { id: "AYK179", name: "疯魔琴心",   alias: "疯魔琴心", type: "法术",  cost: "3", keyword: "妖术", ability: "眩晕/增幅", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_212.webp?v=3.2.2.0" },
+    { id: "AYK179", name: "疯魔琴心",   alias: "疯魔琴心", type: "法术",  cost: "3", keyword: "妖术", ability: "沉默", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_212.webp?v=3.2.2.0" },
     { id: "AYK180", name: "怪力",   alias: "怪力", type: "法术",  cost: "4", keyword: "妖术", ability: "贯通", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_213.webp" },
     { id: "AYK181", name: "流霰",   alias: "流霰", type: "法术",  cost: "5", keyword: "妖术", ability: "眩晕", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_214.webp" },
     { id: "AYK182", name: "吸魂灯",   alias: "吸魂灯", type: "法术",  cost: "5", keyword: "妖术", ability: "", img: "https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/A_215.webp" },
@@ -1432,7 +1697,7 @@ button.btn-gold:hover {
 {"id":"BPP187","name":"黑豹","alias":"黑豹","type":"附灵","cost":"2","keyword":"御灵","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_187.webp"},
 {"id":"BPP187-UR","name":"黑豹(UR)","alias":"黑豹","type":"附灵","cost":"2","keyword":"御灵","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_234.webp"},
 {"id":"BPP188","name":"暗·神龙","alias":"神龙","type":"附灵","cost":"3","keyword":"御灵","ability":"耗火","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_188.webp"},
-{"id":"BPP189","name":"狂骨","alias":"狂骨","type":"附灵","cost":"1","keyword":"御魂","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_189.webp?v=3.2.2.3"},
+{"id":"BPP189","name":"狂骨","alias":"狂骨","type":"附灵","cost":"1","keyword":"御魂","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_189.webp?v=3.2.2.2"},
 {"id":"BPP190","name":"涅槃之火","alias":"涅槃之火","type":"附灵","cost":"2","keyword":"御魂","ability":"恢复","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_190.webp?v=3.2.2.1"},
 {"id":"BPP191","name":"镜姬","alias":"镜姬","type":"附灵","cost":"3","keyword":"御魂","ability":"横置","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_191.webp?v=3.2.2.1"},
 {"id":"BPP192","name":"心眼","alias":"心眼","type":"附灵","cost":"1","keyword":"御魂","ability":"","img":"https://fishcrashers.oss-cn-chengdu.aliyuncs.com/YYSTCG/CARD/B_192.webp?v=3.2.1.0"},
@@ -1484,7 +1749,7 @@ button.btn-gold:hover {
 
     // 新增：本地卡组存储配置
     const STORAGE_KEY = "YYSTCG_DECKS";
-    const MAX_DECKS = 27;
+    const MAX_DECKS = 30;
     let currentEditingDeckId = null; // 当前编辑的卡组ID
 
     const previewBox = document.getElementById('cardPreview');
@@ -1494,6 +1759,80 @@ button.btn-gold:hover {
     const RARE_TYPES = ['UR', 'SP', 'OR', 'PC', 'EX', '3D'];
 
     let cardPrefixGroups = {};
+
+// 全局变量：当前正在选择封面的卡组ID
+let currentCoverDeckId = null;
+let selectedCoverCardId = null;
+
+// 打开封面选择弹窗
+function openCoverSelectModal(deckId) {
+    const decks = getLocalDecks();
+    const deck = decks.find(d => d.id === deckId);
+    if (!deck) return;
+    // 预组套牌不允许修改封面（可选，如果你想让预组也能改，就去掉这个判断）
+    if (deck.isPreset) {
+        alert("预组套牌的封面不可修改！");
+        return;
+    }
+
+    currentCoverDeckId = deckId;
+    selectedCoverCardId = deck.coverCardId || null;
+
+    const grid = document.getElementById('coverSelectGrid');
+    grid.innerHTML = '';
+
+    // 获取卡组里的所有卡牌（去重）
+    const uniqueCardIds = Object.keys(deck.cards);
+    uniqueCardIds.forEach(cardId => {
+        const card = ALL_CARDS.find(c => c.id === cardId);
+        if (!card) return;
+
+        const item = document.createElement('div');
+        item.className = 'cover-select-item';
+        if (cardId === selectedCoverCardId) {
+            item.classList.add('selected');
+        }
+        item.innerHTML = `<img src="${card.img}" alt="${card.name}">`;
+        item.onclick = () => {
+            // 清除其他选中
+            document.querySelectorAll('.cover-select-item').forEach(el => el.classList.remove('selected'));
+            item.classList.add('selected');
+            selectedCoverCardId = cardId;
+        };
+        grid.appendChild(item);
+    });
+
+    document.getElementById('coverSelectModal').classList.add('show');
+}
+
+// 关闭封面选择弹窗
+function closeCoverSelectModal() {
+    document.getElementById('coverSelectModal').classList.remove('show');
+    currentCoverDeckId = null;
+    selectedCoverCardId = null;
+}
+
+// 确认选择封面卡并保存
+function confirmCoverSelect() {
+    if (!currentCoverDeckId || !selectedCoverCardId) {
+        alert("请选择一张卡牌作为封面！");
+        return;
+    }
+
+    // 只修改用户卡组
+    let userDecks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const deckIndex = userDecks.findIndex(d => d.id === currentCoverDeckId);
+    if (deckIndex === -1) return;
+
+    // 保存封面卡ID
+    userDecks[deckIndex].coverCardId = selectedCoverCardId;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userDecks));
+
+    alert("封面卡已更新！");
+    closeCoverSelectModal();
+    renderDeckList(); // 刷新卡组列表
+}
+
     function initPrefixGroups() {
         cardPrefixGroups = {};
         for (let c of ALL_CARDS) {
@@ -1654,14 +1993,122 @@ function calculatePageSize() {
   currentPageSize = cols * ROWS_PER_PAGE;
 }
 
-
-
-    // -------------------------- 新增：本地卡组核心函数 --------------------------
-    // 获取本地所有卡组
-    function getLocalDecks() {
-        const data = localStorage.getItem(STORAGE_KEY);
-        return data ? JSON.parse(data) : [];
+// ====================== 全局固定预组套牌（只生成1次，杜绝重复） ======================
+const PRESET_DECKS = [
+    {
+        id: "PRESET_DECK_1",
+        name: "【预组套牌】天邪鬼",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/D0YsD0oUD038D1HkD1XLD1XxETosET4UEVGaEVGtEVHBEVlsEbNDEbNfEbsSEb78EfHEEhECEhTsEkPM",
+        coverCardId: "AYK005-PC" 
+    },
+    {
+        id: "PRESET_DECK_2",
+        name: "【预组套牌】大江山",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/EOBUEOQ8EOghEOg/EOwgEPPaEPfBEPvbEPvHEP+mEQN6EQdhEcrSEhTsEmb0HwVsH+f8H+vkH+/MIGzMIIRQ",
+        coverCardId: "AYK108-3D" 
+    },
+    {
+        id: "PRESET_DECK_3",
+        name: "【预组套牌】跳跳家族",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/EGskEG8MEHL0EHbcEHrEEIZ6EUnMEU2yEVlrEatzEhECEiCiEkPLH7kcH8DqH8TUIHScIRirIWbK",
+        coverCardId: "AYK077" 
+    },
+    {
+        id: "PRESET_DECK_4",
+        name: "【预组套牌】青蛙瓷器",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/ES50EWkLEZQEEZfsEfHDEhy6Hr9EHsMEHsbqHsrUHs68IHC0IJusIJ+SINJcIVNEIZHCIaFi",
+        coverCardId: "BPP016" 
+    },
+    {
+        id: "PRESET_DECK_5",
+        name: "【预组套牌】青灯凤火",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/D208D3E4EEviEEwAEMT8EMjiEMkAES50Eat0EdKEEdZsEgFkEgk0EjBEEjgSIJfEIM50IXpS",
+        coverCardId: "AYK100-UR" 
+    },
+    {
+        id: "PRESET_DECK_6",
+        name: "【预组套牌】雪女眩晕",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/EEQSEEQ6EEf8EF9sEGNSEGNmEI5gEJYcEV1UEZQEEdpUEeYMEgVMEjQqEjQ0IHCzIHSbIOH8Ia0a",
+        coverCardId: "AYK181" 
+    },
+    {
+        id: "PRESET_DECK_7",
+        name: "【预组套牌】怨灵快攻",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/EOQ8EVlrEbNCEbNgEfHEHpQkHzg0HzwaHzw4H0AEH0PsH0fUH0u8IHCzIIBSIN4UIPGcIU9c",
+        coverCardId: "BPP047-UR" 
+    },
+    {
+        id: "PRESET_DECK_8",
+        name: "【预组套牌】岿岩屏障",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/EAWmEAl8EA1iEBU0EBkuECjOECy3EDCJEDRyEF9sES50EYhLEaOjEhEDEhTsEiCjHp/6H8TUIMqLIRyT",
+        coverCardId: "AYK059-OR" 
+    },
+    {
+        id: "PRESET_DECK_9",
+        name: "【预组套牌】运势整活",
+        isOpen: false,
+        isPreset: true,
+        deckCode: "*OT/D206D3EiD3UKEBU0EMT8EMkKES50EWkMEcLiEd47HwVsH2MrH2cUH27iILcEINosISB8ITfsITvS",
+        coverCardId: "BPP177" 
     }
+];
+
+// 解析预组套牌卡牌（只执行1次）
+PRESET_DECKS.forEach(d => {
+    try{
+        let s = b64Decode(d.deckCode.replace(CODE_HEAD,''));
+        let c = {};
+        for(let i=0;i<s.length;i+=7){
+            let id = decodeCard(s.substr(i,6));
+            let n = +s[i+6];
+            if(id) c[id] = (c[id]||0)+n;
+        }
+        d.cards = c;
+    }catch(e){d.cards={}}
+});
+
+// 解析短码函数（抽离为独立函数，供预组初始化使用）
+function parseDeckCode(deckCode) {
+    try {
+        let b64data = deckCode.substring(CODE_HEAD.length);
+        let decodedStr = b64Decode(b64data);
+        let tempCards = {};
+        for (let i = 0; i < decodedStr.length; i += 7) {
+            let segment = decodedStr.substring(i, i + 7);
+            let cardCode = segment.substring(0, 6);
+            let count = parseInt(segment[6]) || 1;
+            let cardId = decodeCard(cardCode);
+            if (!cardId) continue;
+            tempCards[cardId] = (tempCards[cardId] || 0) + count;
+        }
+        return tempCards;
+    } catch (e) {
+        return {};
+    }
+}
+
+// ====================== 修复后的获取卡组函数（无重复渲染） ======================
+function getLocalDecks() {
+    const user = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    // ✅ 固定预组 + 用户卡组，永远不重复
+    return [...PRESET_DECKS, ...user];
+}
     // 保存卡组到本地
     function saveLocalDecks(decks) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(decks));
@@ -1670,27 +2117,64 @@ function calculatePageSize() {
     function generateDeckId() {
         return 'deck_' + Date.now() + Math.random().toString(36).substr(2, 5);
     }
-    // 渲染卡组列表
-    function renderDeckList() {
-        const decks = getLocalDecks();
-        const grid = document.getElementById('deckGrid');
-        grid.innerHTML = '';
-        decks.forEach(deck => {
-            const total = Object.values(deck.cards).reduce((a,b)=>a+b,0);
-            const cardEl = document.createElement('div');
-            cardEl.className = 'deck-card';
+// 渲染卡组列表（适配你要的布局）
+function renderDeckList() {
+    const grid = document.getElementById('deckGrid');
+    // ✅ 强制清空，彻底解决重复渲染
+    grid.innerHTML = ''; 
+
+    const decks = getLocalDecks();
+    decks.forEach(deck => {
+        const total = Object.values(deck.cards).reduce((a,b)=>a+b,0);
+        let coverCardId = deck.coverCardId || null;
+        if (!coverCardId) {
+            const sortedIds = Object.keys(deck.cards).sort();
+            coverCardId = sortedIds[0] || null;
+        }
+        const coverCard = ALL_CARDS.find(c => c.id === coverCardId);
+        const coverImg = coverCard ? coverCard.img : DEFAULT_PREVIEW_IMG;
+
+        const cardEl = document.createElement('div');
+        cardEl.className = 'deck-card';
+        
+        if (deck.isPreset) {
             cardEl.innerHTML = `
-                <div class="deck-card-name">${deck.name}</div>
-                <div class="deck-card-count">卡牌数量：${total}/60</div>
+                <div class="deck-card-header">
+                    <div class="deck-cover" onclick="openCoverSelectModal('${deck.id}')">
+                        <img src="${coverImg}" alt="封面卡">
+                    </div>
+                    <div class="deck-card-info">
+                        <div class="deck-card-name">${deck.name}</div>
+                        <div class="deck-card-count">卡牌数量：${total}/60</div>
+                    </div>
+                </div>
+                <div class="deck-card-actions">
+                    <button onclick="viewDeck('${deck.id}')">查看</button>
+                </div>
+            `;
+        } else {
+            cardEl.innerHTML = `
+                <div class="deck-card-header">
+                    <div class="deck-cover" onclick="openCoverSelectModal('${deck.id}')">
+                        <img src="${coverImg}" alt="封面卡">
+                    </div>
+                    <div class="deck-card-info">
+                        <div class="deck-card-name">${deck.name}</div>
+                        <div class="deck-card-count">卡牌数量：${total}/60</div>
+                    </div>
+                </div>
                 <div class="deck-card-actions">
                     <button onclick="viewDeck('${deck.id}')">查看</button>
                     <button onclick="renameDeck('${deck.id}')">重命名</button>
                     <button class="danger" onclick="deleteDeck('${deck.id}')">删除</button>
                 </div>
             `;
-            grid.appendChild(cardEl);
-        });
-    }
+        }
+        
+        grid.appendChild(cardEl);
+    });
+}
+
 // 切换页面：显示卡组列表
 function showDeckListPage() {
     document.getElementById('deckListPage').style.display = 'block';
@@ -1700,23 +2184,27 @@ function showDeckListPage() {
     renderDeckList();
 }
 
-// 你的原版 showMainApp，只加双层等待，其余完全不动
-function showMainApp() {
+// 你的原版 showMainApp，增加参数 resetState 控制是否重置抽卡
+function showMainApp(resetState = true) { // 【修改】默认重置，但允许传 false 阻止
     closeDeckDetail();
     document.getElementById('deckListPage').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
 
     toggleDrawBtn(true);
-    drawLeft = 20;
-    drawCount = {};
-    hasDrawn = false;
+    
+    // 【修改】只有在 resetState 为 true 时才重置抽卡状态
+    if (resetState) {
+        drawLeft = 20;
+        drawCount = {};
+        hasDrawn = false;
+    }
+    
     resetCardPreview();
 
     // ✅ 核心：等浏览器【真正渲染完DOM】，再执行renderCards
-    // 此时 cardLibrary 已显示 → 有宽度 → calculatePageSize 正常计算
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            renderCards(); // render自带calculatePageSize，自动算对currentPageSize
+            renderCards();
         });
     });
 }
@@ -1803,24 +2291,27 @@ function editCurrentDeck() {
     const target = decks.find(d => d.id === currentEditingDeckId);
     if (!target) return;
     
-    // 1. ✅ 核心修复：重置所有搜索/筛选/代码
+    // 1. 重置所有搜索/筛选/代码
     resetDeckEditorUI();
     
-    // 2. 加载卡组数据（必生效）
+    // 2. 【核心修改】先切换页面，传入 false 告诉它不要重置抽卡数据
+    showMainApp(false); 
+    
+    // 3. 切换页面后，再加载卡组数据和抽卡状态
     deck = {...target.cards};
     hasDrawn = target.isOpen;
     currentEditingDeckId = target.id;
 
-    // 3. 切换页面 + 重置抽卡次数
-    showMainApp();
-    
-    // 4. ✅ 强制渲染卡组和卡牌（确保卡牌加载到列表）
+    // 【恢复抽卡状态】兼容旧数据：如果存档里没有，就给默认值
+    drawLeft = (target.drawLeft !== undefined && target.drawLeft !== null) ? target.drawLeft : 20;
+    drawCount = target.drawCount ? {...target.drawCount} : {};
+
+    // 4. 强制渲染
     renderDeck();
     renderCards();
     
     closeDeckDetail();
 }
-
     // 复制当前卡组短码
     function copyCurrentDeckCode() {
         const decks = getLocalDecks();
@@ -1837,64 +2328,118 @@ function editCurrentDeck() {
         copyToClipboard(finalCode, "短码");
         alert('卡组短码已复制！');
     }
-    // 重命名卡组（自由构筑前缀锁定）
-    function renameDeck(deckId) {
-        const decks = getLocalDecks();
-        const target = decks.find(d => d.id === deckId);
-        if (!target) return;
-        // 未抽牌 → 锁定【自由构筑】前缀
-        const prefix = target.isOpen ? '' : '【自由构筑】';
-        const oldName = target.name.replace(prefix, '');
-        const newName = prompt('请输入卡组名称：', oldName);
-        if (!newName) return;
-        target.name = prefix + newName;
-        saveLocalDecks(decks);
-        renderDeckList();
+// 重命名卡组
+function renameDeck(deckId) {
+    const decks = getLocalDecks();
+    const target = decks.find(d => d.id === deckId);
+    if (!target) return;
+    if (target.isPreset) {
+        alert("预组套牌不可重命名！");
+        return;
     }
-    // 删除卡组
-    function deleteDeck(deckId) {
-        if (!confirm('确定删除该卡组？')) return;
-        let decks = getLocalDecks();
-        decks = decks.filter(d => d.id !== deckId);
-        saveLocalDecks(decks);
-        renderDeckList();
+    const prefix = target.isOpen ? '' : '【自由构筑】';
+    const oldName = target.name.replace(prefix, '');
+    const newName = prompt('请输入卡组名称：', oldName);
+    if (!newName) return;
+    let userDecks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const idx = userDecks.findIndex(d => d.id === deckId);
+    if (idx !== -1) {
+        userDecks[idx].name = prefix + newName;
+        saveLocalDecks(userDecks);
     }
-    // 保存当前卡组到本地
-    function saveCurrentDeck() {
-        const total = Object.values(deck).reduce((a,b)=>a+b,0);
-        if (total === 0) {
-            alert('卡组不能为空！');
-            return;
-        }
-        const decks = getLocalDecks();
-        // 编辑模式：更新卡组
-        if (currentEditingDeckId) {
-            const index = decks.findIndex(d => d.id === currentEditingDeckId);
-            if (index !== -1) {
-                decks[index].cards = {...deck};
-                decks[index].isOpen = hasDrawn;
-                saveLocalDecks(decks);
-                alert('卡组更新成功！');
-                backToDeckList();
-                return;
-            }
-        }
-        // 新建模式：新增卡组
-        if (decks.length >= MAX_DECKS) {
+    renderDeckList();
+}
+// 删除卡组
+function deleteDeck(deckId) {
+    const decks = getLocalDecks();
+    const target = decks.find(d => d.id === deckId);
+    if (target?.isPreset) {
+        alert("预组套牌不可删除！");
+        return;
+    }
+    if (!confirm('确定删除该卡组？')) return;
+    let userDecks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    userDecks = userDecks.filter(d => d.id !== deckId);
+    saveLocalDecks(userDecks);
+    renderDeckList();
+}
+// 保存当前卡组到本地（加入封面卡）
+// 保存当前卡组到本地（修复：仅保存用户卡组，绝不保存预组）
+function saveCurrentDeck() {
+    const total = Object.values(deck).reduce((a,b)=>a+b,0);
+    if (total === 0) {
+        alert('卡组不能为空！');
+        return;
+    }
+
+    // 【新增】核心判断：如果当前编辑的是预组套牌，强制另存为新卡组
+    if (currentEditingDeckId && currentEditingDeckId.startsWith('PRESET_DECK_')) {
+        // 仅获取用户卡组，不包含预组
+        let userDecks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        if (userDecks.length >= MAX_DECKS) {
             alert(`最多只能保存${MAX_DECKS}套卡组！`);
             return;
         }
+        const sortedIds = Object.keys(deck).sort();
+        const defaultCover = sortedIds[0] || null;
         const newDeck = {
             id: generateDeckId(),
             name: hasDrawn ? '新卡组' : '【自由构筑】新卡组',
             isOpen: hasDrawn,
-            cards: {...deck}
+            cards: {...deck},
+            drawLeft: drawLeft,
+            drawCount: {...drawCount},
+            coverCardId: defaultCover
         };
-        decks.push(newDeck);
-        saveLocalDecks(decks);
-        alert('卡组保存成功！');
+        userDecks.push(newDeck);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(userDecks));
+        alert('已另存为新卡组！');
         backToDeckList();
+        return;
     }
+
+    // --------------------------
+    // 核心修复：仅操作用户卡组，不包含预组
+    // --------------------------
+    let userDecks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    
+    // 编辑模式：更新用户卡组
+    if (currentEditingDeckId) {
+        const index = userDecks.findIndex(d => d.id === currentEditingDeckId);
+        if (index !== -1) {
+            userDecks[index].cards = {...deck};
+            userDecks[index].isOpen = hasDrawn;
+            userDecks[index].drawLeft = drawLeft;
+            userDecks[index].drawCount = {...drawCount};
+            const sortedIds = Object.keys(deck).sort();
+            userDecks[index].coverCardId = sortedIds[0] || null;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(userDecks));
+            alert('卡组更新成功！');
+            backToDeckList();
+            return;
+        }
+    }
+    // 新建模式：新增用户卡组
+    if (userDecks.length >= MAX_DECKS) {
+        alert(`最多只能保存${MAX_DECKS}套卡组！`);
+        return;
+    }
+    const sortedIds = Object.keys(deck).sort();
+    const newDeck = {
+        id: generateDeckId(),
+        name: hasDrawn ? '新卡组' : '【自由构筑】新卡组',
+        isOpen: hasDrawn,
+        cards: {...deck},
+        drawLeft: drawLeft,
+        drawCount: {...drawCount},
+        coverCardId: sortedIds[0] || null
+    };
+    userDecks.push(newDeck);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userDecks));
+    alert('卡组保存成功！');
+    backToDeckList();
+}
+
     // 返回卡组列表
 function backToDeckList() {
     // 退出组卡器时也重置，下次进入更干净
@@ -2089,18 +2634,18 @@ function renderDeck() {
     if(!list || !total) return;
     list.innerHTML = "";
     let sum=0;
-// 按类型排序：式神 > 觉醒 > 法术 > 附灵 > 结界，同类型按编号升序
-const typeOrder = { '式神': 1, '觉醒': 2, '法术': 3, '附灵': 4, '结界': 5 };
-const sortedEntries = Object.entries(deck).sort((a, b) => {
-  const cardA = ALL_CARDS.find(c => c.id === a[0]);
-  const cardB = ALL_CARDS.find(c => c.id === b[0]);
-  const typeA = cardA?.type || '';
-  const typeB = cardB?.type || '';
-  const ta = typeOrder[typeA] ?? 99;
-  const tb = typeOrder[typeB] ?? 99;
-  if (ta !== tb) return ta - tb;
-  return a[0].localeCompare(b[0]);
-});    
+    // 按类型排序：式神 > 觉醒 > 法术 > 附灵 > 结界，同类型按编号升序
+    const typeOrder = { '式神': 1, '觉醒': 2, '法术': 3, '附灵': 4, '结界': 5 };
+    const sortedEntries = Object.entries(deck).sort((a, b) => {
+      const cardA = ALL_CARDS.find(c => c.id === a[0]);
+      const cardB = ALL_CARDS.find(c => c.id === b[0]);
+      const typeA = cardA?.type || '';
+      const typeB = cardB?.type || '';
+      const ta = typeOrder[typeA] ?? 99;
+      const tb = typeOrder[typeB] ?? 99;
+      if (ta !== tb) return ta - tb;
+      return a[0].localeCompare(b[0]);
+    });    
     const typeColors = {
         "式神":"#c92a2a","觉醒":"#212529","法术":"#2f9e44","附灵":"#fd7e14","结界":"#9b30af"
     };
@@ -2116,6 +2661,14 @@ const sortedEntries = Object.entries(deck).sort((a, b) => {
         if(card && card.img){
             const grad = `linear-gradient(to right, transparent 0%, ${typeColors[type]||'#333'} 35%, ${typeColors[type]||'#333'} 100%)`;
             item.style.backgroundImage = `${grad}, url(${card.img})`;
+            
+            // 【新增】鼠标悬停时在预览区域显示卡牌图片
+            item.onmouseenter = () => {
+                if(previewBox) previewBox.style.backgroundImage = `url(${card.img})`;
+            };
+            item.onmouseleave = () => {
+                if(previewBox) previewBox.style.backgroundImage = `url(${DEFAULT_PREVIEW_IMG})`;
+            };
         }
 
         item.innerHTML=`
@@ -2701,5 +3254,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
     </script>
+
+<!-- 封面卡选择弹窗 -->
+<div class="cover-select-modal" id="coverSelectModal">
+    <div class="cover-select-box">
+        <div class="cover-select-title">选择封面卡</div>
+        <div class="cover-select-grid" id="coverSelectGrid"></div>
+        <div class="cover-select-actions">
+            <button onclick="confirmCoverSelect()">确定</button>
+            <button onclick="closeCoverSelectModal()">取消</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
